@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Salles de classe</title>
+    <link rel="stylesheet" href="./assets/css/design-system.css" />
+    <style>
+        /* OS Layout */
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .os-desktop {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Widget d'info du Cours flottant en haut à droite */
+        .course-widget {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background-color: var(--surface-color);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 16px;
+            border-radius: var(--radius-window);
+            box-shadow: var(--shadow-inactive);
+            border: 1px solid var(--border);
+            width: 280px;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success);
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        /* Fenêtres (Windows) */
+        .os-window {
+            position: absolute;
+            top: 50px;
+            left: 100px;
+            width: 800px;
+            height: 500px;
+            background-color: var(--window-bg);
+            border-radius: var(--radius-window);
+            box-shadow: var(--shadow-active);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            opacity: 0;
+            transform: scale(0.98);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+        }
+
+        .os-window.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: all;
+            z-index: 100;
+        }
+
+        .os-window.minimized {
+            display: none;
+        }
+
+        .window-header {
+            height: 40px;
+            background-color: var(--window-header);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .window-header:active {
+            cursor: grabbing;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .win-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .win-btn.close {
+            background-color: #EF4444;
+        }
+
+        .win-btn.close:hover {
+            background-color: #DC2626;
+        }
+
+        .win-btn.minimize {
+            background-color: #F59E0B;
+        }
+
+        .win-btn.minimize:hover {
+            background-color: #D97706;
+        }
+
+        .window-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* ── Browser toolbar ── */
+        .browser-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: var(--window-header);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .browser-nav-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: background .15s;
+        }
+
+        .browser-nav-btn:hover:not(:disabled) {
+            background: rgba(0, 0, 0, 0.08);
+            color: var(--text-primary);
+        }
+
+        .browser-nav-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .browser-address-bar {
+            flex: 1;
+            height: 30px;
+            background: var(--window-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 0 12px 0 32px;
+            font-size: 13px;
+            color: var(--text-primary);
+            outline: none;
+            font-family: inherit;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .browser-address-bar:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        }
+
+        .addr-wrap {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .security-icon {
+            position: absolute;
+            left: 10px;
+            font-size: 13px;
+        }
+
+        .browser-webview {
+            flex: 1;
+            width: 100%;
+            border: none;
+        }
+
+        .browser-statusbar {
+            height: 20px;
+            background: var(--window-header);
+            border-top: 1px solid var(--border);
+            padding: 0 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+        }
+
+        .browser-error {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 32px;
+            background: var(--window-bg);
+            z-index: 5;
+        }
+
+        .browser-error.visible {
+            display: flex;
+        }
+
+        .browser-error h3 {
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+
+        .browser-error p {
+            font-size: 13px;
+            max-width: 320px;
+            line-height: 1.5;
+        }
+
+        #browser-body {
+            position: relative;
+        }
+
+        /* Taskbar Windows 11 Style */
+        .os-taskbar {
+            height: 48px;
+            background-color: var(--surface-color);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: var(--shadow-taskbar);
+            z-index: 999;
+        }
+
+        .taskbar-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .taskbar-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            font-size: 18px;
+            position: relative;
+        }
+
+        .taskbar-icon:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .taskbar-icon.open::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            width: 16px;
+            height: 3px;
+            background-color: var(--primary);
+            border-radius: 3px;
+        }
+
+        .start-btn {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 8px !important;
+        }
+
+        .start-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .taskbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Launcher (Start Menu) */
+        .os-launcher {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            width: 400px;
+            background-color: var(--surface-color);
+            backdrop-filter: blur(30px);
+            border-radius: var(--radius-window);
+            box-shadow: var(--shadow-active);
+            border: 1px solid var(--border);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+        }
+
+        .os-launcher.open {
+            opacity: 1;
+            pointer-events: all;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .search-bar {
+            width: 100%;
+            height: 40px;
+            border-radius: var(--radius-ui);
+            border: 1px solid var(--border);
+            background-color: var(--window-bg);
+            padding: 0 16px;
+            margin-bottom: 24px;
+            outline: none;
+        }
+
+        .launcher-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            text-align: center;
+        }
+
+        .launcher-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: var(--radius-ui);
+        }
+
+        .launcher-app:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Window Specific UI */
+        .resources-layout {
+            display: flex;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 220px;
+            border-right: 1px solid var(--border);
+            padding: 16px;
+            background-color: var(--window-header);
+        }
+
+        .sidebar-item {
+            padding: 8px 12px;
+            border-radius: var(--radius-ui);
+            margin-bottom: 4px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .sidebar-item:hover,
+        .sidebar-item.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .main-pane {
+            flex: 1;
+            padding: 24px;
+            background-color: var(--window-bg);
+            overflow-y: auto;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .resource-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-ui);
+            padding: 16px;
+            transition: transform 0.1s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background-color: var(--window-bg);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .resource-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-color: var(--primary);
+        }
+
+        .card-icon {
+            font-size: 24px;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal {
+            background: var(--window-bg);
+            padding: 24px;
+            border-radius: var(--radius-window);
+            width: 400px;
+            box-shadow: var(--shadow-active);
+            border: 1px solid var(--border);
+        }
+
+        /* Calculator Styles */
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 20px;
+            background: var(--window-bg);
+            flex: 1;
+        }
+
+        .btn-calc {
+            height: 50px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface-color);
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-calc:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--primary);
+        }
+
+        .btn-calc.operator {
+            background: rgba(88, 101, 242, 0.1);
+            color: var(--primary);
+        }
+
+        .btn-calc.equals {
+            background: var(--primary);
+            color: white;
+            grid-column: span 2;
+        }
+
+        #calc-display {
+            width: 100%;
+            height: 60px;
+            background: var(--window-header);
+            border: none;
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            text-align: right;
+            font-size: 24px;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        /* Notepad Styles */
+        .notepad-area {
+            flex: 1;
+            background: var(--window-bg);
+            border: none;
+            padding: 20px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- OS Work Area -->
+    <div class="os-desktop" id="desktop">
+
+        <!-- Widget d'information sur la session -->
+        <div class="course-widget">
+            <h2 style="font-size: 14px;"><span class="status-dot"></span><span id="widgetStatus">Session Active</span>
+            </h2>
+            <div id="widgetCourse" style="font-size: 16px; font-weight:bold; margin-top:4px;">Chargement...</div>
+            <p class="text-secondary small">
+                <span id="widgetProfInfo"></span>Code : <span id="widgetCode"
+                    style="font-family: monospace; font-weight:bold; color:var(--text-primary);">—</span>
+            </p>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                <span class="small" id="widgetTimer" style="color:var(--warning); font-weight:600;">⏱️ —:--:--</span>
+            </div>
+        </div>
+
+
+
+        <!-- FENETRE 2 : PDF Viewer -->
+        <div class="os-window" id="win-pdf" style="left: 20px; top: 20px; width: 700px; height: 600px;">
+            <div class="window-header">
+                <h2>Visionneuse PDF - Chapitre_1_Intro.pdf</h2>
+                <div class="window-controls">
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-pdf')"></button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-pdf')"></button>
+                </div>
+            </div>
+            <div class="window-content"
+                style="background-color: #525659; display:flex; justify-content:center; padding: 24px; overflow:auto;">
+                <div
+                    style="width: 80%; background-color: white; height: 1200px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display:flex; justify-content:center; padding-top:100px;">
+                    <h1 style="color: black; font-size:24px;">Page 1: Introduction à la POO</h1>
+                </div>
+            </div>
+        </div>
+
+        <!-- FENETRE 3 : Browser intégré (Chromium via <webview>) -->
+        <div class="os-window" id="win-browser" style="left: 80px; top: 30px; width: 960px; height: 600px;">
+            <div class="window-header" style="gap: 12px;">
+                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                    <span style="flex-shrink:0;">🌐</span>
+                    <h2 id="browser-title"
+                        style="font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:400px;">
+                        Nouvel onglet</h2>
+                </div>
+                <div class="window-controls">
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-browser')"></button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-browser')"></button>
+                </div>
+            </div>
+
+            <!-- Barre d'adresse -->
+            <div class="browser-toolbar">
+                <button class="browser-nav-btn" id="btn-back" title="Précédent" onclick="BrowserVM.goBack()"
+                    disabled>&#8592;</button>
+                <button class="browser-nav-btn" id="btn-forward" title="Suivant" onclick="BrowserVM.goForward()"
+                    disabled>&#8594;</button>
+                <button class="browser-nav-btn" id="btn-reload" title="Recharger"
+                    onclick="BrowserVM.reload()">&#8635;</button>
+
+                <div class="addr-wrap">
+                    <span class="security-icon" id="security-icon">🔒</span>
+                    <input class="browser-address-bar" id="addressBar" type="text"
+                        placeholder="Entrez une URL ou recherche Google..." value="https://www.google.com"
+                        onkeydown="if(event.key==='Enter') BrowserVM.navigate(this.value)" />
+                </div>
+
+                <button class="browser-nav-btn" title="Aller"
+                    onclick="BrowserVM.navigate(document.getElementById('addressBar').value)">&#10148;</button>
+            </div>
+
+            <!-- Webview wrapper — prend toute la place restante -->
+            <div id="browser-body" style="flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0;">
+
+                <!-- Webview Chromium réel -->
+                <webview id="mainWebview" src="https://www.google.com" style="flex:1; width:100%;" allowpopups
+                    useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    partition="persist:browser">
+                </webview>
+
+                <!-- Etat d'erreur (affiché à la place du webview si échec) -->
+                <div class="browser-error" id="browser-error">
+                    <span style="font-size:48px;">🌐</span>
+                    <h3>Impossible de charger cette page</h3>
+                    <p id="browser-error-msg">Vérifiez votre connexion internet ou l'URL saisie.</p>
+                    <button class="primary" onclick="BrowserVM.reload()"
+                        style="padding:8px 20px; margin-top:8px;">Réessayer</button>
+                </div>
+
+            </div>
+
+            <div class="browser-statusbar" id="browser-status">Prêt</div>
+        </div>
+
+        <!-- FENETRE 4 : Bloc-notes -->
+        <div class="os-window" id="win-notepad" style="left: 150px; top: 100px; width: 600px; height: 400px;">
+            <div class="window-header">
+                <h2>Bloc-notes</h2>
+                <div class="window-controls">
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-notepad')"></button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-notepad')"></button>
+                </div>
+            </div>
+            <textarea class="notepad-area" placeholder="Commencez à écrire ici..." spellcheck="false"></textarea>
+        </div>
+
+        <!-- FENETRE 5 : Calculatrice -->
+        <div class="os-window" id="win-calc" style="left: 300px; top: 80px; width: 320px; height: 460px;">
+            <div class="window-header">
+                <h2>Calculatrice</h2>
+                <div class="window-controls">
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-calc')"></button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-calc')"></button>
+                </div>
+            </div>
+            <input type="text" id="calc-display" readonly value="0">
+            <div class="calc-grid">
+                <button class="btn-calc operator" onclick="calcClear()">C</button>
+                <button class="btn-calc operator" onclick="calcInput('/')">/</button>
+                <button class="btn-calc operator" onclick="calcInput('*')">×</button>
+                <button class="btn-calc operator" onclick="calcBackspace()">⌫</button>
+
+                <button class="btn-calc" onclick="calcInput('7')">7</button>
+                <button class="btn-calc" onclick="calcInput('8')">8</button>
+                <button class="btn-calc" onclick="calcInput('9')">9</button>
+                <button class="btn-calc operator" onclick="calcInput('-')">-</button>
+
+                <button class="btn-calc" onclick="calcInput('4')">4</button>
+                <button class="btn-calc" onclick="calcInput('5')">5</button>
+                <button class="btn-calc" onclick="calcInput('6')">6</button>
+                <button class="btn-calc operator" onclick="calcInput('+')">+</button>
+
+                <button class="btn-calc" onclick="calcInput('1')">1</button>
+                <button class="btn-calc" onclick="calcInput('2')">2</button>
+                <button class="btn-calc" onclick="calcInput('3')">3</button>
+                <button class="btn-calc operator" onclick="calcResult()">=</button>
+
+                <button class="btn-calc" style="grid-column: span 2;" onclick="calcInput('0')">0</button>
+                <button class="btn-calc" onclick="calcInput('.')">.</button>
+            </div>
+        </div>
+
+
+    </div>
+
+    <!-- Taskbar (Barre des tâches) -->
+    <div class="os-taskbar">
+        <div class="taskbar-left" style="width: 150px; display: flex; align-items: center; padding-left: 8px;">
+            <button class="secondary"
+                style="font-size: 11px; padding: 6px 12px; color: var(--danger); border-color: rgba(237, 66, 69, 0.3); background: rgba(237, 66, 69, 0.08); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 600;"
+                onclick="async function q(){ if(window.electronAPI) await window.electronAPI.setLocked(false); sessionStorage.clear(); window.location.href='./login.html'; } q()">
+                <span>🔴</span> Quitter
+            </button>
+        </div>
+
+        <div class="taskbar-center">
+            <div class="taskbar-icon start-btn" onclick="UI.toggleLauncher()">💠</div>
+
+            <div class="taskbar-icon" onclick="UI.openWindow('win-pdf')" title="PDF Viewer" id="tb-pdf">📄</div>
+            <div class="taskbar-icon" onclick="UI.openWindow('win-browser')" title="Navigateur" id="tb-browser">🌐</div>
+            <div class="taskbar-icon" onclick="UI.openWindow('win-notepad')" title="Bloc-notes" id="tb-notepad">📝</div>
+            <div class="taskbar-icon" onclick="UI.openWindow('win-calc')" title="Calculatrice" id="tb-calc">🔢</div>
+            <div class="taskbar-icon" onclick="openVSCodeIntegrated()" title="VS Code Intégré" id="tb-vscode">💻</div>
+        </div>
+
+        <div class="taskbar-right">
+            <span>🛜</span>
+            <span id="clockClock">10:45 AM</span>
+        </div>
+    </div>
+
+    <!-- Launcher (Menu Démarrer) -->
+    <div class="os-launcher" id="launcher">
+        <input type="text" class="search-bar" placeholder="Rechercher des fichiers, apps (Ctrl+K)...">
+
+        <p class="small text-secondary" style="margin-bottom: 12px; font-weight: 600;">ÉPINGLÉ</p>
+        <div class="launcher-grid">
+
+            <div class="launcher-app" onclick="UI.toggleLauncher(); UI.openWindow('win-browser')">
+                <span style="font-size: 24px;">🌐</span>
+                <span class="small">Navigateur</span>
+            </div>
+            <div class="launcher-app" onclick="UI.toggleLauncher(); UI.openWindow('win-notepad')">
+                <span style="font-size: 24px;">📝</span>
+                <span class="small">Bloc-notes</span>
+            </div>
+            <div class="launcher-app" onclick="UI.toggleLauncher(); UI.openWindow('win-calc')">
+                <span style="font-size: 24px;">🔢</span>
+                <span class="small">Calculatrice</span>
+            </div>
+            <div class="launcher-app" onclick="UI.toggleLauncher(); AppActions.requestVSCodeLaunch()">
+                <span style="font-size: 24px; color:var(--primary);">💻</span>
+                <span class="small">VS Code</span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modale VS Code Erreur/Lancement -->
+    <div class="modal-overlay" id="vscodeModal">
+        <div class="modal">
+            <h2 id="vsModalTitle" style="margin-bottom: 16px;">Lancement en cours...</h2>
+            <p id="vsModalMessage" class="text-secondary" style="margin-bottom: 24px; line-height: 1.5;">Contact avec le
+                système d'exploitation pour démarrer Visual Studio Code avec votre projet.</p>
+
+            <div style="display:flex; justify-content:flex-end; gap:8px;" id="vsModalActions">
+                <!-- Les actions s'injectent ici dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <script src="./views/ClassroomDesktopView.js"></script>
+    <script src="./views/BrowserView.js"></script>
+    <script>
+        // ── Initialisation du widget de session depuis sessionStorage ─────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            // Données de la session active
+            const code = sessionStorage.getItem('activeSessionCode') || '—';
+            const course = sessionStorage.getItem('sessionCourse') || 'Session en cours';
+            const classe = sessionStorage.getItem('sessionClasse') || '';
+            const duree = sessionStorage.getItem('sessionDuree') || '';
+
+            // Infos du professseur connecté
+            const nom = sessionStorage.getItem('userNom') || sessionStorage.getItem('studentNom') || '';
+            const prenom = sessionStorage.getItem('userPrenom') || sessionStorage.getItem('studentPrenom') || '';
+            const tStart = sessionStorage.getItem('sessionStart') || '';
+            const tEnd = sessionStorage.getItem('sessionEnd') || '';
+
+            // Afficher le cours et la classe
+            let coursLabel = classe ? `${course} — ${classe}` : course;
+            if (tStart !== '' && tStart !== '—' && tEnd !== '' && tEnd !== '—') {
+                coursLabel += ` [${tStart} - ${tEnd}]`;
+            }
+            document.getElementById('widgetCourse').textContent = coursLabel;
+            document.getElementById('widgetCode').textContent = code;
+
+            // Afficher les infos professor / étudiant
+            if (nom || prenom) {
+                const fullName = [prenom, nom].filter(Boolean).join(' ');
+                if (role === 'student') {
+                    document.getElementById('widgetProfInfo').textContent = `Étudiant : ${fullName} | `;
+                } else {
+                    document.getElementById('widgetProfInfo').textContent = `Prof : ${fullName} | `;
+                }
+            }
+
+            // ── Timer de décompte ─────────────────────────────────────────────
+            // Calcul de la durée totale en secondes
+            let totalSeconds = 0;
+            if (duree) {
+                // Peut être "2h", "1h30", "90 min", "90" (number string), "1h30min"
+                const mH = duree.match(/(\d+)\s*h/);
+                const mM = duree.match(/(\d+)\s*min/);
+                const mN = !mH && !mM ? duree.match(/^(\d+)$/) : null;
+                const hours = mH ? parseInt(mH[1]) : 0;
+                const minutes = mM ? parseInt(mM[1]) : (mN ? parseInt(mN[1]) : 0);
+                totalSeconds = (hours * 3600) + (minutes * 60);
+            }
+
+            // Si pas de durée : afficher juste un chrono qui monte
+            const sessionStart = Date.now();
+            const timerEl = document.getElementById('widgetTimer');
+
+            const pad = n => String(n).padStart(2, '0');
+            const tick = () => {
+                const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+                if (totalSeconds > 0) {
+                    // Décompte
+                    const remaining = Math.max(0, totalSeconds - elapsed);
+                    const h = Math.floor(remaining / 3600);
+                    const m = Math.floor((remaining % 3600) / 60);
+                    const s = remaining % 60;
+                    timerEl.textContent = `⏱️ ${pad(h)}:${pad(m)}:${pad(s)}`;
+                    if (remaining === 0) {
+                        timerEl.style.color = 'var(--danger)';
+                        timerEl.textContent = '⏱️ Temps écoulé';
+                        clearInterval(timerInterval);
+                    }
+                } else {
+                    // Chrono montant
+                    const h = Math.floor(elapsed / 3600);
+                    const m = Math.floor((elapsed % 3600) / 60);
+                    const s = elapsed % 60;
+                    timerEl.textContent = `⏱️ ${pad(h)}:${pad(m)}:${pad(s)}`;
+                }
+            };
+            tick();
+            const timerInterval = setInterval(tick, 1000);
+        });
+
+        /**
+         * Ouvre la page VS Code intégrée en passant optionnellement
+         * un workspacePath via sessionStorage.
+         * @param {string} [projectName] - Nom du projet (affiché) ou chemin complet
+         */
+        function openVSCodeIntegrated(projectName) {
+            if (projectName) {
+                sessionStorage.setItem('vscodeWorkspace', projectName);
+            } else {
+                sessionStorage.removeItem('vscodeWorkspace');
+            }
+            window.location.href = './vscode.html';
+        }
+
+        // ── Logique Calculatrice ──
+        let calcExpr = "";
+        function calcInput(val) {
+            const display = document.getElementById('calc-display');
+            if (calcExpr === "0" && val !== ".") calcExpr = "";
+            calcExpr += val;
+            display.value = calcExpr || "0";
+        }
+        function calcClear() {
+            calcExpr = "";
+            document.getElementById('calc-display').value = "0";
+        }
+        function calcBackspace() {
+            calcExpr = calcExpr.slice(0, -1);
+            document.getElementById('calc-display').value = calcExpr || "0";
+        }
+        function calcResult() {
+            try {
+                // Utilisation de Function('return ...') car eval() est déconseillé
+                // (Ici limité à un contexte simple de calculatrice)
+                const result = new Function('return ' + calcExpr)();
+                calcExpr = String(result);
+                document.getElementById('calc-display').value = calcExpr;
+            } catch (e) {
+                document.getElementById('calc-display').value = "Erreur";
+                calcExpr = "";
+            }
+        }
+    </script>
+</body>
+
+</html>

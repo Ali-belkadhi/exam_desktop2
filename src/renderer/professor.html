@@ -1,0 +1,1733 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Espace Professeur</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: #0a0a0f;
+            background-image:
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(88, 101, 242, .22) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 60% at 80% 100%, rgba(0, 212, 255, .10) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 50% at 10% 80%, rgba(147, 51, 234, .12) 0%, transparent 60%);
+            display: flex;
+            flex-direction: column;
+            -webkit-app-region: drag;
+        }
+
+        /* Orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            pointer-events: none;
+            animation: floatOrb 9s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 440px;
+            height: 440px;
+            background: rgba(88, 101, 242, .22);
+            top: -130px;
+            left: -90px;
+        }
+
+        .orb-2 {
+            width: 320px;
+            height: 320px;
+            background: rgba(0, 212, 255, .13);
+            bottom: -70px;
+            right: 6%;
+            animation-delay: -4s;
+        }
+
+        .orb-3 {
+            width: 220px;
+            height: 220px;
+            background: rgba(147, 51, 234, .16);
+            top: 40%;
+            right: 2%;
+            animation-delay: -7s;
+        }
+
+        @keyframes floatOrb {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1)
+            }
+
+            50% {
+                transform: translateY(-28px) scale(1.04)
+            }
+        }
+
+        /* Top Bar */
+        .topbar {
+            height: 52px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, .06);
+            background: rgba(10, 10, 15, .7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            position: relative;
+            z-index: 20;
+            -webkit-app-region: drag;
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            -webkit-app-region: no-drag;
+        }
+
+        .topbar-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #5865f2, #00d4ff);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .topbar-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            -webkit-app-region: no-drag;
+        }
+
+        .role-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(88, 101, 242, .2);
+            border: 1px solid rgba(88, 101, 242, .4);
+            font-size: 12px;
+            font-weight: 600;
+            color: #7289da;
+            letter-spacing: .04em;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #5865f2, #7289da);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, .4);
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: all .15s;
+        }
+
+        .logout-btn:hover {
+            color: #ed4245;
+            background: rgba(237, 66, 69, .08);
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
+            position: relative;
+            z-index: 10;
+            -webkit-app-region: no-drag;
+        }
+
+        .main::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .main::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .1);
+            border-radius: 3px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        /* Welcome */
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeUp .5s ease both;
+        }
+
+        .welcome-emoji {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .welcome-title {
+            font-size: clamp(24px, 3vw, 34px);
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, .55) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            letter-spacing: -.5px;
+        }
+
+        .welcome-sub {
+            font-size: 15px;
+            color: rgba(255, 255, 255, .4);
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+            animation: fadeUp .5s ease .1s both;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .07);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            text-align: center;
+            transition: border-color .2s, transform .2s;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(88, 101, 242, .4);
+            transform: translateY(-2px);
+        }
+
+        .stat-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, .4);
+            font-weight: 500;
+        }
+
+        .stat-card.online .stat-value {
+            color: #23d160;
+        }
+
+        .stat-card.online .stat-icon::after {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #23d160;
+            margin-left: 6px;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(35, 209, 96, .4)
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(35, 209, 96, 0)
+            }
+        }
+
+        /* Actions */
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            animation: fadeUp .5s ease .2s both;
+        }
+
+        .action-card {
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .07);
+            border-radius: 16px;
+            padding: 28px 24px;
+            backdrop-filter: blur(20px);
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transition: opacity .2s;
+            background: linear-gradient(135deg, rgba(88, 101, 242, .1), transparent);
+        }
+
+        .action-card:hover {
+            border-color: rgba(88, 101, 242, .5);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, .3);
+        }
+
+        .action-card:hover::before {
+            opacity: 1;
+        }
+
+        .action-card:active {
+            transform: scale(.98);
+        }
+
+        .action-card.primary-card {
+            background: linear-gradient(135deg, rgba(88, 101, 242, .2), rgba(88, 101, 242, .05));
+            border-color: rgba(88, 101, 242, .3);
+        }
+
+        .action-card.primary-card:hover {
+            border-color: rgba(88, 101, 242, .6);
+            box-shadow: 0 12px 40px rgba(88, 101, 242, .25);
+        }
+
+        .action-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            background: rgba(88, 101, 242, .2);
+            border: 1px solid rgba(88, 101, 242, .3);
+        }
+
+        .action-card:nth-child(2) .action-icon {
+            background: rgba(0, 212, 255, .15);
+            border-color: rgba(0, 212, 255, .3);
+        }
+
+        .action-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .action-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, .45);
+            line-height: 1.5;
+        }
+
+        .action-arrow {
+            margin-top: auto;
+            font-size: 18px;
+            color: rgba(88, 101, 242, .7);
+        }
+
+        /* Sessions card */
+        .sessions-card {
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .07);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 16px;
+            animation: fadeUp .5s ease .3s both;
+            display: none;
+        }
+
+        .sessions-card.visible {
+            display: block;
+        }
+
+        .sessions-card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+
+        .session-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .05);
+        }
+
+        .session-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .session-code {
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: #5865f2;
+            letter-spacing: 2px;
+        }
+
+        .session-meta {
+            font-size: 12px;
+            color: rgba(255, 255, 255, .4);
+            margin-top: 2px;
+        }
+
+        .session-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .session-badge.active {
+            background: rgba(35, 209, 96, .15);
+            color: #23d160;
+            border: 1px solid rgba(35, 209, 96, .3);
+        }
+
+        .session-badge.closed {
+            background: rgba(255, 255, 255, .08);
+            color: rgba(255, 255, 255, .4);
+            border: 1px solid rgba(255, 255, 255, .1);
+        }
+
+        /* ══ MODAL ══ */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, .6);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #1a1b1e;
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 20px;
+            padding: 32px 36px;
+            width: 540px;
+            max-height: 90vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, .5);
+            animation: fadeUp .3s ease both;
+        }
+
+        .modal-box h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .modal-box>p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, .4);
+            margin-bottom: 20px;
+        }
+
+        .modal-field {
+            margin-bottom: 18px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: rgba(255, 255, 255, .5);
+            margin-bottom: 8px;
+        }
+
+        .modal-field input,
+        .modal-field select {
+            width: 100%;
+            height: 42px;
+            padding: 0 14px;
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        .modal-field select option {
+            background: #1a1b1e;
+        }
+
+        .modal-field input:focus,
+        .modal-field select:focus {
+            border-color: rgba(88, 101, 242, .7);
+            box-shadow: 0 0 0 3px rgba(88, 101, 242, .15);
+        }
+
+        .modal-divider {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, .07);
+            margin: 20px 0;
+        }
+
+        .modal-section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: rgba(255, 255, 255, .4);
+            margin-bottom: 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, .07);
+        }
+
+        /* Mode tabs */
+        .mode-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 22px;
+        }
+
+        .mode-tab {
+            padding: 12px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255, 255, 255, .1);
+            background: rgba(255, 255, 255, .04);
+            cursor: pointer;
+            text-align: center;
+            transition: all .2s;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, .5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mode-tab .mtab-icon {
+            font-size: 22px;
+        }
+
+        .mode-tab:hover {
+            border-color: rgba(88, 101, 242, .4);
+            color: rgba(255, 255, 255, .8);
+        }
+
+        .mode-tab.active {
+            border-color: #5865f2;
+            background: rgba(88, 101, 242, .15);
+            color: #fff;
+        }
+
+        /* Exam list */
+        .exam-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 240px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            padding-right: 4px;
+            margin-bottom: 4px;
+        }
+
+        .exam-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .exam-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, .15);
+            border-radius: 3px;
+        }
+
+        .exam-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1.5px solid rgba(255, 255, 255, .07);
+            background: rgba(255, 255, 255, .03);
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .exam-card:hover {
+            border-color: rgba(88, 101, 242, .45);
+            background: rgba(88, 101, 242, .08);
+        }
+
+        .exam-card.selected {
+            border-color: #5865f2;
+            background: rgba(88, 101, 242, .15);
+        }
+
+        .exam-card-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(88, 101, 242, .2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .exam-card-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .exam-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .exam-card-meta {
+            font-size: 11px;
+            color: rgba(255, 255, 255, .4);
+            margin-top: 2px;
+        }
+
+        .exam-card-radio {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, .2);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .15s;
+        }
+
+        .exam-card.selected .exam-card-radio {
+            border-color: #5865f2;
+            background: #5865f2;
+        }
+
+        .exam-card.selected .exam-card-radio::after {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #fff;
+        }
+
+        /* Spinner */
+        .exam-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 24px;
+            color: rgba(255, 255, 255, .4);
+            font-size: 13px;
+        }
+
+        .spin-ring {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(255, 255, 255, .1);
+            border-top-color: #5865f2;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* Autofill badge */
+        .autofill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .05em;
+            padding: 2px 7px;
+            border-radius: 5px;
+            background: rgba(35, 209, 96, .15);
+            color: #23d160;
+            border: 1px solid rgba(35, 209, 96, .3);
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        /* IDE chips */
+        .ide-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .ide-chip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, .1);
+            background: rgba(255, 255, 255, .04);
+            cursor: pointer;
+            transition: all .15s;
+            user-select: none;
+        }
+
+        .ide-chip:hover {
+            border-color: rgba(88, 101, 242, .4);
+            background: rgba(88, 101, 242, .08);
+        }
+
+        .ide-chip.selected {
+            border-color: rgba(88, 101, 242, .6);
+            background: rgba(88, 101, 242, .15);
+        }
+
+        .ide-chip input[type=checkbox] {
+            display: none;
+        }
+
+        .ide-chip-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 5px;
+            flex-shrink: 0;
+            border: 1.5px solid rgba(255, 255, 255, .2);
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #5865f2;
+            transition: all .15s;
+        }
+
+        .ide-chip.selected .ide-chip-check {
+            background: #5865f2;
+            border-color: #5865f2;
+            color: #fff;
+        }
+
+        .ide-chip-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, .85);
+        }
+
+        .ide-chip-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* File drop */
+        .file-drop-zone {
+            border: 1.5px dashed rgba(255, 255, 255, .15);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+        }
+
+        .file-drop-zone:hover {
+            border-color: rgba(88, 101, 242, .5);
+            background: rgba(88, 101, 242, .05);
+        }
+
+        .file-drop-zone p {
+            font-size: 13px;
+            color: rgba(255, 255, 255, .35);
+            margin-top: 6px;
+        }
+
+        .file-drop-zone span {
+            font-size: 24px;
+        }
+
+        .url-input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .url-input-group input {
+            flex: 1;
+            height: 36px;
+            padding: 0 12px;
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            outline: none;
+            transition: border-color .2s;
+        }
+
+        .url-input-group input:focus {
+            border-color: rgba(88, 101, 242, .5);
+        }
+
+        .btn-add-url {
+            height: 36px;
+            padding: 0 12px;
+            background: rgba(88, 101, 242, .2);
+            border: 1px solid rgba(88, 101, 242, .3);
+            border-radius: 8px;
+            color: #5865f2;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .btn-add-url:hover {
+            background: rgba(88, 101, 242, .3);
+            color: #fff;
+        }
+
+        .url-list {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .file-list {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, .05);
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        .file-item-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-item-name {
+            font-size: 13px;
+            color: rgba(255, 255, 255, .8);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+        }
+
+        .file-item-size {
+            font-size: 11px;
+            color: rgba(255, 255, 255, .35);
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, .3);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 4px;
+        }
+
+        .file-remove:hover {
+            color: #ed4245;
+        }
+
+        /* Generated code */
+        .generated-code {
+            font-family: monospace;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 6px;
+            color: #5865f2;
+            text-align: center;
+            background: rgba(88, 101, 242, .1);
+            border: 1px dashed rgba(88, 101, 242, .4);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        /* Buttons */
+        .btn {
+            height: 40px;
+            padding: 0 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            transition: all .15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: rgba(255, 255, 255, .5);
+            border: 1px solid rgba(255, 255, 255, .1);
+        }
+
+        .btn-ghost:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, .25);
+        }
+
+        .btn-indigo {
+            background: linear-gradient(135deg, #5865f2, #7289da);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(88, 101, 242, .3);
+        }
+
+        .btn-indigo:hover {
+            filter: brightness(1.1);
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #23d160, #1fa847);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(35, 209, 96, .3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Top Bar -->
+    <div class="topbar">
+        <div class="topbar-brand"></div>
+        <div class="topbar-right">
+            <span class="role-badge">Professeur</span>
+            <div class="user-avatar" id="avatarEl">P</div>
+            <button class="logout-btn" onclick="window.location.href='./login.html'">← Déconnexion</button>
+        </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+        <div class="container">
+
+            <div class="welcome-section">
+                <span class="welcome-emoji">👨‍🏫</span>
+                <h1 class="welcome-title" id="welcomeTitle">Bienvenue Professeur</h1>
+                <p class="welcome-sub">Gérez vos sessions de cours depuis votre espace dédié.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card online">
+                    <span class="stat-icon">🟢</span>
+                    <div class="stat-value">En ligne</div>
+                    <div class="stat-label">État de connexion</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">📚</span>
+                    <div class="stat-value" id="stat-count">3</div>
+                    <div class="stat-label">Sessions créées</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-icon">🕐</span>
+                    <div class="stat-value" id="stat-last" style="font-size:16px;padding-top:4px;">Aujourd'hui</div>
+                    <div class="stat-label">Dernière session</div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <div class="action-card primary-card" onclick="ProfVM.openCreateModal()">
+                    <div class="action-icon">➕</div>
+                    <div>
+                        <div class="action-title">Créer une session</div>
+                        <div class="action-desc">Générez un code à 6 chiffres et lancez un nouveau cours en direct.
+                        </div>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </div>
+                <div class="action-card" onclick="ProfVM.toggleSessions()">
+                    <div class="action-icon">📋</div>
+                    <div>
+                        <div class="action-title">Voir mes sessions</div>
+                        <div class="action-desc">Consultez l'historique et l'état de toutes vos sessions passées.</div>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </div>
+            </div>
+
+            <div class="sessions-card" id="sessionsCard">
+                <h3>📋 Mes sessions récentes</h3>
+                <div id="sessionsList"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══ MODAL NOUVELLE SESSION ══ -->
+    <div class="modal-overlay" id="createModal">
+        <div class="modal-box">
+            <h2>✨ Nouvelle session</h2>
+            <p>Choisissez un examen existant ou créez-en un nouveau.</p>
+
+            <!-- Sélecteur de mode -->
+            <div class="mode-tabs">
+                <div class="mode-tab active" id="modeExistant" onclick="ProfVM.setMode('existant')">
+                    <span class="mtab-icon">📋</span>
+                    Examen existant
+                    <small style="font-weight:400;font-size:11px;color:rgba(255,255,255,0.4)">depuis la base de
+                        données</small>
+                </div>
+                <div class="mode-tab" id="modeNouveau" onclick="ProfVM.setMode('nouveau')">
+                    <span class="mtab-icon">➕</span>
+                    Nouveau examen
+                    <small style="font-weight:400;font-size:11px;color:rgba(255,255,255,0.4)">saisie manuelle</small>
+                </div>
+            </div>
+
+            <!-- ── ZONE EXAMEN EXISTANT ── -->
+            <div id="zoneExistant">
+                <div class="modal-section-title">📚 Sélectionner un examen</div>
+                <div style="position:relative;margin-bottom:10px;">
+                    <input type="text" id="examSearch" placeholder="Rechercher un examen..."
+                        style="width:100%;height:36px;padding:0 12px 0 34px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;outline:none;font-family:'Inter',sans-serif;"
+                        oninput="ProfVM.filterExams(this.value)" />
+                    <span
+                        style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.3);font-size:14px;">🔍</span>
+                </div>
+                <div class="exam-list" id="examList">
+                    <div class="exam-loading">
+                        <div class="spin-ring"></div>
+                        Chargement des examens depuis la base...
+                    </div>
+                </div>
+                <hr class="modal-divider" />
+                <!-- Détails auto-remplis -->
+                <div id="autoFilledFields" style="display:none;">
+                    <div class="modal-section-title">📝 Détails de l'examen sélectionné<span class="autofill-badge">✦
+                            AUTO</span></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="modal-field">
+                            <label>Matière / Devoir</label>
+                            <input type="text" id="af_matiere" readonly
+                                style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
+                        </div>
+                        <div class="modal-field">
+                            <label>Classe</label>
+                            <input type="text" id="af_classe" readonly
+                                style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="modal-field">
+                            <label>Date de l'examen</label>
+                            <input type="text" id="af_date" readonly
+                                style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
+                        </div>
+                        <div class="modal-field">
+                            <label>Durée</label>
+                            <input type="text" id="af_duree" readonly
+                                style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+                        <div class="modal-field">
+                            <label>Heure de début</label>
+                            <input type="time" id="af_start" />
+                        </div>
+                        <div class="modal-field">
+                            <label>Heure de fin</label>
+                            <input type="time" id="af_end" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── ZONE NOUVEAU EXAMEN ── -->
+            <div id="zoneNouveau" style="display:none;">
+                <div class="modal-section-title">📋 Informations de l'examen</div>
+                <div class="modal-field">
+                    <label>Matière / Devoir *</label>
+                    <input type="text" id="n_matiere" placeholder="ex: Architecture POO – Devoir 1" />
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="modal-field">
+                        <label>Date *</label>
+                        <input type="date" id="n_date" />
+                    </div>
+                    <div class="modal-field">
+                        <label>Durée *</label>
+                        <select id="n_duree">
+                            <option value="30min">30 minutes</option>
+                            <option value="1h">1 heure</option>
+                            <option value="1h30" selected>1h30</option>
+                            <option value="2h">2 heures</option>
+                            <option value="2h30">2h30</option>
+                            <option value="3h">3 heures</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="modal-field">
+                        <label>Heure de début *</label>
+                        <input type="time" id="n_start" />
+                    </div>
+                    <div class="modal-field">
+                        <label>Heure de fin *</label>
+                        <input type="time" id="n_end" />
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="modal-field">
+                        <label>Classe *</label>
+                        <select id="n_classe">
+                            <option value="">— Sélectionner —</option>
+                            <option>4SIM1</option>
+                            <option>4SIM2</option>
+                            <option>4SIM3</option>
+                            <option>4SIM4</option>
+                            <option>3INFO1</option>
+                            <option>3INFO2</option>
+                            <option>2GL1</option>
+                            <option>2GL2</option>
+                        </select>
+                    </div>
+                    <div class="modal-field">
+                        <label>Niveau</label>
+                        <select id="n_niveau">
+                            <option>L1</option>
+                            <option>L2</option>
+                            <option>L3</option>
+                            <option>M1</option>
+                            <option>M2</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-field">
+                    <label>Description / Consignes</label>
+                    <textarea id="n_desc" rows="3" placeholder="Instructions pour les étudiants..."
+                        style="width:100%;padding:10px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:vertical;line-height:1.5;transition:border-color .2s;"
+                        onfocus="this.style.borderColor='rgba(88,101,242,.7)'"
+                        onblur="this.style.borderColor='rgba(255,255,255,.1)'"></textarea>
+                </div>
+            </div>
+
+            <!-- ── SECTION COMMUNE ── -->
+            <hr class="modal-divider" />
+
+            <div class="modal-section-title">💻 IDEs autorisés</div>
+            <div class="ide-grid" id="ideGrid">
+                <label class="ide-chip selected" onclick="ProfVM.toggleIde(this)">
+                    <input type="checkbox" value="vscode" checked />
+                    <span class="ide-chip-check">✓</span>
+                    <span class="ide-chip-icon">💙</span>
+                    <span class="ide-chip-label">VS Code</span>
+                </label>
+                <label class="ide-chip" onclick="ProfVM.toggleIde(this)">
+                    <input type="checkbox" value="intellij" />
+                    <span class="ide-chip-check"></span>
+                    <span class="ide-chip-icon">🟠</span>
+                    <span class="ide-chip-label">IntelliJ IDEA</span>
+                </label>
+            </div>
+
+            <hr class="modal-divider" />
+
+            <div class="modal-section-title">🔗 Liens URL (Ressources externes)</div>
+            <div class="url-input-group">
+                <input type="text" id="urlInput" placeholder="Entrez une URL (ex: https://docs.oracle.com)" />
+                <button class="btn-add-url" onclick="ProfVM.addUrl()">+</button>
+            </div>
+            <div id="urlList" class="url-list"></div>
+
+            <hr class="modal-divider" />
+
+            <div class="modal-section-title">📎 Fichiers partagés</div>
+            <div class="file-drop-zone" onclick="document.getElementById('fileInput').click()">
+                <span>📂</span>
+                <p>Cliquez pour ajouter des fichiers<br />
+                    <small style="color:rgba(255,255,255,.2)">PDF, Word (.docx), Excel (.xlsx), Images</small>
+                </p>
+                <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                    style="display:none" onchange="ProfVM.handleFiles(this.files)" />
+            </div>
+            <div class="file-list" id="fileList"></div>
+
+            <hr class="modal-divider" />
+
+            <div class="generated-code" id="generatedCode"></div>
+            <div id="codeSummary"
+                style="display:none;font-size:12px;color:rgba(255,255,255,.45);text-align:center;margin-bottom:12px;">
+            </div>
+
+            <div id="modalError"
+                style="display:none;color:#ed4245;font-size:13px;background:rgba(237,66,69,.1);border:1px solid rgba(237,66,69,.25);border-radius:8px;padding:10px 14px;margin-bottom:12px;">
+            </div>
+
+            <div class="modal-actions" id="modalActions">
+                <button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Annuler</button>
+                <button class="btn btn-indigo" onclick="ProfVM.generateCode()">🎲 Générer le code session</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://save-exam-db.onrender.com';
+        const SERVICE_EMAIL = 'jean.dupont@university.edu';
+        const SERVICE_PASSWORD = 'SecureP@ss123';
+
+        // ── Helpers de décodage des champs populés par MongoDB ──────────────
+        /**
+         * Résout un champ qui peut être :
+         *   - un objet populé  { _id, nom, code, ... }
+         *   - une string ObjectId brute
+         *   - une valeur primitive normale
+         * Retourne la valeur lisible (string) ou le fallback.
+         */
+        function _resolveStr(field, ...keys) {
+            if (field === null || field === undefined) return null;
+            if (typeof field === 'object' && !Array.isArray(field)) {
+                for (const k of keys) {
+                    if (field[k] !== undefined && field[k] !== null) return String(field[k]);
+                }
+                return null;
+            }
+            return String(field);
+        }
+
+        /**
+         * Formate une durée :
+         *   - Si c'est un number (minutes venant du backend) → "2h", "1h30", "45 min"
+         *   - Si c'est déjà une string → retourne telle quelle
+         */
+        function _formatDuree(duree) {
+            if (duree === null || duree === undefined || duree === '') return '—';
+            const n = Number(duree);
+            if (!isNaN(n) && n > 0) {
+                const h = Math.floor(n / 60);
+                const m = n % 60;
+                if (h === 0) return `${m} min`;
+                return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+            }
+            return String(duree); // déjà formatée (ex: "1h30" en mode démo)
+        }
+
+        const ProfData = {
+            sessions: [
+                { code: 'A4F-9X1', course: 'Architecture POO – L3', date: 'Aujourd\'hui, 10:00', status: 'active' },
+                { code: '7K2-M3R', course: 'Algorithmique – L2', date: 'Hier, 14:30', status: 'closed' },
+                { code: 'B9T-1LZ', course: 'Base de données – M1', date: '20/02/2026, 09:15', status: 'closed' },
+            ],
+            allExams: [],
+            filteredExams: [],
+        };
+
+        const ProfVM = {
+            sessionsOpen: false,
+            sharedFiles: [],
+            sharedUrls: [],
+            mode: 'existant',
+            selectedExam: null,
+
+            init() {
+                const nom = sessionStorage.getItem('userNom') || sessionStorage.getItem('username') || 'Professeur';
+                const prenom = sessionStorage.getItem('userPrenom') || '';
+                const full = prenom ? `${prenom} ${nom}` : nom;
+                const init = full.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'P';
+                document.getElementById('avatarEl').textContent = init;
+                document.getElementById('welcomeTitle').textContent = `Bienvenue, ${full} 👋`;
+                document.getElementById('stat-count').textContent = ProfData.sessions.length;
+                this.renderSessions();
+            },
+
+            renderSessions() {
+                document.getElementById('sessionsList').innerHTML = ProfData.sessions.map(s => `
+                <div class="session-row">
+                    <div>
+                        <div class="session-code">${s.code}</div>
+                        <div class="session-meta">${s.course} · ${s.date}</div>
+                    </div>
+                    <span class="session-badge ${s.status}">${s.status === 'active' ? '🟢 Active' : '⚫ Terminée'}</span>
+                </div>`).join('');
+            },
+
+            toggleSessions() {
+                this.sessionsOpen = !this.sessionsOpen;
+                document.getElementById('sessionsCard').classList.toggle('visible', this.sessionsOpen);
+                if (this.sessionsOpen) document.getElementById('sessionsCard').scrollIntoView({ behavior: 'smooth' });
+            },
+
+            openCreateModal() {
+                this.sharedFiles = [];
+                this.sharedUrls = [];
+                this.selectedExam = null;
+                const gc = document.getElementById('generatedCode');
+                gc.style.display = 'none'; gc.textContent = '';
+                document.getElementById('codeSummary').style.display = 'none';
+                document.getElementById('fileList').innerHTML = '';
+                document.getElementById('urlList').innerHTML = '';
+                document.getElementById('fileInput').value = '';
+                document.getElementById('urlInput').value = '';
+                document.getElementById('modalError').style.display = 'none';
+                document.getElementById('autoFilledFields').style.display = 'none';
+                document.getElementById('examSearch').value = '';
+                document.getElementById('modalActions').innerHTML = `
+                <button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Annuler</button>
+                <button class="btn btn-indigo" onclick="ProfVM.generateCode()">🎲 Générer le code session</button>`;
+                document.querySelectorAll('.ide-chip').forEach(chip => {
+                    const cb = chip.querySelector('input');
+                    const chk = chip.querySelector('.ide-chip-check');
+                    if (cb.value === 'vscode') { cb.checked = true; chip.classList.add('selected'); chk.textContent = '✓'; }
+                    else { cb.checked = false; chip.classList.remove('selected'); chk.textContent = ''; }
+                });
+                this.setMode('existant');
+                document.getElementById('createModal').classList.add('open');
+                this.fetchExams();
+            },
+
+            closeCreateModal() {
+                document.getElementById('createModal').classList.remove('open');
+            },
+
+            setMode(mode) {
+                this.mode = mode;
+                document.getElementById('modeExistant').classList.toggle('active', mode === 'existant');
+                document.getElementById('modeNouveau').classList.toggle('active', mode === 'nouveau');
+                document.getElementById('zoneExistant').style.display = mode === 'existant' ? 'block' : 'none';
+                document.getElementById('zoneNouveau').style.display = mode === 'nouveau' ? 'block' : 'none';
+                if (mode === 'nouveau') {
+                    document.getElementById('n_date').value = new Date().toISOString().split('T')[0];
+                }
+            },
+
+            async fetchExams() {
+                document.getElementById('examList').innerHTML = `
+                <div class="exam-loading">
+                    <div class="spin-ring"></div>Connexion au serveur...
+                </div>`;
+                try {
+                    // ── Étape 0 : Vérifier si l'API est joignable (évite cold start silencieux)
+                    const pingCtrl = new AbortController();
+                    const pingTimer = setTimeout(() => pingCtrl.abort(), 6000);
+                    let pingOk = false;
+                    try {
+                        const ping = await fetch(`${API_BASE}/auth/config-test`, { signal: pingCtrl.signal });
+                        pingOk = ping.ok;
+                    } catch (_) { /* timeout ou réseau indispo */ }
+                    clearTimeout(pingTimer);
+                    if (!pingOk) throw new Error('API injoignable (timeout)');
+
+                    // ── Étape 1 : Obtenir le token service ──────────────────────────────
+                    document.getElementById('examList').innerHTML = `
+                    <div class="exam-loading"><div class="spin-ring"></div>Authentification...</div>`;
+
+                    const tr = await fetch(`${API_BASE}/auth/login`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: SERVICE_EMAIL, password: SERVICE_PASSWORD }),
+                    });
+                    if (!tr.ok) throw new Error(`Auth échouée (${tr.status})`);
+                    const authData = await tr.json();
+                    if (authData.status === 'error') throw new Error('Compte service invalide');
+                    const access_token = authData.access_token;
+                    if (!access_token) throw new Error('Token absent dans la réponse');
+
+                    // ── Étape 2 : Récupérer les examens ─────────────────────────────────
+                    document.getElementById('examList').innerHTML = `
+                    <div class="exam-loading"><div class="spin-ring"></div>Chargement des examens...</div>`;
+
+                    const er = await fetch(`${API_BASE}/exams`, {
+                        headers: { Authorization: `Bearer ${access_token}` }
+                    });
+                    if (!er.ok) throw new Error(`/exams non disponible (${er.status})`);
+                    const raw = await er.json();
+                    const all = Array.isArray(raw) ? raw : (raw.data || raw.items || raw.exams || []);
+                    // ── Garder uniquement les examens PRATIQUES ──────────────────────────
+                    ProfData.allExams = all.filter(e => e.type === 'practical');
+                    if (!ProfData.allExams.length) throw new Error('Aucun examen pratique trouvé');
+                    ProfData.filteredExams = [...ProfData.allExams];
+                    this.renderExamList(ProfData.filteredExams);
+                } catch (e) {
+                    console.warn('[ProfVM] fetchExams:', e.message);
+                    // ── Données de démonstration (type pratique) ─────────────────────────
+                    ProfData.allExams = [
+                        { _id: 'e1', type: 'practical', matiere: 'Architecture POO', classe: '4SIM1', date: '2026-03-10', duree: '2h' },
+                        { _id: 'e2', type: 'practical', matiere: 'Algorithmique', classe: '4SIM2', date: '2026-03-15', duree: '1h30' },
+                        { _id: 'e3', type: 'practical', matiere: 'Bases de données', classe: '4SIM3', date: '2026-03-20', duree: '1h' },
+                        { _id: 'e4', type: 'practical', matiere: 'Développement Web', classe: '3INFO1', date: '2026-03-25', duree: '3h' },
+                        { _id: 'e5', type: 'practical', matiere: 'Réseaux – Final', classe: '4SIM4', date: '2026-04-02', duree: '2h' },
+                    ];
+                    ProfData.filteredExams = [...ProfData.allExams];
+                    this.renderExamList(ProfData.filteredExams, true);
+                }
+            },
+
+            renderExamList(list, isDemo = false) {
+                const el = document.getElementById('examList');
+                if (!list.length) { el.innerHTML = '<div class="exam-loading" style="color:rgba(255,255,255,.3)">Aucun examen trouvé</div>'; return; }
+                const demo = isDemo
+                    ? `<div style="font-size:11px;color:rgba(255,185,0,.7);padding:6px 10px;background:rgba(255,185,0,.07);border-radius:6px;margin-bottom:8px;">⚠ Mode démonstration — API non joignable</div>`
+                    : '';
+                const icons = { poo: '☕', java: '☕', python: '🐍', web: '🌐', data: '🗄', reseau: '🔌', algo: '📊', reseaux: '🔌' };
+
+                // Stocker dans un Map keyed par _id ─ on passe UNIQUEMENT l'id dans onclick
+                // (injecter du JSON dans un attribut HTML plante avec les objets MongoDB)
+                ProfData._examMap = {};
+                list.forEach(e => { ProfData._examMap[String(e._id)] = e; });
+
+                el.innerHTML = demo + list.map(e => {
+                    const title = _resolveStr(e.matiere, 'nom', 'code', 'name')
+                        || _resolveStr(e.title) || _resolveStr(e.nom) || '—';
+                    // Classe : masquer si c'est un ObjectId brut (24 hex chars)
+                    const classeRaw = _resolveStr(e.classe, 'nom', 'name')
+                        || _resolveStr(e.class) || _resolveStr(e.group) || '';
+                    const classe = /^[0-9a-f]{24}$/i.test(classeRaw) ? '' : classeRaw;
+                    const dateRaw = e.date || e.examDate || e.scheduledAt || '';
+                    const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString('fr-FR') : '—';
+                    const duree = _formatDuree(e.duree ?? e.durationMinutes ?? e.duration);
+                    // Icône 💻 pour examens pratiques
+                    const icon = '💻';
+                    const sid = String(e._id);
+                    // Meta : filtre les éléments vides
+                    const meta = [classe, dateStr, duree].filter(Boolean).join(' · ');
+                    return `
+                <div class="exam-card" id="exam-${sid}" data-exam-id="${sid}" onclick="ProfVM.selectExamById('${sid}')">
+                    <div class="exam-card-icon">${icon}</div>
+                    <div class="exam-card-body">
+                        <div class="exam-card-title">${title}</div>
+                        <div class="exam-card-meta">${meta}</div>
+                    </div>
+                    <div class="exam-card-radio"></div>
+                </div>`;
+                }).join('');
+            },
+
+            /** Appelé par onclick — cherche l'examen dans _examMap par son _id */
+            selectExamById(id) {
+                const exam = ProfData._examMap && ProfData._examMap[id];
+                if (!exam) { console.warn('[ProfVM] selectExamById: id inconnu =', id); return; }
+                this._applyExamSelection(exam);
+            },
+
+            /** Conservé pour compatibilité */
+            selectExam(examOrJson) {
+                const exam = (typeof examOrJson === 'string') ? JSON.parse(examOrJson) : examOrJson;
+                this._applyExamSelection(exam);
+            },
+
+            _applyExamSelection(exam) {
+                this.selectedExam = exam;
+                document.querySelectorAll('.exam-card').forEach(c => c.classList.remove('selected'));
+                const card = document.getElementById(`exam-${exam._id}`);
+                if (card) card.classList.add('selected');
+
+                const matiereStr = _resolveStr(exam.matiere, 'nom', 'code', 'name')
+                    || _resolveStr(exam.subject) || _resolveStr(exam.title) || '—';
+                const classeStr = _resolveStr(exam.classe, 'nom', 'name')
+                    || _resolveStr(exam.class) || _resolveStr(exam.group) || '—';
+                const dateRaw = exam.date || exam.examDate || exam.scheduledAt || '';
+                const dateStr = dateRaw
+                    ? new Date(dateRaw).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+                    : '—';
+                const dureeStr = _formatDuree(exam.duree ?? exam.durationMinutes ?? exam.duration);
+
+                document.getElementById('af_matiere').value = matiereStr;
+                document.getElementById('af_classe').value = classeStr;
+                document.getElementById('af_date').value = dateStr;
+                document.getElementById('af_duree').value = dureeStr;
+
+                // Par défaut : heure actuelle pour le début
+                const now = new Date();
+                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                document.getElementById('af_start').value = timeStr;
+                document.getElementById('af_end').value = ""; // À remplir par le prof
+
+                document.getElementById('autoFilledFields').style.display = 'block';
+                document.getElementById('autoFilledFields').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            },
+
+            filterExams(q) {
+                q = q.toLowerCase().trim();
+                ProfData.filteredExams = q
+                    ? ProfData.allExams.filter(e => {
+                        // Résoudre matiere et classe même si populés
+                        const m = (_resolveStr(e.matiere, 'nom', 'code') || _resolveStr(e.title) || '').toLowerCase();
+                        const c = (_resolveStr(e.classe, 'nom') || _resolveStr(e.class) || '').toLowerCase();
+                        return m.includes(q) || c.includes(q);
+                    })
+                    : [...ProfData.allExams];
+                this.renderExamList(ProfData.filteredExams);
+            },
+
+            validate() {
+                const err = document.getElementById('modalError');
+                err.style.display = 'none';
+                if (this.mode === 'existant' && !this.selectedExam) {
+                    err.textContent = '⚠ Veuillez sélectionner un examen dans la liste.';
+                    err.style.display = 'block'; return false;
+                }
+                if (this.mode === 'nouveau') {
+                    if (!document.getElementById('n_matiere').value.trim()) {
+                        err.textContent = '⚠ Veuillez saisir la matière / le devoir.';
+                        err.style.display = 'block'; return false;
+                    }
+                    if (!document.getElementById('n_classe').value) {
+                        err.textContent = '⚠ Veuillez sélectionner une classe.';
+                        err.style.display = 'block'; return false;
+                    }
+                }
+                return true;
+            },
+
+            generateCode() {
+                if (!this.validate()) return;
+                // Code entièrement numérique sur 6 chiffres (ex: 482951)
+                const code = String(Math.floor(100000 + Math.random() * 900000));
+
+                let courseLabel, classeLabel, dateLabel, dureeLabel, startLabel, endLabel;
+                if (this.mode === 'existant') {
+                    const e = this.selectedExam;
+                    // ── Résoudre les champs populés ─────────────────────────────
+                    courseLabel = _resolveStr(e.matiere, 'nom', 'code', 'name')
+                        || _resolveStr(e.subject) || _resolveStr(e.title) || 'Examen';
+                    classeLabel = _resolveStr(e.classe, 'nom', 'name')
+                        || _resolveStr(e.class) || '—';
+                    const dr = e.date || e.examDate || e.scheduledAt;
+                    dateLabel = dr ? new Date(dr).toLocaleDateString('fr-FR') : '—';
+                    dureeLabel = _formatDuree(e.duree ?? e.durationMinutes ?? e.duration);
+                    startLabel = document.getElementById('af_start').value || '—';
+                    endLabel = document.getElementById('af_end').value || '—';
+                } else {
+                    courseLabel = document.getElementById('n_matiere').value.trim();
+                    classeLabel = document.getElementById('n_classe').value;
+                    dateLabel = document.getElementById('n_date').value;
+                    dureeLabel = document.getElementById('n_duree').value;
+                    startLabel = document.getElementById('n_start').value || '—';
+                    endLabel = document.getElementById('n_end').value || '—';
+                }
+
+                sessionStorage.setItem('activeSessionCode', code);
+                sessionStorage.setItem('sessionCourse', courseLabel);
+                sessionStorage.setItem('sessionClasse', classeLabel);
+                sessionStorage.setItem('sessionDate', dateLabel);
+                sessionStorage.setItem('sessionDuree', dureeLabel);
+                sessionStorage.setItem('sessionStart', startLabel);
+                sessionStorage.setItem('sessionEnd', endLabel);
+                const ides = [...document.querySelectorAll('.ide-chip.selected')]
+                    .map(c => c.querySelector('.ide-chip-label').textContent).join(', ') || 'Aucun';
+                sessionStorage.setItem('allowedIDEs', ides);
+                sessionStorage.setItem('sharedFiles', JSON.stringify(this.sharedFiles.map(f => f.name)));
+                sessionStorage.setItem('sharedUrls', JSON.stringify(this.sharedUrls));
+
+                const gc = document.getElementById('generatedCode');
+                gc.style.display = 'block'; gc.textContent = code;
+                const sum = document.getElementById('codeSummary');
+                sum.style.display = 'block';
+                const isRawId = s => /^[0-9a-f]{24}$/i.test(s);
+                const classeDisplay = (!classeLabel || classeLabel === '—' || isRawId(classeLabel)) ? '' : ` · ${classeLabel}`;
+                const timeDisplay = (startLabel !== '—' || endLabel !== '—') ? ` · [${startLabel} - ${endLabel}]` : '';
+                sum.innerHTML = `${courseLabel}${classeDisplay} · ${dureeLabel}${timeDisplay}`;
+
+                ProfData.sessions.unshift({ code, course: courseLabel, date: 'À l\'instant', status: 'active' });
+                document.getElementById('stat-count').textContent = ProfData.sessions.length;
+                this.renderSessions();
+
+                document.getElementById('modalActions').innerHTML = `
+                <button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Fermer</button>
+                <button class="btn btn-ghost" id="copyBtn"
+                    onclick="navigator.clipboard.writeText('${code}').then(()=>document.getElementById('copyBtn').textContent='✅ Copié!')"
+                >📋 Copier</button>
+                <button class="btn btn-green" onclick="ProfVM.launchSession('${code}')">🚀 Lancer</button>`;
+            },
+
+            launchSession(code) {
+                sessionStorage.setItem('activeSessionCode', code);
+                this.closeCreateModal();
+                window.location.href = './desktop.html';
+            },
+
+            toggleIde(chip) {
+                const cb = chip.querySelector('input');
+                const chk = chip.querySelector('.ide-chip-check');
+                cb.checked = !cb.checked;
+                chip.classList.toggle('selected', cb.checked);
+                chk.textContent = cb.checked ? '✓' : '';
+            },
+
+            handleFiles(fileList) {
+                Array.from(fileList).forEach(f => {
+                    if (!this.sharedFiles.find(x => x.name === f.name)) this.sharedFiles.push(f);
+                });
+                this.renderFileList();
+            },
+            removeFile(name) {
+                this.sharedFiles = this.sharedFiles.filter(f => f.name !== name);
+                this.renderFileList();
+            },
+            addUrl() {
+                const input = document.getElementById('urlInput');
+                let url = input.value.trim();
+                if (!url) return;
+                // Auto-fix missing protocol
+                if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+                if (!this.sharedUrls.includes(url)) {
+                    this.sharedUrls.push(url);
+                    this.renderUrlList();
+                }
+                input.value = '';
+            },
+            removeUrl(url) {
+                this.sharedUrls = this.sharedUrls.filter(u => u !== url);
+                this.renderUrlList();
+            },
+            renderUrlList() {
+                document.getElementById('urlList').innerHTML = this.sharedUrls.map(url => `
+                <div class="file-item">
+                    <div class="file-item-left">
+                        <span>🔗</span>
+                        <div class="file-item-name" title="${url}">${url}</div>
+                    </div>
+                    <button class="file-remove" onclick="ProfVM.removeUrl('${url.replace(/'/g, "\\'")}')">✕</button>
+                </div>`).join('');
+            },
+            renderFileList() {
+                document.getElementById('fileList').innerHTML = this.sharedFiles.map(f => `
+                <div class="file-item">
+                    <div class="file-item-left">
+                        <span>${this.fileIcon(f.name)}</span>
+                        <div>
+                            <div class="file-item-name">${f.name}</div>
+                            <div class="file-item-size">${(f.size / 1024).toFixed(1)} Ko</div>
+                        </div>
+                    </div>
+                    <button class="file-remove" onclick="ProfVM.removeFile('${f.name.replace(/'/g, "\\'")}')")>✕</button>
+                </div>`).join('');
+            },
+            fileIcon(name) {
+                const ext = name.split('.').pop().toLowerCase();
+                return { pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', png: '🖼️', jpg: '🖼️', jpeg: '🖼️' }[ext] || '📁';
+            },
+        };
+
+        document.addEventListener('DOMContentLoaded', () => ProfVM.init());
+        document.getElementById('createModal').addEventListener('click', function (e) {
+            if (e.target === this) ProfVM.closeCreateModal();
+        });
+    </script>
+</body>
+
+</html>

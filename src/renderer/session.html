@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code de Session</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #0a0a0f;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            -webkit-app-region: drag;
+        }
+
+        .bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(88, 101, 242, 0.2) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 60% at 80% 100%, rgba(0, 212, 255, 0.1) 0%, transparent 60%),
+                #0a0a0f;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 7s ease-in-out infinite;
+        }
+
+        .orb-1 {
+            width: 350px;
+            height: 350px;
+            background: rgba(88, 101, 242, 0.3);
+            top: -80px;
+            right: 10%;
+        }
+
+        .orb-2 {
+            width: 250px;
+            height: 250px;
+            background: rgba(0, 212, 255, 0.2);
+            bottom: -40px;
+            left: 5%;
+            animation-delay: -4s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 24px;
+            -webkit-app-region: no-drag;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 48px;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #5865f2, #00d4ff);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .card {
+            width: 440px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 44px;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset, 0 40px 80px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.45s ease both;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .icon-circle {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.3), rgba(0, 212, 255, 0.2));
+            border: 1px solid rgba(88, 101, 242, 0.4);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            margin: 0 auto 24px;
+        }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.6));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card-sub {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.4);
+            line-height: 1.6;
+            margin-bottom: 36px;
+        }
+
+        /* Code inputs */
+        .code-inputs {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+
+        .code-digit {
+            width: 52px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 24px;
+            font-weight: 700;
+            font-family: 'Inter', monospace;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            caret-color: #5865f2;
+        }
+
+        .code-digit:focus {
+            border-color: rgba(88, 101, 242, 0.7);
+            background: rgba(88, 101, 242, 0.1);
+            box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.2);
+        }
+
+        .code-digit.filled {
+            border-color: rgba(88, 101, 242, 0.5);
+            color: #7289da;
+        }
+
+        .code-separator {
+            display: flex;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 24px;
+            padding-bottom: 4px;
+        }
+
+        .btn {
+            width: 100%;
+            height: 50px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #5865f2, #7289da);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(88, 101, 242, 0.35);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.08);
+            box-shadow: 0 12px 32px rgba(88, 101, 242, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .back-link {
+            margin-top: 20px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.35);
+            cursor: pointer;
+        }
+
+        .back-link:hover {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .back-link span {
+            color: #5865f2;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        .error-msg {
+            font-size: 13px;
+            color: #f48771;
+            background: rgba(244, 135, 113, 0.1);
+            border: 1px solid rgba(244, 135, 113, 0.2);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 16px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <div class="container">
+
+
+        <div class="card">
+            <div class="icon-circle">🔑</div>
+            <div class="card-title">Code de session</div>
+            <div class="card-sub">Entrez le code à 6 chiffres que<br />votre professeur vous a communiqué.</div>
+
+            <div id="errorMsg" class="error-msg"></div>
+
+            <div class="code-inputs" id="codeInputs">
+                <input class="code-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+                <input class="code-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+                <input class="code-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+                <span class="code-separator">–</span>
+                <input class="code-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+                <input class="code-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+                <input class="code-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            </div>
+
+            <button id="joinBtn" class="btn btn-primary" disabled>
+                Rejoindre la session →
+            </button>
+        </div>
+
+        <div class="back-link" onclick="window.location.href='./login.html'">
+            ← Revenir à <span>la connexion</span>
+        </div>
+    </div>
+
+    <script src="./viewmodels/SessionVM.js"></script>
+    <script>
+        const digits = document.querySelectorAll('.code-digit');
+        const joinBtn = document.getElementById('joinBtn');
+        const errorEl = document.getElementById('errorMsg');
+
+        // Auto-advance, auto-backspace
+        digits.forEach((input, i) => {
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Backspace' && !input.value && i > 0) {
+                    digits[i - 1].focus();
+                }
+            });
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/[^0-9]/g, '').slice(0, 1);
+                input.classList.toggle('filled', !!input.value);
+                if (input.value && i < digits.length - 1) digits[i + 1].focus();
+                updateJoinBtn();
+            });
+            input.addEventListener('paste', e => {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text').replace(/\D/g, '');
+                [...text].slice(0, 6).forEach((ch, j) => {
+                    if (digits[j]) { digits[j].value = ch; digits[j].classList.add('filled'); }
+                });
+                updateJoinBtn();
+            });
+        });
+
+        function updateJoinBtn() {
+            const code = getCode();
+            joinBtn.disabled = code.length < 6;
+        }
+
+        function getCode() {
+            return [...digits].map(d => d.value).join('');
+        }
+
+        joinBtn.addEventListener('click', () => {
+            const vm = new SessionVM(render);
+
+            function render() {
+                if (vm.isLoading) {
+                    joinBtn.innerHTML = '<div class="spinner"></div> Connexion...';
+                    joinBtn.disabled = true;
+                    errorEl.style.display = 'none';
+                } else {
+                    joinBtn.innerHTML = 'Rejoindre la session →';
+                    joinBtn.disabled = getCode().length < 6;
+
+                    if (vm.error) {
+                        errorEl.textContent = vm.error;
+                        errorEl.style.display = 'block';
+                    } else {
+                        errorEl.style.display = 'none';
+                    }
+                }
+            }
+
+            vm.setCode(getCode());
+            vm.join();
+        });
+
+        // Focus first digit on load
+        digits[0].focus();
+    </script>
+</body>
+
+</html>

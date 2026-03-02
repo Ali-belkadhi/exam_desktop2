@@ -1,0 +1,134 @@
+:root {
+  /* Studio OS Colors */
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --bg-desktop: url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2000&auto=format&fit=crop');
+  /* Gradient abstract background */
+  --surface-color: rgba(255, 255, 255, 0.85);
+  /* Acrylic */
+  --window-bg: #FFFFFF;
+  --window-header: #F1F5F9;
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --danger: #EF4444;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --border: #E2E8F0;
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Geometry */
+  --radius-window: 12px;
+  --radius-ui: 8px;
+  --shadow-active: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --shadow-inactive: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --shadow-taskbar: 0 -4px 20px rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #3B82F6;
+    --primary-hover: #60A5FA;
+    --bg-desktop: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop');
+    /* Dark abstract */
+    --surface-color: rgba(15, 23, 42, 0.85);
+    --window-bg: #1E293B;
+    --window-header: #0F172A;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --border: rgba(255, 255, 255, 0.1);
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+}
+
+body {
+  overflow: hidden;
+  /* OS feel, no global scrolling */
+  color: var(--text-primary);
+  user-select: none;
+  background: var(--bg-desktop) center/cover no-repeat;
+  background-color: #0F172A;
+}
+
+/* Global Buttons */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius-ui);
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button.primary {
+  background-color: var(--primary);
+  color: #FFF;
+}
+
+button.primary:hover {
+  background-color: var(--primary-hover);
+}
+
+button.secondary {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+button.secondary:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Typography */
+h1 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+p {
+  font-size: 14px;
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.small {
+  font-size: 12px;
+}
