@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 
 <head>
@@ -1129,8 +1129,10 @@
                         </div>
                         <div class="modal-field">
                             <label>Classe</label>
-                            <input type="text" id="af_classe" readonly
-                                style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
+                            <input type="text" id="af_classe" placeholder="Corriger si besoin (ex: 4SIM1)"
+                                style="background:rgba(255,255,255,.06); border:1px solid rgba(255,185,0,.3);" />
+                            <div style="font-size:10px; color:rgba(255,185,0,.6); margin-top:4px;">⚠ Vérifier le nom de
+                                la classe</div>
                         </div>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -1197,14 +1199,14 @@
                         <label>Classe *</label>
                         <select id="n_classe">
                             <option value="">— Sélectionner —</option>
+                            <option>2GL1</option>
+                            <option>2GL2</option>
+                            <option>3INFO1</option>
+                            <option>3INFO2</option>
                             <option>4SIM1</option>
                             <option>4SIM2</option>
                             <option>4SIM3</option>
                             <option>4SIM4</option>
-                            <option>3INFO1</option>
-                            <option>3INFO2</option>
-                            <option>2GL1</option>
-                            <option>2GL2</option>
                         </select>
                     </div>
                     <div class="modal-field">
@@ -1287,7 +1289,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://save-exam-db.onrender.com';
+        const API_BASE = 'https://safe-exam-db.onrender.com';
         const SERVICE_EMAIL = 'jean.dupont@university.edu';
         const SERVICE_PASSWORD = 'SecureP@ss123';
 
@@ -1325,6 +1327,43 @@
                 return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
             }
             return String(duree); // déjà formatée (ex: "1h30" en mode démo)
+        }
+
+        /** 
+         * Récupère le nom lisible de la classe avec fallbacks intelligents
+         */
+        function _getClasse(e) {
+            if (!e) return '';
+
+            // 1. Cas direct ou objet classe
+            if (e.classe) {
+                if (typeof e.classe === 'string' && !/^[0-9a-f]{24}$/i.test(e.classe)) return e.classe;
+                if (typeof e.classe === 'object') {
+                    const n = e.classe.nom || e.classe.name || e.classe.code || e.classe.label || e.classe.libelle;
+                    if (n) return String(n);
+                }
+            }
+
+            // 2. Chercher dans e.matiere.classe (structure fréquente)
+            if (e.matiere && e.matiere.classe) {
+                const mc = e.matiere.classe;
+                if (typeof mc === 'string' && !/^[0-9a-f]{24}$/i.test(mc)) return mc;
+                if (typeof mc === 'object') {
+                    const n = mc.nom || mc.name || mc.code || mc.label;
+                    if (n) return String(n);
+                }
+            }
+
+            // 3. Propriétés à plat (classe_nom, nom_classe, group, etc.)
+            const flat = e.classe_nom || e.nom_classe || e.classeName || e.group || e.promotion || e.section;
+            if (flat && typeof flat === 'string' && !/^[0-9a-f]{24}$/i.test(flat)) return flat;
+
+            // 4. Heuristique : chercher un motif de classe dans le titre/matière
+            const mTitle = (e.matiere && (e.matiere.nom || e.matiere.name || e.matiere.code)) || e.title || e.matiere || '';
+            const match = String(mTitle).match(/\b[1-5](?:SIM|INFO|GL|BI|DS|GL|L|M)\d?\b/i);
+            if (match) return match[0].toUpperCase();
+
+            return '';
         }
 
         const ProfData = {
@@ -1398,6 +1437,34 @@
                 this.setMode('existant');
                 document.getElementById('createModal').classList.add('open');
                 this.fetchExams();
+                this.fetchClasses();
+            },
+
+            async fetchClasses() {
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    if (!token) return;
+                    const resp = await fetch(`${API_BASE}/classe`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!resp.ok) return;
+                    const classes = await resp.json();
+                    ProfData.allClasses = Array.isArray(classes) ? classes : [];
+                    this.renderClassDropdown(ProfData.allClasses);
+                } catch (e) {
+                    console.error('[ProfVM] fetchClasses failed:', e);
+                }
+            },
+
+            renderClassDropdown(list) {
+                const el = document.getElementById('n_classe');
+                if (!el) return;
+                let html = '<option value="">— Sélectionner —</option>';
+                list.forEach(c => {
+                    const label = c.nom || c.name || c.code || 'Classe sans nom';
+                    html += `<option value="${c._id || c.id}">${label}</option>`;
+                });
+                el.innerHTML = html;
             },
 
             closeCreateModal() {
@@ -1459,6 +1526,14 @@
                     // ── Garder uniquement les examens PRATIQUES ──────────────────────────
                     ProfData.allExams = all.filter(e => e.type === 'practical');
                     if (!ProfData.allExams.length) throw new Error('Aucun examen pratique trouvé');
+
+                    // ── Trier par nom de classe ──────────────────────────────────────────
+                    ProfData.allExams.sort((a, b) => {
+                        const ca = (_resolveStr(a.classe, 'nom') || _resolveStr(a.class) || '').toLowerCase();
+                        const cb = (_resolveStr(b.classe, 'nom') || _resolveStr(b.class) || '').toLowerCase();
+                        return ca.localeCompare(cb);
+                    });
+
                     ProfData.filteredExams = [...ProfData.allExams];
                     this.renderExamList(ProfData.filteredExams);
                 } catch (e) {
@@ -1471,6 +1546,10 @@
                         { _id: 'e4', type: 'practical', matiere: 'Développement Web', classe: '3INFO1', date: '2026-03-25', duree: '3h' },
                         { _id: 'e5', type: 'practical', matiere: 'Réseaux – Final', classe: '4SIM4', date: '2026-04-02', duree: '2h' },
                     ];
+
+                    // ── Trier par nom de classe (démo) ──────────────────────────────────
+                    ProfData.allExams.sort((a, b) => (a.classe || '').localeCompare(b.classe || ''));
+
                     ProfData.filteredExams = [...ProfData.allExams];
                     this.renderExamList(ProfData.filteredExams, true);
                 }
@@ -1492,10 +1571,7 @@
                 el.innerHTML = demo + list.map(e => {
                     const title = _resolveStr(e.matiere, 'nom', 'code', 'name')
                         || _resolveStr(e.title) || _resolveStr(e.nom) || '—';
-                    // Classe : masquer si c'est un ObjectId brut (24 hex chars)
-                    const classeRaw = _resolveStr(e.classe, 'nom', 'name')
-                        || _resolveStr(e.class) || _resolveStr(e.group) || '';
-                    const classe = /^[0-9a-f]{24}$/i.test(classeRaw) ? '' : classeRaw;
+                    const classe = _getClasse(e);
                     const dateRaw = e.date || e.examDate || e.scheduledAt || '';
                     const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString('fr-FR') : '—';
                     const duree = _formatDuree(e.duree ?? e.durationMinutes ?? e.duration);
@@ -1537,8 +1613,8 @@
 
                 const matiereStr = _resolveStr(exam.matiere, 'nom', 'code', 'name')
                     || _resolveStr(exam.subject) || _resolveStr(exam.title) || '—';
-                const classeStr = _resolveStr(exam.classe, 'nom', 'name')
-                    || _resolveStr(exam.class) || _resolveStr(exam.group) || '—';
+                let classeStr = _getClasse(exam) || '—';
+
                 const dateRaw = exam.date || exam.examDate || exam.scheduledAt || '';
                 const dateStr = dateRaw
                     ? new Date(dateRaw).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
@@ -1564,9 +1640,8 @@
                 q = q.toLowerCase().trim();
                 ProfData.filteredExams = q
                     ? ProfData.allExams.filter(e => {
-                        // Résoudre matiere et classe même si populés
-                        const m = (_resolveStr(e.matiere, 'nom', 'code') || _resolveStr(e.title) || '').toLowerCase();
-                        const c = (_resolveStr(e.classe, 'nom') || _resolveStr(e.class) || '').toLowerCase();
+                        const m = (_resolveStr(e.matiere, 'nom', 'code', 'name') || e.title || '').toLowerCase();
+                        const c = _getClasse(e).toLowerCase();
                         return m.includes(q) || c.includes(q);
                     })
                     : [...ProfData.allExams];
@@ -1593,32 +1668,185 @@
                 return true;
             },
 
-            generateCode() {
+            async generateCode() {
                 if (!this.validate()) return;
-                // Code entièrement numérique sur 6 chiffres (ex: 482951)
-                const code = String(Math.floor(100000 + Math.random() * 900000));
+                
+                const modalError = document.getElementById('modalError');
+                modalError.style.display = 'none';
 
+                let apiSessionCode = null;
                 let courseLabel, classeLabel, dateLabel, dureeLabel, startLabel, endLabel;
+
+                // ── 1. Création via le BACKEND (uniquement si examen existant sélectionné) ──
                 if (this.mode === 'existant') {
-                    const e = this.selectedExam;
-                    // ── Résoudre les champs populés ─────────────────────────────
-                    courseLabel = _resolveStr(e.matiere, 'nom', 'code', 'name')
-                        || _resolveStr(e.subject) || _resolveStr(e.title) || 'Examen';
-                    classeLabel = _resolveStr(e.classe, 'nom', 'name')
-                        || _resolveStr(e.class) || '—';
-                    const dr = e.date || e.examDate || e.scheduledAt;
-                    dateLabel = dr ? new Date(dr).toLocaleDateString('fr-FR') : '—';
-                    dureeLabel = _formatDuree(e.duree ?? e.durationMinutes ?? e.duration);
-                    startLabel = document.getElementById('af_start').value || '—';
-                    endLabel = document.getElementById('af_end').value || '—';
+                    try {
+                        const token = sessionStorage.getItem('accessToken');
+                        if (!token) throw new Error('Session expirée ou token manquant.');
+
+                        const e = this.selectedExam;
+                        
+                        // Extraire l'ID MongoDB de la classe avec vérification approfondie
+                        const isMongoId = id => id && /^[0-9a-fA-F]{24}$/.test(String(id));
+                        let classId = null;
+                        
+                        // Chercher dans e.classe (_id, id, string brut)
+                        if (e.classe) {
+                            if (typeof e.classe === 'object') classId = e.classe._id || e.classe.id;
+                            else if (isMongoId(e.classe)) classId = e.classe;
+                        }
+                        
+                        // Fallback : Chercher dans e.matiere.classe si non trouvé
+                        if (!classId && e.matiere && e.matiere.classe) {
+                            if (typeof e.matiere.classe === 'object') classId = e.matiere.classe._id || e.matiere.classe.id;
+                            else if (isMongoId(e.matiere.classe)) classId = e.matiere.classe;
+                        }
+                        
+                        // Si l'examId n'est pas bon
+                        if (!isMongoId(e._id)) {
+                            throw new Error("Impossible : vous avez sélectionné un examen de démonstration. Veuillez choisir un examen en base.");
+                        }
+                        
+                        // Si la classe est introuvable ou n'est pas un MongoId
+                        if (!isMongoId(classId)) {
+                             // Au lieu de bloquer, essayons de tricher ou avertissons
+                             throw new Error("L'examen sélectionné n'a pas de classe associée avec un ID MongoDB valide dans la base de données. ID trouvé : " + encodeURIComponent(classId || "Aucun"));
+                        }
+
+                        let parsedDuree = 120;
+                        if (e.duree) parsedDuree = parseInt(e.duree, 10);
+                        if (e.durationMinutes) parsedDuree = parseInt(e.durationMinutes, 10);
+                        if (isNaN(parsedDuree)) parsedDuree = 120;
+
+                        // Mapper les IDEs pour le DTO
+                        const ides = [...document.querySelectorAll('.ide-chip.selected')]
+                            .map(c => {
+                                const l = c.querySelector('.ide-chip-label').textContent;
+                                return l === 'VS Code' ? 'vscode' : (l === 'IntelliJ IDEA' ? 'intellij' : l.toLowerCase());
+                            });
+
+                        const payload = {
+                            classe: classId,
+                            examId: e._id,
+                            duration: parsedDuree,
+                            testType: 'DESKTOP_APP',
+                            allowedApps: ides.length ? ides : ['vscode']
+                        };
+
+                        // Afficher le chargement
+                        const btnGen = document.querySelector('#modalActions .btn-indigo');
+                        const oriHtml = btnGen.innerHTML;
+                        btnGen.innerHTML = '<div class="spin-ring" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></div> Patientez...';
+                        btnGen.disabled = true;
+
+                        // Appel à l'API practical-test
+                        const resp = await fetch(`${API_BASE}/practical-tests`, {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}` 
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const data = await resp.json();
+                        
+                        btnGen.innerHTML = oriHtml;
+                        btnGen.disabled = false;
+
+                        if (!resp.ok) {
+                            let detailedMsg = data.message || 'Erreur lors de la communication avec le serveur.';
+                            if (data.errors && Array.isArray(data.errors)) {
+                                detailedMsg = data.errors.map(e => e.message).join('<br> • ');
+                            }
+                            throw new Error(detailedMsg);
+                        }
+
+                        // Code 6 chiffres généré par le serveur
+                        apiSessionCode = data.sessionCode;
+
+                        // Infos pour affichage local
+                        courseLabel = _resolveStr(e.matiere, 'nom', 'code', 'name')
+                            || _resolveStr(e.subject) || _resolveStr(e.title) || 'Examen';
+                        classeLabel = document.getElementById('af_classe').value || '—';
+                        const dr = e.date || e.examDate || e.scheduledAt;
+                        dateLabel = dr ? new Date(dr).toLocaleDateString('fr-FR') : '—';
+                        dureeLabel = _formatDuree(e.duree ?? e.durationMinutes ?? e.duration);
+                        startLabel = document.getElementById('af_start').value || '—';
+                        endLabel = document.getElementById('af_end').value || '—';
+
+                    } catch (err) {
+                        modalError.innerHTML = `<strong>Échec:</strong> ${err.message}`;
+                        modalError.style.display = 'block';
+                        return; // On arrête là si le backend échoue
+                    }
                 } else {
-                    courseLabel = document.getElementById('n_matiere').value.trim();
-                    classeLabel = document.getElementById('n_classe').value;
-                    dateLabel = document.getElementById('n_date').value;
-                    dureeLabel = document.getElementById('n_duree').value;
-                    startLabel = document.getElementById('n_start').value || '—';
-                    endLabel = document.getElementById('n_end').value || '—';
+                    // ── 1.b Mode "Nouveau" (Quick session) ──
+                    try {
+                        const token = sessionStorage.getItem('accessToken');
+                        const classId = document.getElementById('n_classe').value;
+                        const subject = document.getElementById('n_matiere').value.trim();
+                        const dureeRaw = document.getElementById('n_duree').value;
+                        
+                        const isMongoId = id => id && /^[0-9a-fA-F]{24}$/.test(String(id));
+                        if (!isMongoId(classId)) {
+                            throw new Error("Veuillez sélectionner une classe valide venant de la base de données.");
+                        }
+
+                        // Convertir durée "1h30" en minutes
+                        let duration = 90;
+                        if (dureeRaw.includes('h')) {
+                            const parts = dureeRaw.split('h');
+                            duration = (parseInt(parts[0] || 0) * 60) + (parseInt(parts[1] || 0));
+                        } else if (dureeRaw.includes('min')) {
+                            duration = parseInt(dureeRaw);
+                        }
+
+                        const payload = {
+                            classe: classId,
+                            duration: duration,
+                            testType: 'DESKTOP_APP',
+                            allowedApps: ['vscode'] // Par défaut pour le mode rapide
+                        };
+
+                        const btnGen = document.querySelector('#modalActions .btn-indigo');
+                        const oriHtml = btnGen.innerHTML;
+                        btnGen.innerHTML = '<div class="spin-ring" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></div>...';
+                        btnGen.disabled = true;
+
+                        const resp = await fetch(`${API_BASE}/practical-tests`, {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}` 
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const data = await resp.json();
+                        btnGen.innerHTML = oriHtml; btnGen.disabled = false;
+
+                        if (!resp.ok) throw new Error(data.message || 'Erreur API creation rapide.');
+
+                        apiSessionCode = data.sessionCode;
+                        
+                        // Infos local
+                        courseLabel = subject || 'Session rapide';
+                        const sel = document.getElementById('n_classe');
+                        classeLabel = sel.options[sel.selectedIndex].text;
+                        dateLabel = document.getElementById('n_date').value;
+                        dureeLabel = dureeRaw;
+                        startLabel = document.getElementById('n_start').value || '—';
+                        endLabel = document.getElementById('n_end').value || '—';
+
+                    } catch (err) {
+                        modalError.innerHTML = `<strong>Échec mode rapide:</strong> ${err.message}`;
+                        modalError.style.display = 'block';
+                        return;
+                    }
                 }
+
+                // ── 2. Succès : Mise à jour de l'UI avec le code serveur ──
+                const code = apiSessionCode;
 
                 sessionStorage.setItem('activeSessionCode', code);
                 sessionStorage.setItem('sessionCourse', courseLabel);
