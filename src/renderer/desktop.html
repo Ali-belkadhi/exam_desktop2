@@ -597,25 +597,17 @@
                 <button class="browser-nav-btn" id="btn-reload" title="Recharger"
                     onclick="BrowserVM.reload()">&#8635;</button>
 
-                <div class="addr-wrap">
+                <div class="addr-wrap" style="display: none;">
                     <span class="security-icon" id="security-icon">🔒</span>
                     <input class="browser-address-bar" id="addressBar" type="text"
-                        placeholder="Entrez une URL ou recherche Google..." value="https://www.google.com"
-                        onkeydown="if(event.key==='Enter') BrowserVM.navigate(this.value)" />
+                        style="cursor: default;" readonly
+                        placeholder="Lien de session" value="https://www.google.com" />
                 </div>
-
-                <button class="browser-nav-btn" title="Aller"
-                    onclick="BrowserVM.navigate(document.getElementById('addressBar').value)">&#10148;</button>
             </div>
 
             <!-- Webview wrapper — prend toute la place restante -->
             <div id="browser-body" style="flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0;">
-
-                <!-- Webview Chromium réel -->
-                <webview id="mainWebview" src="https://www.google.com" style="flex:1; width:100%;" allowpopups
-                    useragent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                    partition="persist:browser">
-                </webview>
+                <!-- Le webview sera injecté dynamiquement ici par BrowserView.js pour l'isolation des sessions -->
 
                 <!-- Etat d'erreur (affiché à la place du webview si échec) -->
                 <div class="browser-error" id="browser-error">
@@ -699,7 +691,6 @@
             <div class="taskbar-icon" onclick="UI.openWindow('win-browser')" title="Navigateur" id="tb-browser">🌐</div>
             <div class="taskbar-icon" onclick="UI.openWindow('win-notepad')" title="Bloc-notes" id="tb-notepad">📝</div>
             <div class="taskbar-icon" onclick="UI.openWindow('win-calc')" title="Calculatrice" id="tb-calc">🔢</div>
-            <div class="taskbar-icon" onclick="openVSCodeIntegrated()" title="VS Code Intégré" id="tb-vscode">💻</div>
         </div>
 
         <div class="taskbar-right">
@@ -727,10 +718,6 @@
                 <span style="font-size: 24px;">🔢</span>
                 <span class="small">Calculatrice</span>
             </div>
-            <div class="launcher-app" onclick="UI.toggleLauncher(); AppActions.requestVSCodeLaunch()">
-                <span style="font-size: 24px; color:var(--primary);">💻</span>
-                <span class="small">VS Code</span>
-            </div>
 
         </div>
     </div>
@@ -751,78 +738,89 @@
     <script src="./views/ClassroomDesktopView.js"></script>
     <script src="./views/BrowserView.js"></script>
     <script>
+        const quitSession = async () => {
+            if (window.electronAPI) {
+                try {
+                    await window.electronAPI.setLocked(false);
+                } catch (e) {
+                    console.error("Erreur lors du déverrouillage :", e);
+                }
+            }
+            sessionStorage.clear();
+            window.location.href = './login.html';
+        };
+
         // ── Initialisation du widget de session depuis sessionStorage ─────────────
         document.addEventListener('DOMContentLoaded', () => {
-            // Données de la session active
+            const role = sessionStorage.getItem('role') || 'student';
             const code = sessionStorage.getItem('activeSessionCode') || '—';
-            const course = sessionStorage.getItem('sessionCourse') || 'Session en cours';
-            const classe = sessionStorage.getItem('sessionClasse') || '';
-            const duree = sessionStorage.getItem('sessionDuree') || '';
+            const course = sessionStorage.getItem('sessionCourse') || 'Session Pratique';
+            const dureeStr = sessionStorage.getItem('sessionDuree') || '';
+            const startedAt = sessionStorage.getItem('sessionStartedAt');
 
-            // Infos du professseur connecté
-            const nom = sessionStorage.getItem('userNom') || sessionStorage.getItem('studentNom') || '';
-            const prenom = sessionStorage.getItem('userPrenom') || sessionStorage.getItem('studentPrenom') || '';
-            const tStart = sessionStorage.getItem('sessionStart') || '';
-            const tEnd = sessionStorage.getItem('sessionEnd') || '';
-
-            // Afficher le cours et la classe
-            let coursLabel = classe ? `${course} — ${classe}` : course;
-            if (tStart !== '' && tStart !== '—' && tEnd !== '' && tEnd !== '—') {
-                coursLabel += ` [${tStart} - ${tEnd}]`;
-            }
-            document.getElementById('widgetCourse').textContent = coursLabel;
+            // Affichage des informations de base
+            document.getElementById('widgetCourse').textContent = course;
             document.getElementById('widgetCode').textContent = code;
 
-            // Afficher les infos professor / étudiant
+            const nom = sessionStorage.getItem('studentNom') || sessionStorage.getItem('userNom') || '';
+            const prenom = sessionStorage.getItem('studentPrenom') || sessionStorage.getItem('userPrenom') || '';
             if (nom || prenom) {
                 const fullName = [prenom, nom].filter(Boolean).join(' ');
-                if (role === 'student') {
-                    document.getElementById('widgetProfInfo').textContent = `Étudiant : ${fullName} | `;
+                const prefix = role === 'student' ? 'Étudiant' : 'Prof';
+                document.getElementById('widgetProfInfo').textContent = `${prefix} : ${fullName} | `;
+            }
+
+            // ── Logique du Timer ─────────────────────────────────────────────
+            let totalSecondsAllowed = 0;
+            if (dureeStr) {
+                // On s'attend à un nombre pur (minutes) ou une chaîne type "2h"
+                if (!isNaN(dureeStr)) {
+                    totalSecondsAllowed = parseInt(dureeStr, 10) * 60;
                 } else {
-                    document.getElementById('widgetProfInfo').textContent = `Prof : ${fullName} | `;
+                    const mH = dureeStr.match(/(\d+)\s*h/);
+                    const mM = dureeStr.match(/(\d+)\s*min/);
+                    const hours = mH ? parseInt(mH[1]) : 0;
+                    const minutes = mM ? parseInt(mM[1]) : (isNaN(dureeStr) ? 0 : parseInt(dureeStr));
+                    totalSecondsAllowed = (hours * 3600) + (minutes * 60);
                 }
             }
 
-            // ── Timer de décompte ─────────────────────────────────────────────
-            // Calcul de la durée totale en secondes
-            let totalSeconds = 0;
-            if (duree) {
-                // Peut être "2h", "1h30", "90 min", "90" (number string), "1h30min"
-                const mH = duree.match(/(\d+)\s*h/);
-                const mM = duree.match(/(\d+)\s*min/);
-                const mN = !mH && !mM ? duree.match(/^(\d+)$/) : null;
-                const hours = mH ? parseInt(mH[1]) : 0;
-                const minutes = mM ? parseInt(mM[1]) : (mN ? parseInt(mN[1]) : 0);
-                totalSeconds = (hours * 3600) + (minutes * 60);
-            }
-
-            // Si pas de durée : afficher juste un chrono qui monte
-            const sessionStart = Date.now();
+            const startTime = startedAt ? new Date(startedAt).getTime() : Date.now();
             const timerEl = document.getElementById('widgetTimer');
-
             const pad = n => String(n).padStart(2, '0');
+
             const tick = () => {
-                const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
-                if (totalSeconds > 0) {
-                    // Décompte
-                    const remaining = Math.max(0, totalSeconds - elapsed);
+                const now = Date.now();
+                const elapsedSeconds = Math.floor((now - startTime) / 1000);
+
+                if (totalSecondsAllowed > 0) {
+                    const remaining = Math.max(0, totalSecondsAllowed - elapsedSeconds);
                     const h = Math.floor(remaining / 3600);
                     const m = Math.floor((remaining % 3600) / 60);
                     const s = remaining % 60;
+                    
                     timerEl.textContent = `⏱️ ${pad(h)}:${pad(m)}:${pad(s)}`;
-                    if (remaining === 0) {
-                        timerEl.style.color = 'var(--danger)';
+                    
+                    // Alerte rouge si moins de 5 minutes
+                    if (remaining < 300) {
+                        timerEl.style.color = '#EF4444';
+                    }
+
+                    if (remaining <= 0) {
                         timerEl.textContent = '⏱️ Temps écoulé';
                         clearInterval(timerInterval);
+                        // Fermeture automatique après 3 secondes pour laisser l'utilisateur voir le message
+                        setTimeout(quitSession, 3000); 
                     }
                 } else {
-                    // Chrono montant
-                    const h = Math.floor(elapsed / 3600);
-                    const m = Math.floor((elapsed % 3600) / 60);
-                    const s = elapsed % 60;
+                    // Chrono montant par défaut si aucune limite n'est définie
+                    const h = Math.floor(elapsedSeconds / 3600);
+                    const m = Math.floor((elapsedSeconds % 3600) / 60);
+                    const s = elapsedSeconds % 60;
                     timerEl.textContent = `⏱️ ${pad(h)}:${pad(m)}:${pad(s)}`;
                 }
             };
+
             tick();
             const timerInterval = setInterval(tick, 1000);
         });

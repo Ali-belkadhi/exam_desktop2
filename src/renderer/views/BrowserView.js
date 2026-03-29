@@ -10,7 +10,6 @@ const BrowserVM = {
     errorEl: null,
 
     init() {
-        this.webview = document.getElementById('mainWebview');
         this.addressBar = document.getElementById('addressBar');
         this.statusBar = document.getElementById('browser-status');
         this.titleEl = document.getElementById('browser-title');
@@ -19,7 +18,26 @@ const BrowserVM = {
         this.btnForward = document.getElementById('btn-forward');
         this.errorEl = document.getElementById('browser-error');
 
-        if (!this.webview) return; // Guard — page may not have browser window
+        // ── Création dynamique du Webview pour ISOLATION des sessions ──────
+        const container = document.getElementById('browser-body');
+        if (!container) return;
+
+        // On récupère un ID unique pour l'étudiant ou le prof
+        // ERREUR CORRIGÉE : on vérifie studentId OU userId
+        const studentUniqueId = sessionStorage.getItem('studentId') || sessionStorage.getItem('userId') || 'guest';
+        
+        const wv = document.createElement('webview');
+        wv.id = 'mainWebview';
+        wv.setAttribute('style', 'flex:1; width:100%;');
+        wv.setAttribute('allowpopups', '');
+        wv.setAttribute('useragent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        
+        // C'est ici que l'isolation se passe : une partition par ETUDIANT
+        wv.setAttribute('partition', `persist:student-${studentUniqueId}`);
+        wv.setAttribute('src', 'about:blank');
+        
+        container.appendChild(wv);
+        this.webview = wv;
 
         // ── Navigation events ────────────────────────────────────────────
         this.webview.addEventListener('did-start-loading', () => {
@@ -35,13 +53,16 @@ const BrowserVM = {
             document.getElementById('btn-reload').setAttribute('onclick', 'BrowserVM.reload()');
         });
 
+        // ── Navigation events (Correction: ignorer about:blank pour ne pas écraser la barre d'adresse) ──
         this.webview.addEventListener('did-navigate', (e) => {
+            if (e.url === 'about:blank') return;
             this.addressBar.value = e.url;
             this.updateSecurityIcon(e.url);
             this.updateNavButtons();
         });
 
         this.webview.addEventListener('did-navigate-in-page', (e) => {
+            if (e.url === 'about:blank') return;
             this.addressBar.value = e.url;
             this.updateSecurityIcon(e.url);
             this.updateNavButtons();
@@ -69,6 +90,22 @@ const BrowserVM = {
         this.webview.addEventListener('update-target-url', (e) => {
             this.statusBar.textContent = e.url || 'Prêt';
         });
+
+        // ── Ouverture automatique du lien de session avec délai de sécurité pour Electron ──
+        setTimeout(() => {
+            const sessionLink = sessionStorage.getItem('sessionLink');
+            console.log(`[BrowserVM] Tentative de navigation vers (Session Isolée pour ${studentUniqueId}): ${sessionLink}`);
+
+            if (sessionLink && sessionLink !== 'null' && sessionLink !== 'undefined' && sessionLink.length > 5) {
+                this.navigate(sessionLink);
+                if (typeof UI !== 'undefined' && UI.openWindow) {
+                    UI.openWindow('win-browser');
+                }
+            } else {
+                // Fallback Google si vraiment rien
+                this.navigate('https://www.google.com');
+            }
+        }, 1000);
     },
 
     // ── Commands ────────────────────────────────────────────────────────

@@ -141,5 +141,12 @@ const AppActions = {
 setInterval(UI.updateClock, 1000);
 document.addEventListener('DOMContentLoaded', () => {
     UI.updateClock();
-    UI.openWindow('win-resources'); // Ouvre ressources par defaut
+    
+    // Si un lien de session existe, on ouvre le navigateur. Sinon, on peut ouvrir le PDF par défaut.
+    const sessionLink = sessionStorage.getItem('sessionLink');
+    if (sessionLink && document.getElementById('win-browser')) {
+        UI.openWindow('win-browser');
+    } else if (document.getElementById('win-pdf')) {
+        UI.openWindow('win-pdf');
+    }
 });

@@ -312,15 +312,13 @@ module.exports = (ipcMain, mainWindow) => {
     });
 
     // ── Session ──────────────────────────────────────────────────────────────
-    ipcMain.handle('session:join', async (event, { code }) => {
-        await new Promise(r => setTimeout(r, 600));
-        // On accepte absolument TOUT pour la démo
+    ipcMain.handle('session:join', async (event, { code, title, prof }) => {
         return {
             success: true,
             session: {
-                id: code || '999999',
-                title: 'Examen pratique : Développement',
-                prof: 'Professeur'
+                id: code || 'N/A',
+                title: title || 'Examen pratique',
+                prof: prof || 'Professeur'
             }
         };
     });

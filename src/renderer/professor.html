@@ -23,6 +23,8 @@
             overflow: hidden;
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
+            --primary: #5865f2;
+            --primary-hover: #4752c4;
         }
 
         body {
@@ -1041,7 +1043,7 @@
                 </div>
                 <div class="stat-card">
                     <span class="stat-icon">📚</span>
-                    <div class="stat-value" id="stat-count">3</div>
+                    <div class="stat-value" id="stat-count">0</div>
                     <div class="stat-label">Sessions créées</div>
                 </div>
                 <div class="stat-card">
@@ -1072,7 +1074,14 @@
             </div>
 
             <div class="sessions-card" id="sessionsCard">
-                <h3>📋 Mes sessions récentes</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="margin:0">📋 Mes sessions récentes</h3>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.3); background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px;">
+                        Serveur : 
+                        <span style="color:var(--primary);cursor:pointer;" onclick="setApiServer('http://localhost:3000')">Local</span> | 
+                        <span style="color:var(--primary);cursor:pointer;" onclick="setApiServer('https://safe-exam-db.onrender.com')">Render</span>
+                    </div>
+                </div>
                 <div id="sessionsList"></div>
             </div>
 
@@ -1147,14 +1156,10 @@
                                 style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
                         </div>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+                    <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px;">
                         <div class="modal-field">
                             <label>Heure de début</label>
                             <input type="time" id="af_start" />
-                        </div>
-                        <div class="modal-field">
-                            <label>Heure de fin</label>
-                            <input type="time" id="af_end" />
                         </div>
                     </div>
                 </div>
@@ -1184,14 +1189,10 @@
                         </select>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div style="display:grid;grid-template-columns:1fr;gap:12px;">
                     <div class="modal-field">
                         <label>Heure de début *</label>
                         <input type="time" id="n_start" />
-                    </div>
-                    <div class="modal-field">
-                        <label>Heure de fin *</label>
-                        <input type="time" id="n_end" />
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -1259,19 +1260,6 @@
 
             <hr class="modal-divider" />
 
-            <div class="modal-section-title">📎 Fichiers partagés</div>
-            <div class="file-drop-zone" onclick="document.getElementById('fileInput').click()">
-                <span>📂</span>
-                <p>Cliquez pour ajouter des fichiers<br />
-                    <small style="color:rgba(255,255,255,.2)">PDF, Word (.docx), Excel (.xlsx), Images</small>
-                </p>
-                <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                    style="display:none" onchange="ProfVM.handleFiles(this.files)" />
-            </div>
-            <div class="file-list" id="fileList"></div>
-
-            <hr class="modal-divider" />
-
             <div class="generated-code" id="generatedCode"></div>
             <div id="codeSummary"
                 style="display:none;font-size:12px;color:rgba(255,255,255,.45);text-align:center;margin-bottom:12px;">
@@ -1289,7 +1277,13 @@
     </div>
 
     <script>
-        const API_BASE = 'https://safe-exam-db.onrender.com';
+        let API_BASE = 'https://safe-exam-db.onrender.com'; // Par défaut sur la base de données Render
+        
+        function setApiServer(url) {
+            API_BASE = url;
+            console.log("Serveur API changé vers : " + url);
+            ProfVM.fetchRecentSessions();
+        }
         const SERVICE_EMAIL = 'jean.dupont@university.edu';
         const SERVICE_PASSWORD = 'SecureP@ss123';
 
@@ -1303,10 +1297,21 @@
          */
         function _resolveStr(field, ...keys) {
             if (field === null || field === undefined) return null;
+            
+            // Gestion du format MongoDB brute {$oid: "..."} ou {$date: "..."}
+            if (typeof field === 'object' && field.$oid) return String(field.$oid);
+            if (typeof field === 'object' && field.$date) return String(field.$date);
+
             if (typeof field === 'object' && !Array.isArray(field)) {
                 for (const k of keys) {
-                    if (field[k] !== undefined && field[k] !== null) return String(field[k]);
+                    if (field[k] !== undefined && field[k] !== null) {
+                        // Récursivité si la clé elle-même est un objet MongoDB ($oid)
+                        return _resolveStr(field[k], ...keys);
+                    }
                 }
+                // Fallbacks ID
+                if (field._id) return _resolveStr(field._id);
+                if (field.id) return _resolveStr(field.id);
                 return null;
             }
             return String(field);
@@ -1334,44 +1339,26 @@
          */
         function _getClasse(e) {
             if (!e) return '';
-
-            // 1. Cas direct ou objet classe
-            if (e.classe) {
-                if (typeof e.classe === 'string' && !/^[0-9a-f]{24}$/i.test(e.classe)) return e.classe;
-                if (typeof e.classe === 'object') {
-                    const n = e.classe.nom || e.classe.name || e.classe.code || e.classe.label || e.classe.libelle;
-                    if (n) return String(n);
-                }
+            const c = e.classe || (e.examId ? e.examId.classe : null);
+            if (!c) return '';
+            
+            // 1. Tenter de résoudre via l'objet lui-même (si populé)
+            const resolved = _resolveStr(c, 'nom', 'name', 'code', 'label');
+            
+            // 2. Si c'est un ID, tenter de trouver le nom dans la liste globale des classes
+            if (resolved && (resolved.length === 24 || resolved.match(/^[0-9a-fA-F]{24}$/))) {
+                const found = ProfData.allClasses && ProfData.allClasses.find(cl => {
+                    const id = _resolveStr(cl._id);
+                    return id === resolved;
+                });
+                if (found) return found.nom || found.name || found.code || resolved;
             }
 
-            // 2. Chercher dans e.matiere.classe (structure fréquente)
-            if (e.matiere && e.matiere.classe) {
-                const mc = e.matiere.classe;
-                if (typeof mc === 'string' && !/^[0-9a-f]{24}$/i.test(mc)) return mc;
-                if (typeof mc === 'object') {
-                    const n = mc.nom || mc.name || mc.code || mc.label;
-                    if (n) return String(n);
-                }
-            }
-
-            // 3. Propriétés à plat (classe_nom, nom_classe, group, etc.)
-            const flat = e.classe_nom || e.nom_classe || e.classeName || e.group || e.promotion || e.section;
-            if (flat && typeof flat === 'string' && !/^[0-9a-f]{24}$/i.test(flat)) return flat;
-
-            // 4. Heuristique : chercher un motif de classe dans le titre/matière
-            const mTitle = (e.matiere && (e.matiere.nom || e.matiere.name || e.matiere.code)) || e.title || e.matiere || '';
-            const match = String(mTitle).match(/\b[1-5](?:SIM|INFO|GL|BI|DS|GL|L|M)\d?\b/i);
-            if (match) return match[0].toUpperCase();
-
-            return '';
+            return resolved || '—';
         }
 
         const ProfData = {
-            sessions: [
-                { code: 'A4F-9X1', course: 'Architecture POO – L3', date: 'Aujourd\'hui, 10:00', status: 'active' },
-                { code: '7K2-M3R', course: 'Algorithmique – L2', date: 'Hier, 14:30', status: 'closed' },
-                { code: 'B9T-1LZ', course: 'Base de données – M1', date: '20/02/2026, 09:15', status: 'closed' },
-            ],
+            sessions: [],
             allExams: [],
             filteredExams: [],
         };
@@ -1387,19 +1374,110 @@
                 const nom = sessionStorage.getItem('userNom') || sessionStorage.getItem('username') || 'Professeur';
                 const prenom = sessionStorage.getItem('userPrenom') || '';
                 const full = prenom ? `${prenom} ${nom}` : nom;
+                
                 const init = full.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'P';
                 document.getElementById('avatarEl').textContent = init;
                 document.getElementById('welcomeTitle').textContent = `Bienvenue, ${full} 👋`;
-                document.getElementById('stat-count').textContent = ProfData.sessions.length;
+
                 this.renderSessions();
+                this.fetchClasses();
+                this.fetchRecentSessions();
+                this.checkConnection();
+            },
+
+            async checkConnection() {
+                const statVal = document.querySelector('.stat-card.online .stat-value');
+                const statCard = document.querySelector('.stat-card.online');
+                try {
+                    const resp = await fetch(`${API_BASE}/auth/config-test`, { method: 'GET', signal: AbortSignal.timeout(3000) });
+                    if (resp.ok) {
+                        statVal.textContent = "En ligne";
+                        statCard.style.opacity = "1";
+                    } else {
+                        throw new Error();
+                    }
+                } catch (e) {
+                    statVal.textContent = "Hors ligne";
+                    statVal.style.color = "#ed4245";
+                    statCard.classList.remove('online');
+                }
+            },
+
+            async fetchRecentSessions() {
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    const el = document.getElementById('sessionsList');
+                    el.innerHTML = `<div style="text-align:center; padding:20px;"><div class="spin-ring" style="width:20px;height:20px;border-width:2px;"></div></div>`;
+                    
+                    const resp = await fetch(`${API_BASE}/practical-tests`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!resp.ok) {
+                        el.innerHTML = `<div style="text-align:center; padding:20px; color:#ed4245;">⚠️ Erreur ${resp.status}: Chargement impossible.</div>`;
+                        return;
+                    }
+                    
+                    const data = await resp.json();
+                    // On mappe les données backend vers le format d'affichage
+                    ProfData.sessions = data.map(s => {
+                        // 1. Déterminer le titre (Matière/Examen)
+                        let title = _resolveStr(s.examId?.matiere, 'nom') || _resolveStr(s.examId, 'title');
+                        if (!title) title = s.testType === 'WEB_LINK' ? "Lien de redirection" : "Environnement de test";
+
+                        // 2. Déterminer la classe
+                        const classe = _getClasse(s);
+                        const displayTitle = (classe && title.indexOf(classe) === -1) ? `${title} – ${classe}` : title;
+
+                        // 3. Métadonnées (Mode, Durée)
+                        const mode = s.testType === 'WEB_LINK' ? '🔗 URL' : '🖥️ App';
+                        const dur = s.duration ? ` · ${_formatDuree(s.duration)}` : '';
+
+                        const date = s.startedAt 
+                            ? new Date(s.startedAt).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) 
+                            : 'Date inconnue';
+                        
+                        const status = s.isActive ? 'active' : 'closed';
+                        return { 
+                            code: s.sessionCode || '------', 
+                            course: displayTitle, 
+                            meta: `${mode}${dur}`,
+                            date, 
+                            status 
+                        };
+                    });
+                    
+                    document.getElementById('stat-count').textContent = ProfData.sessions.length;
+                    this.renderSessions();
+                } catch (e) {
+                    console.error('[ProfVM] fetchRecentSessions failed:', e);
+                    const el = document.getElementById('sessionsList');
+                    // Gérer le cas où le serveur est injoignable ou l'endpoint n'existe pas
+                    const msg = (e.message.includes('404')) 
+                        ? `⚠️ L'historique des sessions n'est pas encore disponible sur ce serveur.`
+                        : `⚠️ Impossible de contacter le serveur (${API_BASE}).`;
+                    
+                    el.innerHTML = `
+                    <div style="text-align:center; padding:20px; color:#ed4245; font-size:13px; background:rgba(237,66,69,0.05); border-radius:12px; border:1px solid rgba(237,66,69,0.15);">
+                        ${msg}<br/>
+                        <button class="btn btn-ghost" style="margin-top:12px; font-size:11px; height:30px; margin-left:auto; margin-right:auto;" onclick="ProfVM.fetchRecentSessions()">🔄 Réessayer</button>
+                    </div>`;
+                }
             },
 
             renderSessions() {
-                document.getElementById('sessionsList').innerHTML = ProfData.sessions.map(s => `
+                const el = document.getElementById('sessionsList');
+                if (!ProfData.sessions || ProfData.sessions.length === 0) {
+                    el.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.2); font-size:13px;">Aucune session récente trouvée.</div>`;
+                    return;
+                }
+                el.innerHTML = ProfData.sessions.map(s => `
                 <div class="session-row">
                     <div>
                         <div class="session-code">${s.code}</div>
-                        <div class="session-meta">${s.course} · ${s.date}</div>
+                        <div class="session-meta">
+                            <strong style="color:rgba(255,255,255,.9)">${s.course}</strong><br/>
+                            <small style="color:rgba(255,255,255,.45)">${s.meta} · ${s.date}</small>
+                        </div>
                     </div>
                     <span class="session-badge ${s.status}">${s.status === 'active' ? '🟢 Active' : '⚫ Terminée'}</span>
                 </div>`).join('');
@@ -1407,27 +1485,47 @@
 
             toggleSessions() {
                 this.sessionsOpen = !this.sessionsOpen;
-                document.getElementById('sessionsCard').classList.toggle('visible', this.sessionsOpen);
-                if (this.sessionsOpen) document.getElementById('sessionsCard').scrollIntoView({ behavior: 'smooth' });
+                const card = document.getElementById('sessionsCard');
+                card.classList.toggle('visible', this.sessionsOpen);
+                card.style.display = this.sessionsOpen ? 'block' : 'none';
+
+                // Charger les données à la demande
+                if (this.sessionsOpen) {
+                    this.fetchRecentSessions();
+                    card.scrollIntoView({ behavior: 'smooth' });
+                }
             },
 
             openCreateModal() {
-                this.sharedFiles = [];
                 this.sharedUrls = [];
                 this.selectedExam = null;
                 const gc = document.getElementById('generatedCode');
-                gc.style.display = 'none'; gc.textContent = '';
-                document.getElementById('codeSummary').style.display = 'none';
-                document.getElementById('fileList').innerHTML = '';
-                document.getElementById('urlList').innerHTML = '';
-                document.getElementById('fileInput').value = '';
-                document.getElementById('urlInput').value = '';
-                document.getElementById('modalError').style.display = 'none';
-                document.getElementById('autoFilledFields').style.display = 'none';
-                document.getElementById('examSearch').value = '';
-                document.getElementById('modalActions').innerHTML = `
-                <button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Annuler</button>
-                <button class="btn btn-indigo" onclick="ProfVM.generateCode()">🎲 Générer le code session</button>`;
+                if (gc) { gc.style.display = 'none'; gc.textContent = ''; }
+                
+                const sum = document.getElementById('codeSummary');
+                if (sum) sum.style.display = 'none';
+                
+                const urlList = document.getElementById('urlList');
+                if (urlList) urlList.innerHTML = '';
+                
+                const urlInput = document.getElementById('urlInput');
+                if (urlInput) urlInput.value = '';
+                
+                const modalError = document.getElementById('modalError');
+                if (modalError) modalError.style.display = 'none';
+                
+                const autoFields = document.getElementById('autoFilledFields');
+                if (autoFields) autoFields.style.display = 'none';
+                
+                const examSearch = document.getElementById('examSearch');
+                if (examSearch) examSearch.value = '';
+                
+                const modalActions = document.getElementById('modalActions');
+                if (modalActions) {
+                    modalActions.innerHTML = `
+                    <button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Annuler</button>
+                    <button class="btn btn-indigo" onclick="ProfVM.generateCode()">🎲 Générer le code session</button>`;
+                }
                 document.querySelectorAll('.ide-chip').forEach(chip => {
                     const cb = chip.querySelector('input');
                     const chk = chip.querySelector('.ide-chip-check');
@@ -1462,7 +1560,8 @@
                 let html = '<option value="">— Sélectionner —</option>';
                 list.forEach(c => {
                     const label = c.nom || c.name || c.code || 'Classe sans nom';
-                    html += `<option value="${c._id || c.id}">${label}</option>`;
+                    const val = (typeof c._id === 'object' && c._id.$oid) ? c._id.$oid : (c._id || c.id);
+                    html += `<option value="${val}">${label}</option>`;
                 });
                 el.innerHTML = html;
             },
@@ -1523,9 +1622,10 @@
                     if (!er.ok) throw new Error(`/exams non disponible (${er.status})`);
                     const raw = await er.json();
                     const all = Array.isArray(raw) ? raw : (raw.data || raw.items || raw.exams || []);
-                    // ── Garder uniquement les examens PRATIQUES ──────────────────────────
-                    ProfData.allExams = all.filter(e => e.type === 'practical');
-                    if (!ProfData.allExams.length) throw new Error('Aucun examen pratique trouvé');
+                    
+                    // ── On accepte TOUS les examens pour le test (ou on filtre intelligemment) ──
+                    ProfData.allExams = all.filter(e => e.matiere || e.subject || e.title);
+                    if (!ProfData.allExams.length) throw new Error('Aucun examen trouvé en base');
 
                     // ── Trier par nom de classe ──────────────────────────────────────────
                     ProfData.allExams.sort((a, b) => {
@@ -1566,7 +1666,10 @@
                 // Stocker dans un Map keyed par _id ─ on passe UNIQUEMENT l'id dans onclick
                 // (injecter du JSON dans un attribut HTML plante avec les objets MongoDB)
                 ProfData._examMap = {};
-                list.forEach(e => { ProfData._examMap[String(e._id)] = e; });
+                list.forEach(e => { 
+                    const id = _resolveStr(e._id);
+                    if (id) ProfData._examMap[id] = e; 
+                });
 
                 el.innerHTML = demo + list.map(e => {
                     const title = _resolveStr(e.matiere, 'nom', 'code', 'name')
@@ -1577,7 +1680,7 @@
                     const duree = _formatDuree(e.duree ?? e.durationMinutes ?? e.duration);
                     // Icône 💻 pour examens pratiques
                     const icon = '💻';
-                    const sid = String(e._id);
+                    const sid = _resolveStr(e._id);
                     // Meta : filtre les éléments vides
                     const meta = [classe, dateStr, duree].filter(Boolean).join(' · ');
                     return `
@@ -1626,11 +1729,11 @@
                 document.getElementById('af_date').value = dateStr;
                 document.getElementById('af_duree').value = dureeStr;
 
-                // Par défaut : heure actuelle pour le début
-                const now = new Date();
+                // Heure de début : priorité au startedAt de la base (si session commencée), sinon heure actuelle
+                const startRaw = _resolveStr(exam.startedAt);
+                const now = startRaw ? new Date(startRaw) : new Date();
                 const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                 document.getElementById('af_start').value = timeStr;
-                document.getElementById('af_end').value = ""; // À remplir par le prof
 
                 document.getElementById('autoFilledFields').style.display = 'block';
                 document.getElementById('autoFilledFields').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1724,12 +1827,20 @@
                                 return l === 'VS Code' ? 'vscode' : (l === 'IntelliJ IDEA' ? 'intellij' : l.toLowerCase());
                             });
 
+                        // S'assurer qu'un lien tapé mais non ajouté via "+" est quand même envoyé
+                        let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
+                        const manualUrlBody = document.getElementById('urlInput')?.value.trim();
+                        if (!urlToLink && manualUrlBody) {
+                             urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
+                        }
+
                         const payload = {
                             classe: classId,
                             examId: e._id,
                             duration: parsedDuree,
                             testType: 'DESKTOP_APP',
-                            allowedApps: ides.length ? ides : ['vscode']
+                            allowedApps: ides.length ? ides : ['vscode'],
+                            link: urlToLink
                         };
 
                         // Afficher le chargement
@@ -1772,7 +1883,6 @@
                         dateLabel = dr ? new Date(dr).toLocaleDateString('fr-FR') : '—';
                         dureeLabel = _formatDuree(e.duree ?? e.durationMinutes ?? e.duration);
                         startLabel = document.getElementById('af_start').value || '—';
-                        endLabel = document.getElementById('af_end').value || '—';
 
                     } catch (err) {
                         modalError.innerHTML = `<strong>Échec:</strong> ${err.message}`;
@@ -1801,11 +1911,19 @@
                             duration = parseInt(dureeRaw);
                         }
 
+                        // S'assurer qu'un lien tapé mais non ajouté via "+" est quand même envoyé
+                        let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
+                        const manualUrlBody = document.getElementById('urlInput')?.value.trim();
+                        if (!urlToLink && manualUrlBody) {
+                             urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
+                        }
+
                         const payload = {
                             classe: classId,
                             duration: duration,
                             testType: 'DESKTOP_APP',
-                            allowedApps: ['vscode'] // Par défaut pour le mode rapide
+                            allowedApps: ['vscode'], // Par défaut pour le mode rapide
+                            link: urlToLink
                         };
 
                         const btnGen = document.querySelector('#modalActions .btn-indigo');
@@ -1836,7 +1954,6 @@
                         dateLabel = document.getElementById('n_date').value;
                         dureeLabel = dureeRaw;
                         startLabel = document.getElementById('n_start').value || '—';
-                        endLabel = document.getElementById('n_end').value || '—';
 
                     } catch (err) {
                         modalError.innerHTML = `<strong>Échec mode rapide:</strong> ${err.message}`;
@@ -1854,7 +1971,7 @@
                 sessionStorage.setItem('sessionDate', dateLabel);
                 sessionStorage.setItem('sessionDuree', dureeLabel);
                 sessionStorage.setItem('sessionStart', startLabel);
-                sessionStorage.setItem('sessionEnd', endLabel);
+                
                 const ides = [...document.querySelectorAll('.ide-chip.selected')]
                     .map(c => c.querySelector('.ide-chip-label').textContent).join(', ') || 'Aucun';
                 sessionStorage.setItem('allowedIDEs', ides);
@@ -1867,7 +1984,7 @@
                 sum.style.display = 'block';
                 const isRawId = s => /^[0-9a-f]{24}$/i.test(s);
                 const classeDisplay = (!classeLabel || classeLabel === '—' || isRawId(classeLabel)) ? '' : ` · ${classeLabel}`;
-                const timeDisplay = (startLabel !== '—' || endLabel !== '—') ? ` · [${startLabel} - ${endLabel}]` : '';
+                const timeDisplay = (startLabel !== '—') ? ` · [${startLabel}]` : '';
                 sum.innerHTML = `${courseLabel}${classeDisplay} · ${dureeLabel}${timeDisplay}`;
 
                 ProfData.sessions.unshift({ code, course: courseLabel, date: 'À l\'instant', status: 'active' });
@@ -1896,16 +2013,6 @@
                 chk.textContent = cb.checked ? '✓' : '';
             },
 
-            handleFiles(fileList) {
-                Array.from(fileList).forEach(f => {
-                    if (!this.sharedFiles.find(x => x.name === f.name)) this.sharedFiles.push(f);
-                });
-                this.renderFileList();
-            },
-            removeFile(name) {
-                this.sharedFiles = this.sharedFiles.filter(f => f.name !== name);
-                this.renderFileList();
-            },
             addUrl() {
                 const input = document.getElementById('urlInput');
                 let url = input.value.trim();
@@ -1923,7 +2030,9 @@
                 this.renderUrlList();
             },
             renderUrlList() {
-                document.getElementById('urlList').innerHTML = this.sharedUrls.map(url => `
+                const el = document.getElementById('urlList');
+                if (!el) return;
+                el.innerHTML = this.sharedUrls.map(url => `
                 <div class="file-item">
                     <div class="file-item-left">
                         <span>🔗</span>
@@ -1931,24 +2040,7 @@
                     </div>
                     <button class="file-remove" onclick="ProfVM.removeUrl('${url.replace(/'/g, "\\'")}')">✕</button>
                 </div>`).join('');
-            },
-            renderFileList() {
-                document.getElementById('fileList').innerHTML = this.sharedFiles.map(f => `
-                <div class="file-item">
-                    <div class="file-item-left">
-                        <span>${this.fileIcon(f.name)}</span>
-                        <div>
-                            <div class="file-item-name">${f.name}</div>
-                            <div class="file-item-size">${(f.size / 1024).toFixed(1)} Ko</div>
-                        </div>
-                    </div>
-                    <button class="file-remove" onclick="ProfVM.removeFile('${f.name.replace(/'/g, "\\'")}')")>✕</button>
-                </div>`).join('');
-            },
-            fileIcon(name) {
-                const ext = name.split('.').pop().toLowerCase();
-                return { pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', png: '🖼️', jpg: '🖼️', jpeg: '🖼️' }[ext] || '📁';
-            },
+            }
         };
 
         document.addEventListener('DOMContentLoaded', () => ProfVM.init());

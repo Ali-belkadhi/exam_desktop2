@@ -152,6 +152,7 @@ class LoginVM {
 
         // ── Succès : stockage et redirection ──────────────────────────
         sessionStorage.setItem('role', 'student');
+        sessionStorage.setItem('accessToken', serviceToken); // Important pour interroger practical-tests
         sessionStorage.setItem('studentId', student._id);
         sessionStorage.setItem('studentCardNumber', student.studentCardNumber);
         sessionStorage.setItem('studentNom', student.nom || '');
