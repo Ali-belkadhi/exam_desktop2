@@ -1409,7 +1409,7 @@
                     const el = document.getElementById('sessionsList');
                     el.innerHTML = `<div style="text-align:center; padding:20px;"><div class="spin-ring" style="width:20px;height:20px;border-width:2px;"></div></div>`;
                     
-                    const resp = await fetch(`${API_BASE}/practical-tests`, {
+                    const resp = await fetch(`${API_BASE}/practical-tests/professor/history`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (!resp.ok) {
