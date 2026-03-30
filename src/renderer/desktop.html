@@ -740,9 +740,7 @@
     <script>
         const quitSession = async () => {
             if (window.electronAPI) {
-                try {
-                    await window.electronAPI.setLocked(false);
-                } catch (e) {
+                try { await window.electronAPI.setLocked(false); } catch (e) {
                     console.error("Erreur lors du déverrouillage :", e);
                 }
             }
@@ -750,7 +748,35 @@
             window.location.href = './login.html';
         };
 
-        // ── Initialisation du widget de session depuis sessionStorage ─────────────
+        const startHeartbeat = () => {
+            const API_BASE = 'https://safe-exam-db.onrender.com';
+            const sessionCode = sessionStorage.getItem('activeSessionCode');
+            const token = sessionStorage.getItem('accessToken');
+            const name = [sessionStorage.getItem('studentPrenom'), sessionStorage.getItem('studentNom')].filter(Boolean).join(' ') || 'Étudiant';
+
+            if (!sessionCode || !token) return;
+
+            const sendStats = async () => {
+                if (!window.electronAPI) return;
+                try {
+                    const stats = await window.electronAPI.getMonitoringStats();
+                    await fetch(`${API_BASE}/monitoring/heartbeat`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ sessionCode, stats, name })
+                    });
+                } catch (e) {
+                    console.warn('[Monitoring] Heartbeat error:', e);
+                }
+            };
+
+            sendStats();
+            setInterval(sendStats, 20000); // Heartbeat every 20 seconds
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             const role = sessionStorage.getItem('role') || 'student';
             const code = sessionStorage.getItem('activeSessionCode') || '—';
@@ -758,7 +784,6 @@
             const dureeStr = sessionStorage.getItem('sessionDuree') || '';
             const startedAt = sessionStorage.getItem('sessionStartedAt');
 
-            // Affichage des informations de base
             document.getElementById('widgetCourse').textContent = course;
             document.getElementById('widgetCode').textContent = code;
 
@@ -770,10 +795,8 @@
                 document.getElementById('widgetProfInfo').textContent = `${prefix} : ${fullName} | `;
             }
 
-            // ── Logique du Timer ─────────────────────────────────────────────
             let totalSecondsAllowed = 0;
             if (dureeStr) {
-                // On s'attend à un nombre pur (minutes) ou une chaîne type "2h"
                 if (!isNaN(dureeStr)) {
                     totalSecondsAllowed = parseInt(dureeStr, 10) * 60;
                 } else {
@@ -798,22 +821,14 @@
                     const h = Math.floor(remaining / 3600);
                     const m = Math.floor((remaining % 3600) / 60);
                     const s = remaining % 60;
-                    
                     timerEl.textContent = `⏱️ ${pad(h)}:${pad(m)}:${pad(s)}`;
-                    
-                    // Alerte rouge si moins de 5 minutes
-                    if (remaining < 300) {
-                        timerEl.style.color = '#EF4444';
-                    }
-
+                    if (remaining < 300) timerEl.style.color = '#EF4444';
                     if (remaining <= 0) {
                         timerEl.textContent = '⏱️ Temps écoulé';
                         clearInterval(timerInterval);
-                        // Fermeture automatique après 3 secondes pour laisser l'utilisateur voir le message
                         setTimeout(quitSession, 3000); 
                     }
                 } else {
-                    // Chrono montant par défaut si aucune limite n'est définie
                     const h = Math.floor(elapsedSeconds / 3600);
                     const m = Math.floor((elapsedSeconds % 3600) / 60);
                     const s = elapsedSeconds % 60;
@@ -823,23 +838,15 @@
 
             tick();
             const timerInterval = setInterval(tick, 1000);
+            startHeartbeat();
         });
 
-        /**
-         * Ouvre la page VS Code intégrée en passant optionnellement
-         * un workspacePath via sessionStorage.
-         * @param {string} [projectName] - Nom du projet (affiché) ou chemin complet
-         */
         function openVSCodeIntegrated(projectName) {
-            if (projectName) {
-                sessionStorage.setItem('vscodeWorkspace', projectName);
-            } else {
-                sessionStorage.removeItem('vscodeWorkspace');
-            }
+            if (projectName) sessionStorage.setItem('vscodeWorkspace', projectName);
+            else sessionStorage.removeItem('vscodeWorkspace');
             window.location.href = './vscode.html';
         }
 
-        // ── Logique Calculatrice ──
         let calcExpr = "";
         function calcInput(val) {
             const display = document.getElementById('calc-display');
@@ -857,8 +864,6 @@
         }
         function calcResult() {
             try {
-                // Utilisation de Function('return ...') car eval() est déconseillé
-                // (Ici limité à un contexte simple de calculatrice)
                 const result = new Function('return ' + calcExpr)();
                 calcExpr = String(result);
                 document.getElementById('calc-display').value = calcExpr;
@@ -867,6 +872,18 @@
                 calcExpr = "";
             }
         }
+    </script>
+</body>
+</html>
+                 }
+                };
+
+                sendStats();
+                setInterval(sendStats, 15000); // Envoi toutes les 15 secondes
+            };
+
+            startHeartbeat();
+        });
     </script>
 </body>
 

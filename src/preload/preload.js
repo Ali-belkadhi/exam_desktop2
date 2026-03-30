@@ -12,6 +12,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     launchVSCode: (args) => ipcRenderer.invoke('os:launchVSCode', args),
     selectVSCodeExe: () => ipcRenderer.invoke('os:selectVSCodeExe'),
 
+    // Monitoring
+    getMonitoringStats: () => ipcRenderer.invoke('os:getMonitoringStats'),
+
     // code-server intégré
     codeServer: {
         start: (workspacePath, keepAlive) => ipcRenderer.invoke('codeserver:start', { workspacePath, keepAlive }),

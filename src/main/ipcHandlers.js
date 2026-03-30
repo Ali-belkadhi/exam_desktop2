@@ -451,6 +451,92 @@ module.exports = (ipcMain, mainWindow) => {
         }
     });
 
+    // ── Monitoring & Surveillance (Task Manager Logic) ────────────────────────
+    ipcMain.handle('os:getMonitoringStats', async () => {
+        const os = require('os');
+        const { exec } = require('child_process');
+
+        const stats = {
+            pc: {
+                hostname: os.hostname(),
+                platform: os.platform(),
+                release: os.release(),
+                arch: os.arch(),
+                cpu: os.cpus()[0]?.model || 'Inconnu',
+                totalRam: Math.round(os.totalmem() / (1024 ** 3)) + ' GB',
+                freeRam: Math.round(os.freemem() / (1024 ** 3)) + ' GB',
+                manufacturer: 'Chargement...',
+                model: 'Chargement...',
+                isVm: false
+            },
+            processes: [],
+            monitoredApps: {
+                chrome: false,
+                discord: false,
+                intellij: false,
+                vscode: false,
+                obs: false,
+                teams: false
+            }
+        };
+
+        // --- 1. Get Manufacturer, Model & VM Detection (Windows) ---
+        const getWmic = (cmd) => new Promise(res => {
+            exec(`wmic ${cmd}`, (err, stdout) => res(err ? '' : stdout.trim()));
+        });
+
+        if (process.platform === 'win32') {
+            const sysInfo = await getWmic('computersystem get manufacturer,model /format:list');
+            if (sysInfo) {
+                const lines = sysInfo.split('\n');
+                lines.forEach(line => {
+                    if (line.includes('Manufacturer=')) stats.pc.manufacturer = line.split('=')[1].trim();
+                    if (line.includes('Model=')) stats.pc.model = line.split('=')[1].trim();
+                });
+            }
+            
+            // simple VM detection
+            const vendor = stats.pc.manufacturer.toLowerCase();
+            const model = stats.pc.model.toLowerCase();
+            if (vendor.includes('vmware') || vendor.includes('virtualbox') || vendor.includes('microsoft corporation') && model.includes('virtual') || vendor.includes('qemu') || vendor.includes('kvm')) {
+                stats.pc.isVm = true;
+            }
+        }
+
+        // --- 2. Get Processes (Windows) ---
+        return new Promise((resolve) => {
+            if (process.platform === 'win32') {
+                exec('tasklist /NH /FO CSV', (err, stdout) => {
+                    if (!err && stdout) {
+                        const lines = stdout.split('\r\n');
+                        lines.forEach(line => {
+                            const parts = line.split('","');
+                            if (parts.length > 0) {
+                                const name = parts[0].replace(/"/g, '');
+                                if (name && !stats.processes.find(p => p.name === name)) {
+                                    stats.processes.push({ name });
+                                    
+                                    // Check monitored apps
+                                    const lower = name.toLowerCase();
+                                    if (lower.includes('chrome')) stats.monitoredApps.chrome = true;
+                                    if (lower.includes('discord')) stats.monitoredApps.discord = true;
+                                    if (lower.includes('idea')) stats.monitoredApps.intellij = true;
+                                    if (lower.includes('code')) stats.monitoredApps.vscode = true;
+                                    if (lower.includes('obs')) stats.monitoredApps.obs = true;
+                                    if (lower.includes('teams')) stats.monitoredApps.teams = true;
+                                }
+                            }
+                        });
+                        stats.processes.sort((a,b) => a.name.localeCompare(b.name));
+                    }
+                    resolve(stats);
+                });
+            } else {
+                resolve(stats); // Basic fallback for non-windows
+            }
+        });
+    });
+
     // ── Nettoyage à la fermeture ─────────────────────────────────────────────
     app.on('before-quit', () => {
         if (csProcess && !csProcess._keepAlive) stopCodeServer();
