@@ -992,28 +992,11 @@
             border-color: rgba(255, 255, 255, .25);
         }
 
-        .btn-indigo:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(88, 101, 242, .45); }
-
-        /* Monitoring Styles */
-        .monitoring-modal { width: 900px; max-width: 95vw; background: #1a1b1e; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 24px; color: #fff; position: relative; overflow: hidden; display: flex; flex-direction: column; height: 80vh; }
-        .monitoring-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,.05); padding-bottom: 16px; }
-        .monitoring-content { display: grid; grid-template-columns: 280px 1fr; gap: 20px; flex: 1; min-height: 0; }
-        .student-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; cursor: pointer; transition: all .2s; border: 1px solid transparent; margin-bottom: 8px; }
-        .student-item:hover { background: rgba(88, 101, 242, .1); }
-        .student-item.active { background: rgba(88, 101, 242, .15); border-color: rgba(88, 101, 242, .3); }
-        .student-avatar { width: 36px; height: 36px; border-radius: 18px; background: #5865f2; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
-        .vm-badge { background: #ed4245; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: auto; }
-        .detail-view { background: rgba(255,255,255,.03); border-radius: 12px; border: 1px solid rgba(255,255,255,.05); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
-        .task-section-title { font-size: 14px; font-weight: 700; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-        .process-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
-        .process-item { font-size: 12px; color: rgba(255,255,255,.7); background: rgba(255,255,255,.05); padding: 6px 10px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
-        .sys-info-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .sys-info-table th { text-align: left; color: rgba(255,255,255,.3); padding: 8px; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,.03); }
-        .sys-info-table td { padding: 8px; color: #fff; border-bottom: 1px solid rgba(255,255,255,.03); }
-        .monitored-check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-        .monitored-check-item { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,.03); }
-        .monitored-check-item.danger { border: 1px solid rgba(237, 66, 69, 0.4); background: rgba(237, 66, 69, 0.1); color: #ed4245; }
-        .monitored-check-item.success { color: #23d160; }
+        .btn-indigo {
+            background: linear-gradient(135deg, #5865f2, #7289da);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(88, 101, 242, .3);
+        }
 
         .btn-indigo:hover {
             filter: brightness(1.1);
@@ -1285,39 +1268,6 @@
         </div>
     </div>
 
-
-    <!-- ── MODAL MONITORING (Task Manager List) ── -->
-    <div id="monitoringModalOverlay" class="modal-overlay" style="display:none; align-items:center; justify-content:center;">
-        <div class="monitoring-modal" onclick="event.stopPropagation()">
-            <div class="monitoring-header">
-                <div>
-                    <h2 style="font-size:20px; font-weight:800; margin-bottom:4px; display:flex; align-items:center; gap:10px;">
-                        <span style="font-size:24px;">👁️</span> Monitoring en direct
-                    </h2>
-                    <p style="font-size:13px; color:rgba(255,255,255,.45);" id="monitoringSessionInfo">Session #000000 · Chargement...</p>
-                </div>
-                <button class="modal-close" onclick="ProfVM.closeMonitoring()" style="background:none; border:none; color:#fff; font-size:28px; cursor:pointer; opacity:.5;">&times;</button>
-            </div>
-            
-            <div class="monitoring-content">
-                <!-- Colonne Gauche : Liste des étudiants -->
-                <div style="border-right: 1px solid rgba(255,255,255,.05); padding-right:15px; overflow-y:auto;" id="studentListContainer">
-                    <div style="text-align:center; padding:40px; color:rgba(255,255,255,.2);">
-                        Chargement des étudiants...
-                    </div>
-                </div>
-                
-                <!-- Colonne Droite : Détails (Task Manager) -->
-                <div id="studentDetailContainer" class="detail-view">
-                    <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:rgba(255,255,255,.2);">
-                        <span style="font-size:48px; margin-bottom:15px; opacity:.1;">👤</span>
-                        <p style="font-size:14px;">Sélectionnez un étudiant pour analyser<br/>son activité en temps réel.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         let API_BASE = 'https://safe-exam-db.onrender.com'; // Par défaut sur la base de données Render
         
@@ -1514,9 +1464,8 @@
                 }
                 el.innerHTML = ProfData.sessions.map(s => `
                 <div class="session-row">
-                    <div onclick="ProfVM.openMonitoring('${s.id}')" style="cursor:pointer; flex:1; display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <div class="session-code">${s.id}</div>
+                        <div class="session-code">${s.code}</div>
                         <div class="session-meta">
                             <strong style="color:rgba(255,255,255,.9)">${s.course}</strong><br/>
                             <small style="color:rgba(255,255,255,.45)">${s.meta} · ${s.date}</small>
@@ -1524,132 +1473,6 @@
                     </div>
                     <span class="session-badge ${s.status}">${s.status === 'active' ? '🟢 Active' : '⚫ Terminée'}</span>
                 </div>`).join('');
-            },
-
-            // --- Monitoring Implementation ---
-            openMonitoring(sessionId) {
-                document.getElementById('monitoringModalOverlay').style.display = 'flex';
-                document.getElementById('monitoringSessionInfo').textContent = `Session Code: ${sessionId}`;
-                this.currentMonitorSession = sessionId;
-                this.pollMonitoring();
-            },
-            closeMonitoring() {
-                document.getElementById('monitoringModalOverlay').style.display = 'none';
-                if (this.monitorTimer) clearTimeout(this.monitorTimer);
-                this.currentMonitorSession = null;
-                this.selectedStudentId = null;
-            },
-            async pollMonitoring() {
-                if (!this.currentMonitorSession) return;
-                
-                try {
-                    const token = sessionStorage.getItem('accessToken');
-                    const resp = await fetch(`${API_BASE}/monitoring/session/${this.currentMonitorSession}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    
-                    if (resp.ok) {
-                        const students = await resp.json();
-                        // Mapping from backend schema to UI format
-                        const mapped = students.map(s => ({
-                            id: s.studentId,
-                            name: s.studentName || 'Étudiant',
-                            lastSeen: s.lastSeen,
-                            isVm: s.pcInfo?.isVm || false,
-                            hostname: s.pcInfo?.hostname || 'Inconnu',
-                            details: s // keep full object for details
-                        }));
-                        this.renderStudentList(mapped);
-                        this.currentStudentsData = mapped; // store for selectStudent
-                    }
-                } catch (e) {
-                    console.error('[Monitoring] Poll error:', e);
-                }
-                
-                this.monitorTimer = setTimeout(() => this.pollMonitoring(), 5000);
-            },
-            renderStudentList(students) {
-                const container = document.getElementById('studentListContainer');
-                container.innerHTML = students.map(s => {
-                    const statusClass = (Date.now() - new Date(s.lastSeen).getTime() < 60000) ? 'En ligne' : 'Inactif';
-                    const color = statusClass === 'En ligne' ? '#23d160' : 'rgba(255,255,255,.2)';
-                    const active = this.selectedStudentId === s.id ? 'active' : '';
-                    return `
-                    <div class="student-item ${active}" onclick="ProfVM.selectStudent('${s.id}')">
-                        <div class="student-avatar" style="background:${s.isVm ? '#ed4245' : '#5865f2'}">${s.name[0]}</div>
-                        <div style="flex:1">
-                            <div style="font-size:13px; font-weight:600;">${s.name}</div>
-                            <div style="font-size:11px; color:${color};">${statusClass}</div>
-                        </div>
-                        ${s.isVm ? '<span class="vm-badge">VIRTUAL</span>' : ''}
-                    </div>`;
-                }).join('');
-            },
-            selectStudent(studentId) {
-                this.selectedStudentId = studentId;
-                const student = this.currentStudentsData.find(s => s.id === studentId);
-                if (student) {
-                    this.renderStudentDetail(student.details);
-                }
-            },
-            renderStudentDetail(data) {
-                const container = document.getElementById('studentDetailContainer');
-                const pc = data.pcInfo || {};
-                const monitored = data.monitoredApps || {};
-                const processes = data.processes || [];
-
-                const vmSection = pc.isVm ? `
-                    <div style="background:rgba(237,66,69,.1); border:1px solid #ed4245; padding:12px; border-radius:8px; color:#ed4245; display:flex; align-items:center; gap:10px; margin-bottom:15px;">
-                        <span style="font-size:24px;">🚫</span>
-                        <div>
-                            <strong style="display:block">Machine Virtuelle Détectée</strong>
-                            <span style="font-size:11px; opacity:.8;">L'étudiant utilise ${pc.manufacturer || 'un environnement virtuel'}</span>
-                        </div>
-                    </div>
-                ` : '';
-
-                container.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                        <h3 style="font-size:18px; font-weight:800;">👤 ${data.studentName || 'Étudiant'}</h3>
-                        <span style="font-size:12px; opacity:.4;">Mis à jour: ${new Date(data.lastSeen).toLocaleTimeString()}</span>
-                    </div>
-
-                    ${vmSection}
-
-                    <div>
-                        <div class="task-section-title">🔍 Analyse du PC</div>
-                        <table class="sys-info-table">
-                            <tr><th>Ordinateur</th><td>${pc.hostname || '—'}</td></tr>
-                            <tr><th>Sytème</th><td>${pc.platform || '—'} (${pc.arch || '—'}) · ${pc.release || ''}</td></tr>
-                            <tr><th>Fabricant</th><td>${pc.manufacturer || '—'} / ${pc.model || '—'}</td></tr>
-                            <tr><th>Processeur</th><td>${pc.cpu || '—'}</td></tr>
-                            <tr><th>Mémoire</th><td>RAM: ${pc.totalRam || '—'} (Libre: ${pc.freeRam || '—'})</td></tr>
-                        </table>
-                    </div>
-
-                    <div>
-                        <div class="task-section-title">🛑 Surveillance Logiciels</div>
-                        <div class="monitored-check-grid">
-                            <div class="monitored-check-item ${monitored.chrome ? 'success' : ''}">🌐 Chrome : ${monitored.chrome ? 'OUVERT' : 'fermé'}</div>
-                            <div class="monitored-check-item ${monitored.discord ? 'danger' : ''}">💬 Discord : ${monitored.discord ? 'DÉTECTÉ' : 'fermé'}</div>
-                            <div class="monitored-check-item ${monitored.intellij ? 'success' : ''}">⚙️ IntelliJ : ${monitored.intellij ? 'OUVERT' : 'fermé'}</div>
-                            <div class="monitored-check-item ${monitored.vscode ? 'success' : ''}">💙 VS Code : ${monitored.vscode ? 'OUVERT' : 'fermé'}</div>
-                            <div class="monitored-check-item ${monitored.obs ? 'danger' : ''}">🎥 OBS : ${monitored.obs ? 'DÉTECTÉ' : 'fermé'}</div>
-                            <div class="monitored-check-item ${monitored.teams ? 'danger' : ''}">👥 Teams : ${monitored.teams ? 'OUVERT' : 'fermé'}</div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <div class="task-section-title">📋 Processus Actifs (${processes.length})</div>
-                        <div class="process-grid">
-                            ${processes.map(p => `
-                                <div class="process-item" title="${p.name}">
-                                    <span style="opacity:.3">🔹</span> ${p.name.length > 20 ? p.name.substring(0,18)+'...' : p.name}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
             },
 
             toggleSessions() {
