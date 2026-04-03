@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
+    <link rel="stylesheet" href="./assets/css/animation_man_boxes.css" />
     <style>
         *,
         *::before,
@@ -164,6 +165,7 @@
             margin-bottom: 8px;
             background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.6));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -307,7 +309,22 @@
 
 
         <div class="card">
-            <div class="icon-circle">🔑</div>
+            <!-- New Man Between Boxes Animation -->
+            <div class="animation-container state-student">
+                <div class="box box-left">
+                    <div class="box-fill"></div>
+                </div>
+                <div class="pulse-line pulse-left"></div>
+                <div class="man">
+                    <div class="man-head"></div>
+                    <div class="man-body"></div>
+                </div>
+                <div class="pulse-line pulse-right"></div>
+                <div class="box box-right">
+                    <div class="box-fill"></div>
+                </div>
+            </div>
+
             <div class="card-title">Code de session</div>
             <div class="card-sub">Entrez le code à 6 chiffres que<br />votre professeur vous a communiqué.</div>
 
@@ -375,13 +392,16 @@
             const vm = new SessionVM(render);
 
             function render() {
+                const animContainer = document.querySelector('.animation-container');
                 if (vm.isLoading) {
                     joinBtn.innerHTML = '<div class="spinner"></div> Connexion...';
                     joinBtn.disabled = true;
                     errorEl.style.display = 'none';
+                    if (animContainer) animContainer.classList.add('state-loading');
                 } else {
                     joinBtn.innerHTML = 'Rejoindre la session →';
                     joinBtn.disabled = getCode().length < 6;
+                    if (animContainer) animContainer.classList.remove('state-loading');
 
                     if (vm.error) {
                         errorEl.textContent = vm.error;

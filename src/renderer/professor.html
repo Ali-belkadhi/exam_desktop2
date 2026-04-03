@@ -607,6 +607,58 @@
             font-size: 22px;
         }
 
+        .session-row:hover {
+            background-color: rgba(142, 142, 147, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .student-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            transition: background .2s;
+        }
+
+        .student-item:hover {
+            background: rgba(255,255,255,.03);
+        }
+
+        .student-avatar {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #5865f2, #4752c4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(88,101,242,.3);
+        }
+        
+        .student-badge {
+            font-size: 10px;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: rgba(255,255,255,.1);
+            color: rgba(255,255,255,.6);
+            margin-left: auto;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            border: 1px solid transparent;
+        }
+        
+        .student-badge.actif {
+            background: rgba(16,185,129,.1);
+            color: #10b981;
+            border-color: rgba(16,185,129,.2);
+        }
+
         .mode-tab:hover {
             border-color: rgba(88, 101, 242, .4);
             color: rgba(255, 255, 255, .8);
@@ -1225,6 +1277,15 @@
             <!-- ── SECTION COMMUNE ── -->
             <hr class="modal-divider" />
 
+            <div class="modal-section-title">📄 Sujet d'examen (PDF)</div>
+            <div class="modal-field">
+                <div style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.05); padding:10px 14px; border-radius:10px; border:1px dashed rgba(255,255,255,.2);">
+                    <input type="file" id="pdfFile" accept="application/pdf" style="display:none;" onchange="ProfVM.onPdfSelected(this)" />
+                    <button class="btn btn-ghost" style="height:32px; font-size:12px; padding:0 12px; border:1px solid rgba(88,101,242,.4);" onclick="document.getElementById('pdfFile').click()">📎 Choisir un PDF</button>
+                    <span id="pdfFileName" style="font-size:12px; color:rgba(255,255,255,.45); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Aucun fichier sélectionné</span>
+                </div>
+            </div>
+
             <div class="modal-section-title">💻 IDEs autorisés</div>
             <div class="ide-grid" id="ideGrid">
                 <label class="ide-chip selected" onclick="ProfVM.toggleIde(this)">
@@ -1268,11 +1329,35 @@
         </div>
     </div>
 
+    <!-- ── DETAILED SESSION MODAL ── -->
+    <div class="modal-overlay" id="detailsModal">
+        <div class="modal" style="width:500px; max-height:85vh; border:1px solid rgba(255,255,255,.15); background: #1a1b1e; display:flex; flex-direction:column; padding:0;">
+            <div style="padding:24px 24px 16px; border-bottom:1px solid rgba(255,255,255,.08);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2 style="font-size:18px; font-weight:600;"><span style="color:#5865f2; margin-right:8px;">👥</span> Participants à la session</h2>
+                    <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;" onclick="ProfVM.closeDetailsModal()">×</button>
+                </div>
+                <div id="detailsSubheader" style="margin-top:4px; font-size:13px; color:rgba(255,255,255,.45);">Chargement des informations...</div>
+            </div>
+            
+            <div id="detailsContent" style="padding:16px 24px; flex:1; overflow-y:auto; min-height:100px;">
+                <div style="display:flex; justify-content:center; align-items:center; height:150px;">
+                    <div class="spin-ring" style="width:24px; height:24px;"></div>
+                </div>
+            </div>
+
+            <div style="padding:16px 24px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); display:flex; justify-content:flex-end;">
+                <button class="btn btn-ghost" style="font-size:13px; font-weight:600; padding:10px 24px;" onclick="ProfVM.closeDetailsModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let API_BASE = 'https://safe-exam-db.onrender.com'; // Par défaut sur la base de données Render
+        let API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
         
         function setApiServer(url) {
             API_BASE = url;
+            localStorage.setItem('apiBase', url);
             console.log("Serveur API changé vers : " + url);
             ProfVM.fetchRecentSessions();
         }
@@ -1353,6 +1438,7 @@
             sessions: [],
             allExams: [],
             filteredExams: [],
+            detailsInterval: null
         };
 
         const ProfVM = {
@@ -1430,6 +1516,7 @@
                         
                         const status = s.isActive ? 'active' : 'closed';
                         return { 
+                            id: s._id,
                             code: s.sessionCode || '------', 
                             course: displayTitle, 
                             meta: `${mode}${dur}`,
@@ -1463,15 +1550,15 @@
                     return;
                 }
                 el.innerHTML = ProfData.sessions.map(s => `
-                <div class="session-row">
+                <div class="session-row" onclick="ProfVM.showSessionDetails('${s.id}')" style="cursor:pointer; transition: transform .2s, background-color .2s;">
                     <div>
                         <div class="session-code">${s.code}</div>
-                        <div class="session-meta">
-                            <strong style="color:rgba(255,255,255,.9)">${s.course}</strong><br/>
-                            <small style="color:rgba(255,255,255,.45)">${s.meta} · ${s.date}</small>
+                        <div class="session-meta" style="margin-top:2px;">
+                            <strong style="color:rgba(255,255,255,.9); font-size:13.5px;">${s.course}</strong><br/>
+                            <small style="color:rgba(255,255,255,.45); font-size:11.5px;">${s.meta} · ${s.date}</small>
                         </div>
                     </div>
-                    <span class="session-badge ${s.status}">${s.status === 'active' ? '🟢 Active' : '⚫ Terminée'}</span>
+                    <span class="session-badge ${s.status}" style="font-weight:600;">${s.status === 'active' ? '🟢 Active' : '⚫ Terminée'}</span>
                 </div>`).join('');
             },
 
@@ -1526,6 +1613,11 @@
                 });
                 this.setMode('existant');
                 document.getElementById('createModal').classList.add('open');
+                
+                // Reset PDF field
+                document.getElementById('pdfFile').value = '';
+                document.getElementById('pdfFileName').textContent = 'Aucun fichier sélectionné';
+                
                 this.fetchExams();
                 this.fetchClasses();
             },
@@ -1558,8 +1650,125 @@
                 el.innerHTML = html;
             },
 
+            onPdfSelected(input) {
+                const fileName = input.files[0] ? input.files[0].name : 'Aucun fichier sélectionné';
+                document.getElementById('pdfFileName').textContent = fileName;
+                if (input.files[0]) {
+                    document.getElementById('pdfFileName').style.color = '#5865f2';
+                } else {
+                    document.getElementById('pdfFileName').style.color = 'rgba(255,255,255,.45)';
+                }
+            },
+
             closeCreateModal() {
                 document.getElementById('createModal').classList.remove('open');
+            },
+
+            async showSessionDetails(id) {
+                const modal = document.getElementById('detailsModal');
+                modal.classList.add('open');
+                
+                // Fetch first time
+                await this.refreshSessionDetails(id);
+
+                // Then auto-refresh every 5s
+                if (ProfData.detailsInterval) clearInterval(ProfData.detailsInterval);
+                ProfData.detailsInterval = setInterval(() => {
+                    this.refreshSessionDetails(id, true);
+                }, 5000);
+            },
+
+            async refreshSessionDetails(id, isSilent = false) {
+                const content = document.getElementById('detailsContent');
+                const subheader = document.getElementById('detailsSubheader');
+                
+                if (!isSilent) {
+                    content.innerHTML = `
+                        <div style="display:flex; justify-content:center; align-items:center; height:150px;">
+                            <div class="spin-ring" style="width:24px; height:24px;"></div>
+                        </div>
+                    `;
+                    subheader.textContent = 'Récupération des données...';
+                }
+
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    const resp = await fetch(`${API_BASE}/practical-tests/${id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (!resp.ok) throw new Error("Erreur serveur lors de la récupération des détails.");
+                    const data = await resp.json();
+                    
+                    if (data.classe && data.classe.nom) {
+                        subheader.textContent = `Session ${data.sessionCode} · Classe: ${data.classe.nom}`;
+                    } else {
+                        subheader.textContent = `Session ${data.sessionCode}`;
+                    }
+                    
+                    const students = data.classe && data.classe.students ? data.classe.students : [];
+                    const participants = data.participants || [];
+                    
+                    console.log("DEBUG RAW PARTICIPANTS FROM SERVER:", participants);
+                    
+                    const participantIds = participants.map(p => {
+                        if (!p) return '';
+                        
+                        let studentRef = p.student || p;
+                        
+                        if (typeof studentRef === 'string') return studentRef;
+                        if (studentRef && studentRef._id) return studentRef._id.toString();
+                        if (studentRef && studentRef.id) return studentRef.id.toString();
+                        if (studentRef && typeof studentRef.toString === 'function') return studentRef.toString();
+                        
+                        return String(studentRef);
+                    });
+                    
+                    console.log("DEBUG EXTRACTED IDS:", participantIds, "STUDENTS CLASSES IDS:", students.map(s => s._id));
+                    if (students.length === 0) {
+                        content.innerHTML = `
+                            <div style="text-align:center; padding:40px; color:rgba(255,255,255,0.3);">
+                                <span style="font-size:32px; display:block; margin-bottom:12px;">📭</span>
+                                Aucun étudiant n'est inscrit dans cette classe.
+                            </div>
+                        `;
+                    } else {
+                        const html = students.map(st => {
+                            const initiales = (st.prenom && st.nom) 
+                                ? (st.prenom[0] + st.nom[0]).toUpperCase()
+                                : '??';
+                            const isActif = participantIds.includes(st._id.toString());
+                            const statusClass = isActif ? 'actif' : '';
+                            const statusLabel = isActif ? 'Actif' : 'Inscrit';
+                            
+                            return `
+                                <div class="student-item">
+                                    <div class="student-avatar" style="${isActif ? 'background:linear-gradient(135deg, #10b981, #059669);' : ''}">${initiales}</div>
+                                    <div style="flex:1;">
+                                        <div style="color:rgba(255,255,255,.9); font-size:14px; font-weight:500;">${st.prenom} ${st.nom} ${isActif ? '⚡' : ''}</div>
+                                        <div style="color:rgba(255,255,255,.4); font-size:11px;">NC: ${st.studentCardNumber || 'N/A'}</div>
+                                    </div>
+                                    <div class="student-badge ${statusClass}">${statusLabel}</div>
+                                </div>
+                            `;
+                        }).join('');
+                        content.innerHTML = html;
+                    }
+                } catch (e) {
+                    if (!isSilent) {
+                        content.innerHTML = `
+                            <div style="text-align:center; padding:40px; color:#ed4245;">
+                                ⚠️ ${e.message}
+                            </div>
+                        `;
+                        subheader.textContent = 'Erreur de chargement';
+                    }
+                }
+            },
+
+            closeDetailsModal() {
+                if (ProfData.detailsInterval) clearInterval(ProfData.detailsInterval);
+                document.getElementById('detailsModal').classList.remove('open');
             },
 
             setMode(mode) {
@@ -1818,14 +2027,19 @@
                              urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
                         }
 
-                        const payload = {
-                            classe: classId,
-                            examId: e._id,
-                            duration: parsedDuree,
-                            testType: 'DESKTOP_APP',
-                            allowedApps: ides.length ? ides : ['vscode'],
-                            link: urlToLink
-                        };
+                        const formData = new FormData();
+                        formData.append('classe', classId);
+                        formData.append('examId', e._id);
+                        formData.append('duration', parsedDuree.toString());
+                        formData.append('testType', 'DESKTOP_APP');
+                        formData.append('allowedApps', JSON.stringify(ides.length ? ides : ['vscode']));
+                        
+                        if (urlToLink) formData.append('link', urlToLink);
+                        
+                        const pdfInput = document.getElementById('pdfFile');
+                        if (pdfInput.files && pdfInput.files[0]) {
+                            formData.append('pdfFile', pdfInput.files[0]);
+                        }
 
                         // Afficher le chargement
                         const btnGen = document.querySelector('#modalActions .btn-indigo');
@@ -1837,10 +2051,9 @@
                         const resp = await fetch(`${API_BASE}/practical-tests`, {
                             method: 'POST',
                             headers: { 
-                                'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${token}` 
                             },
-                            body: JSON.stringify(payload)
+                            body: formData
                         });
 
                         const data = await resp.json();
@@ -1902,13 +2115,18 @@
                              urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
                         }
 
-                        const payload = {
-                            classe: classId,
-                            duration: duration,
-                            testType: 'DESKTOP_APP',
-                            allowedApps: ['vscode'], // Par défaut pour le mode rapide
-                            link: urlToLink
-                        };
+                        const formData = new FormData();
+                        formData.append('classe', classId);
+                        formData.append('duration', duration.toString());
+                        formData.append('testType', 'DESKTOP_APP');
+                        formData.append('allowedApps', JSON.stringify(['vscode']));
+                        
+                        if (urlToLink) formData.append('link', urlToLink);
+                        
+                        const pdfInput = document.getElementById('pdfFile');
+                        if (pdfInput.files && pdfInput.files[0]) {
+                            formData.append('pdfFile', pdfInput.files[0]);
+                        }
 
                         const btnGen = document.querySelector('#modalActions .btn-indigo');
                         const oriHtml = btnGen.innerHTML;

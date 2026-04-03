@@ -126,6 +126,23 @@
             background-color: #D97706;
         }
 
+        .win-btn.maximize {
+            background-color: #10B981;
+        }
+
+        .win-btn.maximize:hover {
+            background-color: #059669;
+        }
+
+        .os-window.maximized {
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: calc(100% - 1px) !important;
+            border-radius: 0;
+            z-index: 200 !important;
+        }
+
         .window-content {
             flex: 1;
             overflow: hidden;
@@ -302,6 +319,10 @@
             height: 3px;
             background-color: var(--primary);
             border-radius: 3px;
+        }
+
+        #tb-pdf {
+            display: none;
         }
 
         .start-btn {
@@ -558,18 +579,15 @@
         <!-- FENETRE 2 : PDF Viewer -->
         <div class="os-window" id="win-pdf" style="left: 20px; top: 20px; width: 700px; height: 600px;">
             <div class="window-header">
-                <h2>Visionneuse PDF - Chapitre_1_Intro.pdf</h2>
+                <h2 id="pdf-header-title">Visionneuse PDF - Sujet</h2>
                 <div class="window-controls">
-                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-pdf')"></button>
-                    <button class="win-btn close" onclick="UI.closeWindow('win-pdf')"></button>
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-pdf')" title="Réduire"></button>
+                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-pdf')" title="Agrandir"></button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-pdf')" title="Fermer"></button>
                 </div>
             </div>
-            <div class="window-content"
-                style="background-color: #525659; display:flex; justify-content:center; padding: 24px; overflow:auto;">
-                <div
-                    style="width: 80%; background-color: white; height: 1200px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display:flex; justify-content:center; padding-top:100px;">
-                    <h1 style="color: black; font-size:24px;">Page 1: Introduction à la POO</h1>
-                </div>
+            <div class="window-content" id="pdf-body" style="background-color: #525659; flex:1; overflow:hidden; display:flex;">
+                <iframe id="pdf-iframe" style="width: 100%; height: 100%; border:none;" src=""></iframe>
             </div>
         </div>
 
@@ -583,8 +601,9 @@
                         Nouvel onglet</h2>
                 </div>
                 <div class="window-controls">
-                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-browser')"></button>
-                    <button class="win-btn close" onclick="UI.closeWindow('win-browser')"></button>
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-browser')" title="Réduire"></button>
+                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-browser')" title="Agrandir"></button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-browser')" title="Fermer"></button>
                 </div>
             </div>
 
@@ -628,8 +647,9 @@
             <div class="window-header">
                 <h2>Bloc-notes</h2>
                 <div class="window-controls">
-                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-notepad')"></button>
-                    <button class="win-btn close" onclick="UI.closeWindow('win-notepad')"></button>
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-notepad')" title="Réduire"></button>
+                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-notepad')" title="Agrandir"></button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-notepad')" title="Fermer"></button>
                 </div>
             </div>
             <textarea class="notepad-area" placeholder="Commencez à écrire ici..." spellcheck="false"></textarea>
@@ -640,8 +660,9 @@
             <div class="window-header">
                 <h2>Calculatrice</h2>
                 <div class="window-controls">
-                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-calc')"></button>
-                    <button class="win-btn close" onclick="UI.closeWindow('win-calc')"></button>
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-calc')" title="Réduire"></button>
+                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-calc')" title="Agrandir"></button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-calc')" title="Fermer"></button>
                 </div>
             </div>
             <input type="text" id="calc-display" readonly value="0">
@@ -679,7 +700,7 @@
         <div class="taskbar-left" style="width: 150px; display: flex; align-items: center; padding-left: 8px;">
             <button class="secondary"
                 style="font-size: 11px; padding: 6px 12px; color: var(--danger); border-color: rgba(237, 66, 69, 0.3); background: rgba(237, 66, 69, 0.08); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 600;"
-                onclick="async function q(){ if(window.electronAPI) await window.electronAPI.setLocked(false); sessionStorage.clear(); window.location.href='./login.html'; } q()">
+                onclick="quitSession()">
                 <span>🔴</span> Quitter
             </button>
         </div>
@@ -717,6 +738,10 @@
             <div class="launcher-app" onclick="UI.toggleLauncher(); UI.openWindow('win-calc')">
                 <span style="font-size: 24px;">🔢</span>
                 <span class="small">Calculatrice</span>
+            </div>
+            <div class="launcher-app" onclick="UI.toggleLauncher(); UI.openWindow('win-pdf')" id="launcher-pdf" style="display:none;">
+                <span style="font-size: 24px;">📄</span>
+                <span class="small">Sujet PDF</span>
             </div>
 
         </div>
@@ -768,6 +793,30 @@
                 const fullName = [prenom, nom].filter(Boolean).join(' ');
                 const prefix = role === 'student' ? 'Étudiant' : 'Prof';
                 document.getElementById('widgetProfInfo').textContent = `${prefix} : ${fullName} | `;
+            }
+
+            // ── PDF Integration ─────────────────────────────────────────────
+            const pdfRelativeUrl = sessionStorage.getItem('sessionPdf');
+            const tbPdf = document.getElementById('tb-pdf');
+            const lPDF = document.getElementById('launcher-pdf');
+            const pdfIframe = document.getElementById('pdf-iframe');
+            
+            if (pdfRelativeUrl) {
+                // Montrer l'icône dans la barre des tâches et le launcher
+                if (tbPdf) tbPdf.style.display = 'flex';
+                if (lPDF) lPDF.style.display = 'flex';
+                
+                // Construire l'URL absolue vers le backend (en utilisant la base configurée)
+                let API_BASE = 'https://safe-exam-db.onrender.com';
+                try {
+                   // Tenter de récupérer l'API_BASE dynamiquement ou utiliser le défaut
+                   // Pour cette démo, on utilise l'URL absolue concaténée
+                   pdfIframe.src = `${API_BASE}/${pdfRelativeUrl}`;
+                   document.getElementById('pdf-header-title').textContent = "Visionneuse PDF - Sujet d'examen";
+                } catch(e) {}
+            } else {
+                if (tbPdf) tbPdf.style.display = 'none';
+                if (lPDF) lPDF.style.display = 'none';
             }
 
             // ── Logique du Timer ─────────────────────────────────────────────
@@ -865,6 +914,20 @@
             } catch (e) {
                 document.getElementById('calc-display').value = "Erreur";
                 calcExpr = "";
+            }
+        }
+    </script>
+    <script src="./viewmodels/SessionVM.js"></script>
+    <script>
+        const sessionVM = new SessionVM(() => {});
+        
+        // ── Navigation (Quitter) ──
+        async function quitSession() {
+            if (confirm("Êtes-vous sûr de vouloir quitter la session ? Cela signalera votre départ au professeur.")) {
+                await sessionVM.leaveSession(); // Signal au prof
+                if (window.electronAPI) await window.electronAPI.setLocked(false);
+                sessionStorage.clear();
+                window.location.href = './login.html';
             }
         }
     </script>

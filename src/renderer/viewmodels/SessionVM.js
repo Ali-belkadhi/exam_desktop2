@@ -4,22 +4,31 @@ class SessionVM {
         this.isLoading = false;
         this.error = '';
         this.updateView = updateViewCallback;
+        this.API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
+        this.heartbeatInterval = null;
+        
+        // Auto-resume heartbeat if already in a session (for desktop.html)
+        if (sessionStorage.getItem('activeTestId') && sessionStorage.getItem('studentId')) {
+            this.startHeartbeat();
+        }
     }
 
     setCode(val) { this.code = val; }
 
     async join() {
+        if (!this.code) {
+            this.error = 'Veuillez saisir le code de session.';
+            this.updateView();
+            return;
+        }
+
         this.isLoading = true;
         this.error = '';
         this.updateView();
 
-        const API_BASE = 'https://safe-exam-db.onrender.com';
+        const API_BASE = this.API_BASE;
 
         try {
-            // 1. Vérifier l'existence et le statut de la session sur le BACKEND
-            console.log(`[SessionVM] Vérification du code : ${this.code}`);
-            
-            // Le jeton est nécessaire car le contrôleur est gardé par JwtAuthGuard
             const token = sessionStorage.getItem('accessToken');
             const headers = { 'Content-Type': 'application/json' };
             if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -27,65 +36,119 @@ class SessionVM {
             const resp = await fetch(`${API_BASE}/practical-tests/code/${this.code}`, {
                 headers: headers
             });
-            
+
             if (!resp.ok) {
-                if (resp.status === 404) {
-                    throw new Error("Désolé, cette session n'existe pas ou est arrêtée.");
-                } else if (resp.status === 401 || resp.status === 403) {
-                    throw new Error("Session expirée. Veuillez vous reconnecter.");
-                } else {
-                    throw new Error("Erreur de connexion : le serveur a répondu avec le statut " + resp.status);
-                }
+                const err = await resp.json();
+                throw new Error(err.message || 'Session introuvable ou inactive.');
             }
 
             const sessionData = await resp.json();
             
-            // 2. Si OK, appeler l'IPC pour verrouiller la fenêtre et préparer l'environnement
-            const api = window.electronAPI;
-            if (!api) throw new Error("API système non disponible");
+            const courseTitle = sessionData.classe ? sessionData.classe.nom : 'Session Pratique';
+            const profName = sessionData.professors && sessionData.professors.length > 0 
+                ? (sessionData.professors[0].firstName + ' ' + sessionData.professors[0].lastName)
+                : 'Enseignant';
 
-            // Préparer les libellés pour l'affichage
-            const courseTitle = sessionData.classe?.name || "Session Pratique";
-            const profName = sessionData.professors && sessionData.professors[0] 
-                ? (sessionData.professors[0].lastName || "Professeur")
-                : "Professeur";
-
-            const res = await api.joinSession({ 
-                code: this.code,
-                title: courseTitle,
-                prof: profName
-            });
-
-            if (res.success) {
-                // Stocker les infos pour le bureau
-                sessionStorage.setItem('activeSessionCode', this.code);
-                sessionStorage.setItem('sessionCourse', courseTitle);
-                sessionStorage.setItem('sessionProf', profName);
+            sessionStorage.setItem('activeSessionCode', this.code);
+            sessionStorage.setItem('sessionCourse', courseTitle);
+            sessionStorage.setItem('sessionProf', profName);
+            
+            const studentId = sessionStorage.getItem('studentId');
+            const testId = sessionData._id || sessionData.id;
+            sessionStorage.setItem('activeTestId', testId);
+            
+            if (studentId && testId) {
+                // First join
+                await fetch(`${API_BASE}/practical-tests/${testId}/join`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ studentId }),
+                    keepalive: true
+                });
                 
-                // Données temporelles pour le décompte
-                if (sessionData.duration) {
-                    sessionStorage.setItem('sessionDuree', sessionData.duration); // en minutes
-                }
-                if (sessionData.startedAt) {
-                    sessionStorage.setItem('sessionStartedAt', sessionData.startedAt);
-                }
-                if (sessionData.link) {
-                    sessionStorage.setItem('sessionLink', sessionData.link);
-                }
-
-                // Activer le mode examen (Kiosque Fullscreen)
-                await api.setLocked(true);
-
-                // Redirection vers le bureau sécurisé
-                window.location.href = './desktop.html';
-            } else {
-                throw new Error(res.error || "Échec de l'initialisation système");
+                // Start heartbeat for continuous "Online" status
+                this.startHeartbeat();
             }
+            
+            if (sessionData.duration) {
+                sessionStorage.setItem('sessionDuree', sessionData.duration);
+                sessionStorage.setItem('sessionStartedAt', sessionData.startedAt || new Date().toISOString());
+            }
+
+            if (sessionData.pdfUrl) {
+                sessionStorage.setItem('sessionPdfUrl', sessionData.pdfUrl);
+            } else {
+                sessionStorage.removeItem('sessionPdfUrl');
+            }
+
+            window.location.href = './desktop.html';
+
         } catch (e) {
-            console.error('[SessionVM] Join Error:', e);
+            console.error('[SessionVM] join error:', e);
             this.isLoading = false;
             this.error = e.message;
             this.updateView();
+        }
+    }
+
+    async _sendPing() {
+        const testId = sessionStorage.getItem('activeTestId');
+        const studentId = sessionStorage.getItem('studentId');
+        const API_BASE = this.API_BASE;
+        
+        if (testId && studentId) {
+            try {
+                const token = sessionStorage.getItem('accessToken');
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                await fetch(`${API_BASE}/practical-tests/${testId}/join`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ studentId }),
+                    keepalive: true
+                });
+            } catch (e) {
+                console.warn("Ping failed", e);
+            }
+        }
+    }
+
+    startHeartbeat() {
+        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        
+        // Immediate ping
+        this._sendPing();
+        
+        // Use a persistent interval that survives context
+        this.heartbeatInterval = setInterval(() => {
+            this._sendPing();
+        }, 10000); // 10 seconds
+    }
+
+    async leaveSession() {
+        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        
+        const testId = sessionStorage.getItem('activeTestId');
+        const studentId = sessionStorage.getItem('studentId');
+        const API_BASE = this.API_BASE;
+        
+        if (testId && studentId) {
+            try {
+                const token = sessionStorage.getItem('accessToken');
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                
+                await fetch(`${API_BASE}/practical-tests/${testId}/leave`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ studentId }),
+                    keepalive: true
+                });
+                console.log("[SessionVM] Participation retirée");
+            } catch (e) {
+                console.error("[SessionVM] Erreur retrait:", e);
+            }
         }
     }
 }

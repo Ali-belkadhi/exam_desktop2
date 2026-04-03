@@ -29,7 +29,8 @@ class LoginVM {
         this.updateView = updateViewCallback;
 
         // ── Configuration backend ──────────────────────────────────────────
-        this.API_BASE = 'https://safe-exam-db.onrender.com';
+        this.API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
+        localStorage.setItem('apiBase', this.API_BASE);
 
         // Compte service (super-admin) pour les recherches d'étudiants
         this.SERVICE_EMAIL = 'jean.dupont@university.edu';

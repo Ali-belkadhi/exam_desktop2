@@ -23,6 +23,7 @@ const UI = {
     closeWindow(id) {
         const win = document.getElementById(id);
         win.classList.remove('active');
+        win.classList.remove('maximized'); // Réinitialiser l'état agrandi
         win.classList.add('minimized');
         if (id === 'win-pdf') document.getElementById('tb-pdf').classList.remove('open');
     },
@@ -30,6 +31,13 @@ const UI = {
     minimizeWindow(id) {
         const win = document.getElementById(id);
         win.classList.add('minimized');
+        // On ne retire pas forcément maximized ici pour pouvoir restaurer l'état
+    },
+
+    toggleMaximizeWindow(id) {
+        const win = document.getElementById(id);
+        win.classList.toggle('maximized');
+        this.bringToFront(win);
     },
 
     bringToFront(el) {
