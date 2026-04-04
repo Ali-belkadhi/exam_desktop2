@@ -622,7 +622,7 @@
         }
 
         .student-item:hover {
-            background: rgba(255,255,255,.03);
+            background: rgba(255, 255, 255, .03);
         }
 
         .student-avatar {
@@ -637,26 +637,26 @@
             font-weight: 700;
             color: #fff;
             flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(88,101,242,.3);
+            box-shadow: 0 2px 8px rgba(88, 101, 242, .3);
         }
-        
+
         .student-badge {
             font-size: 10px;
             padding: 3px 10px;
             border-radius: 6px;
-            background: rgba(255,255,255,.1);
-            color: rgba(255,255,255,.6);
+            background: rgba(255, 255, 255, .1);
+            color: rgba(255, 255, 255, .6);
             margin-left: auto;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .03em;
             border: 1px solid transparent;
         }
-        
+
         .student-badge.actif {
-            background: rgba(16,185,129,.1);
+            background: rgba(16, 185, 129, .1);
             color: #10b981;
-            border-color: rgba(16,185,129,.2);
+            border-color: rgba(16, 185, 129, .2);
         }
 
         .mode-tab:hover {
@@ -1128,10 +1128,13 @@
             <div class="sessions-card" id="sessionsCard">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <h3 style="margin:0">📋 Mes sessions récentes</h3>
-                    <div style="font-size:10px; color:rgba(255,255,255,0.3); background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px;">
-                        Serveur : 
-                        <span style="color:var(--primary);cursor:pointer;" onclick="setApiServer('http://localhost:3000')">Local</span> | 
-                        <span style="color:var(--primary);cursor:pointer;" onclick="setApiServer('https://safe-exam-db.onrender.com')">Render</span>
+                    <div
+                        style="font-size:10px; color:rgba(255,255,255,0.3); background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px;">
+                        Serveur :
+                        <span style="color:var(--primary);cursor:pointer;"
+                            onclick="setApiServer('http://localhost:3000')">Local</span> |
+                        <span style="color:var(--primary);cursor:pointer;"
+                            onclick="setApiServer('https://safe-exam-db.onrender.com')">Render</span>
                     </div>
                 </div>
                 <div id="sessionsList"></div>
@@ -1279,10 +1282,16 @@
 
             <div class="modal-section-title">📄 Sujet d'examen (PDF)</div>
             <div class="modal-field">
-                <div style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.05); padding:10px 14px; border-radius:10px; border:1px dashed rgba(255,255,255,.2);">
-                    <input type="file" id="pdfFile" accept="application/pdf" style="display:none;" onchange="ProfVM.onPdfSelected(this)" />
-                    <button class="btn btn-ghost" style="height:32px; font-size:12px; padding:0 12px; border:1px solid rgba(88,101,242,.4);" onclick="document.getElementById('pdfFile').click()">📎 Choisir un PDF</button>
-                    <span id="pdfFileName" style="font-size:12px; color:rgba(255,255,255,.45); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Aucun fichier sélectionné</span>
+                <div
+                    style="display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.05); padding:10px 14px; border-radius:10px; border:1px dashed rgba(255,255,255,.2);">
+                    <input type="file" id="pdfFile" accept="application/pdf" style="display:none;"
+                        onchange="ProfVM.onPdfSelected(this)" />
+                    <button class="btn btn-ghost"
+                        style="height:32px; font-size:12px; padding:0 12px; border:1px solid rgba(88,101,242,.4);"
+                        onclick="document.getElementById('pdfFile').click()">📎 Choisir un PDF</button>
+                    <span id="pdfFileName"
+                        style="font-size:12px; color:rgba(255,255,255,.45); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Aucun
+                        fichier sélectionné</span>
                 </div>
             </div>
 
@@ -1331,30 +1340,36 @@
 
     <!-- ── DETAILED SESSION MODAL ── -->
     <div class="modal-overlay" id="detailsModal">
-        <div class="modal" style="width:500px; max-height:85vh; border:1px solid rgba(255,255,255,.15); background: #1a1b1e; display:flex; flex-direction:column; padding:0;">
+        <div class="modal"
+            style="width:500px; max-height:85vh; border:1px solid rgba(255,255,255,.15); background: #1a1b1e; display:flex; flex-direction:column; padding:0;">
             <div style="padding:24px 24px 16px; border-bottom:1px solid rgba(255,255,255,.08);">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2 style="font-size:18px; font-weight:600;"><span style="color:#5865f2; margin-right:8px;">👥</span> Participants à la session</h2>
-                    <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;" onclick="ProfVM.closeDetailsModal()">×</button>
+                    <h2 style="font-size:18px; font-weight:600;"><span
+                            style="color:#5865f2; margin-right:8px;">👥</span> Participants à la session</h2>
+                    <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;"
+                        onclick="ProfVM.closeDetailsModal()">×</button>
                 </div>
-                <div id="detailsSubheader" style="margin-top:4px; font-size:13px; color:rgba(255,255,255,.45);">Chargement des informations...</div>
+                <div id="detailsSubheader" style="margin-top:4px; font-size:13px; color:rgba(255,255,255,.45);">
+                    Chargement des informations...</div>
             </div>
-            
+
             <div id="detailsContent" style="padding:16px 24px; flex:1; overflow-y:auto; min-height:100px;">
                 <div style="display:flex; justify-content:center; align-items:center; height:150px;">
                     <div class="spin-ring" style="width:24px; height:24px;"></div>
                 </div>
             </div>
 
-            <div style="padding:16px 24px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); display:flex; justify-content:flex-end;">
-                <button class="btn btn-ghost" style="font-size:13px; font-weight:600; padding:10px 24px;" onclick="ProfVM.closeDetailsModal()">Fermer</button>
+            <div
+                style="padding:16px 24px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); display:flex; justify-content:flex-end;">
+                <button class="btn btn-ghost" style="font-size:13px; font-weight:600; padding:10px 24px;"
+                    onclick="ProfVM.closeDetailsModal()">Fermer</button>
             </div>
         </div>
     </div>
 
     <script>
         let API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
-        
+
         function setApiServer(url) {
             API_BASE = url;
             localStorage.setItem('apiBase', url);
@@ -1374,7 +1389,7 @@
          */
         function _resolveStr(field, ...keys) {
             if (field === null || field === undefined) return null;
-            
+
             // Gestion du format MongoDB brute {$oid: "..."} ou {$date: "..."}
             if (typeof field === 'object' && field.$oid) return String(field.$oid);
             if (typeof field === 'object' && field.$date) return String(field.$date);
@@ -1418,10 +1433,10 @@
             if (!e) return '';
             const c = e.classe || (e.examId ? e.examId.classe : null);
             if (!c) return '';
-            
+
             // 1. Tenter de résoudre via l'objet lui-même (si populé)
             const resolved = _resolveStr(c, 'nom', 'name', 'code', 'label');
-            
+
             // 2. Si c'est un ID, tenter de trouver le nom dans la liste globale des classes
             if (resolved && (resolved.length === 24 || resolved.match(/^[0-9a-fA-F]{24}$/))) {
                 const found = ProfData.allClasses && ProfData.allClasses.find(cl => {
@@ -1452,7 +1467,7 @@
                 const nom = sessionStorage.getItem('userNom') || sessionStorage.getItem('username') || 'Professeur';
                 const prenom = sessionStorage.getItem('userPrenom') || '';
                 const full = prenom ? `${prenom} ${nom}` : nom;
-                
+
                 const init = full.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'P';
                 document.getElementById('avatarEl').textContent = init;
                 document.getElementById('welcomeTitle').textContent = `Bienvenue, ${full} 👋`;
@@ -1486,7 +1501,7 @@
                     const token = sessionStorage.getItem('accessToken');
                     const el = document.getElementById('sessionsList');
                     el.innerHTML = `<div style="text-align:center; padding:20px;"><div class="spin-ring" style="width:20px;height:20px;border-width:2px;"></div></div>`;
-                    
+
                     const resp = await fetch(`${API_BASE}/practical-tests/professor/history`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
@@ -1494,7 +1509,7 @@
                         el.innerHTML = `<div style="text-align:center; padding:20px; color:#ed4245;">⚠️ Erreur ${resp.status}: Chargement impossible.</div>`;
                         return;
                     }
-                    
+
                     const data = await resp.json();
                     // On mappe les données backend vers le format d'affichage
                     ProfData.sessions = data.map(s => {
@@ -1510,31 +1525,31 @@
                         const mode = s.testType === 'WEB_LINK' ? '🔗 URL' : '🖥️ App';
                         const dur = s.duration ? ` · ${_formatDuree(s.duration)}` : '';
 
-                        const date = s.startedAt 
-                            ? new Date(s.startedAt).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) 
+                        const date = s.startedAt
+                            ? new Date(s.startedAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                             : 'Date inconnue';
-                        
+
                         const status = s.isActive ? 'active' : 'closed';
-                        return { 
+                        return {
                             id: s._id,
-                            code: s.sessionCode || '------', 
-                            course: displayTitle, 
+                            code: s.sessionCode || '------',
+                            course: displayTitle,
                             meta: `${mode}${dur}`,
-                            date, 
-                            status 
+                            date,
+                            status
                         };
                     });
-                    
+
                     document.getElementById('stat-count').textContent = ProfData.sessions.length;
                     this.renderSessions();
                 } catch (e) {
                     console.error('[ProfVM] fetchRecentSessions failed:', e);
                     const el = document.getElementById('sessionsList');
                     // Gérer le cas où le serveur est injoignable ou l'endpoint n'existe pas
-                    const msg = (e.message.includes('404')) 
+                    const msg = (e.message.includes('404'))
                         ? `⚠️ L'historique des sessions n'est pas encore disponible sur ce serveur.`
                         : `⚠️ Impossible de contacter le serveur (${API_BASE}).`;
-                    
+
                     el.innerHTML = `
                     <div style="text-align:center; padding:20px; color:#ed4245; font-size:13px; background:rgba(237,66,69,0.05); border-radius:12px; border:1px solid rgba(237,66,69,0.15);">
                         ${msg}<br/>
@@ -1580,25 +1595,25 @@
                 this.selectedExam = null;
                 const gc = document.getElementById('generatedCode');
                 if (gc) { gc.style.display = 'none'; gc.textContent = ''; }
-                
+
                 const sum = document.getElementById('codeSummary');
                 if (sum) sum.style.display = 'none';
-                
+
                 const urlList = document.getElementById('urlList');
                 if (urlList) urlList.innerHTML = '';
-                
+
                 const urlInput = document.getElementById('urlInput');
                 if (urlInput) urlInput.value = '';
-                
+
                 const modalError = document.getElementById('modalError');
                 if (modalError) modalError.style.display = 'none';
-                
+
                 const autoFields = document.getElementById('autoFilledFields');
                 if (autoFields) autoFields.style.display = 'none';
-                
+
                 const examSearch = document.getElementById('examSearch');
                 if (examSearch) examSearch.value = '';
-                
+
                 const modalActions = document.getElementById('modalActions');
                 if (modalActions) {
                     modalActions.innerHTML = `
@@ -1613,11 +1628,11 @@
                 });
                 this.setMode('existant');
                 document.getElementById('createModal').classList.add('open');
-                
+
                 // Reset PDF field
                 document.getElementById('pdfFile').value = '';
                 document.getElementById('pdfFileName').textContent = 'Aucun fichier sélectionné';
-                
+
                 this.fetchExams();
                 this.fetchClasses();
             },
@@ -1649,7 +1664,6 @@
                 });
                 el.innerHTML = html;
             },
-
             onPdfSelected(input) {
                 const fileName = input.files[0] ? input.files[0].name : 'Aucun fichier sélectionné';
                 document.getElementById('pdfFileName').textContent = fileName;
@@ -1667,21 +1681,35 @@
             async showSessionDetails(id) {
                 const modal = document.getElementById('detailsModal');
                 modal.classList.add('open');
-                
+
                 // Fetch first time
                 await this.refreshSessionDetails(id);
 
-                // Then auto-refresh every 5s
+                // Then auto-refresh via WebSocket
+                if (window.io) {
+                    if (this.socket) this.socket.disconnect();
+                    this.socket = window.io(API_BASE);
+
+                    this.socket.on('connect', () => {
+                        this.socket.emit('watchSession', id);
+                    });
+
+                    this.socket.on('studentPresenceChanged', () => {
+                        this.refreshSessionDetails(id, true);
+                    });
+                }
+
+                // Fallback lent en arrière plan au cas où
                 if (ProfData.detailsInterval) clearInterval(ProfData.detailsInterval);
                 ProfData.detailsInterval = setInterval(() => {
                     this.refreshSessionDetails(id, true);
-                }, 5000);
+                }, 15000);
             },
 
             async refreshSessionDetails(id, isSilent = false) {
                 const content = document.getElementById('detailsContent');
                 const subheader = document.getElementById('detailsSubheader');
-                
+
                 if (!isSilent) {
                     content.innerHTML = `
                         <div style="display:flex; justify-content:center; align-items:center; height:150px;">
@@ -1696,35 +1724,22 @@
                     const resp = await fetch(`${API_BASE}/practical-tests/${id}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
-                    
+
                     if (!resp.ok) throw new Error("Erreur serveur lors de la récupération des détails.");
                     const data = await resp.json();
-                    
+
                     if (data.classe && data.classe.nom) {
                         subheader.textContent = `Session ${data.sessionCode} · Classe: ${data.classe.nom}`;
                     } else {
                         subheader.textContent = `Session ${data.sessionCode}`;
                     }
-                    
+
                     const students = data.classe && data.classe.students ? data.classe.students : [];
                     const participants = data.participants || [];
-                    
+
                     console.log("DEBUG RAW PARTICIPANTS FROM SERVER:", participants);
-                    
-                    const participantIds = participants.map(p => {
-                        if (!p) return '';
-                        
-                        let studentRef = p.student || p;
-                        
-                        if (typeof studentRef === 'string') return studentRef;
-                        if (studentRef && studentRef._id) return studentRef._id.toString();
-                        if (studentRef && studentRef.id) return studentRef.id.toString();
-                        if (studentRef && typeof studentRef.toString === 'function') return studentRef.toString();
-                        
-                        return String(studentRef);
-                    });
-                    
-                    console.log("DEBUG EXTRACTED IDS:", participantIds, "STUDENTS CLASSES IDS:", students.map(s => s._id));
+
+
                     if (students.length === 0) {
                         content.innerHTML = `
                             <div style="text-align:center; padding:40px; color:rgba(255,255,255,0.3);">
@@ -1733,17 +1748,22 @@
                             </div>
                         `;
                     } else {
-                        const html = students.map(st => {
-                            const initiales = (st.prenom && st.nom) 
-                                ? (st.prenom[0] + st.nom[0]).toUpperCase()
-                                : '??';
-                            const isActif = participantIds.includes(st._id.toString());
+                        let html = '';
+                        students.forEach(st => {
+                            const pObj = participants.find(p => {
+                                let studentRef = p.student || p;
+                                let refId = (typeof studentRef === 'string') ? studentRef :
+                                    (studentRef._id || studentRef.id || studentRef.toString());
+                                return refId === st._id.toString();
+                            });
+
+                            const isActif = pObj ? (pObj.status === 'actif') : false;
                             const statusClass = isActif ? 'actif' : '';
                             const statusLabel = isActif ? 'Actif' : 'Inscrit';
-                            
-                            return `
+
+                            html += `
                                 <div class="student-item">
-                                    <div class="student-avatar" style="${isActif ? 'background:linear-gradient(135deg, #10b981, #059669);' : ''}">${initiales}</div>
+                                    <div class="student-avatar" style="${isActif ? 'background:linear-gradient(135deg, #10b981, #059669);' : ''}">${(st.prenom && st.nom) ? (st.prenom[0] + st.nom[0]).toUpperCase() : '??'}</div>
                                     <div style="flex:1;">
                                         <div style="color:rgba(255,255,255,.9); font-size:14px; font-weight:500;">${st.prenom} ${st.nom} ${isActif ? '⚡' : ''}</div>
                                         <div style="color:rgba(255,255,255,.4); font-size:11px;">NC: ${st.studentCardNumber || 'N/A'}</div>
@@ -1751,7 +1771,7 @@
                                     <div class="student-badge ${statusClass}">${statusLabel}</div>
                                 </div>
                             `;
-                        }).join('');
+                        });
                         content.innerHTML = html;
                     }
                 } catch (e) {
@@ -1767,6 +1787,10 @@
             },
 
             closeDetailsModal() {
+                if (this.socket) {
+                    this.socket.disconnect();
+                    this.socket = null;
+                }
                 if (ProfData.detailsInterval) clearInterval(ProfData.detailsInterval);
                 document.getElementById('detailsModal').classList.remove('open');
             },
@@ -1823,7 +1847,7 @@
                     if (!er.ok) throw new Error(`/exams non disponible (${er.status})`);
                     const raw = await er.json();
                     const all = Array.isArray(raw) ? raw : (raw.data || raw.items || raw.exams || []);
-                    
+
                     // ── On accepte TOUS les examens pour le test (ou on filtre intelligemment) ──
                     ProfData.allExams = all.filter(e => e.matiere || e.subject || e.title);
                     if (!ProfData.allExams.length) throw new Error("Aucun examen n'est disponible pour le moment.");
@@ -1859,9 +1883,9 @@
                 // Stocker dans un Map keyed par _id ─ on passe UNIQUEMENT l'id dans onclick
                 // (injecter du JSON dans un attribut HTML plante avec les objets MongoDB)
                 ProfData._examMap = {};
-                list.forEach(e => { 
+                list.forEach(e => {
                     const id = _resolveStr(e._id);
-                    if (id) ProfData._examMap[id] = e; 
+                    if (id) ProfData._examMap[id] = e;
                 });
 
                 el.innerHTML = demo + list.map(e => {
@@ -1966,7 +1990,7 @@
 
             async generateCode() {
                 if (!this.validate()) return;
-                
+
                 const modalError = document.getElementById('modalError');
                 modalError.style.display = 'none';
 
@@ -1980,32 +2004,32 @@
                         if (!token) throw new Error('Session expirée ou token manquant.');
 
                         const e = this.selectedExam;
-                        
+
                         // Extraire l'ID MongoDB de la classe avec vérification approfondie
                         const isMongoId = id => id && /^[0-9a-fA-F]{24}$/.test(String(id));
                         let classId = null;
-                        
+
                         // Chercher dans e.classe (_id, id, string brut)
                         if (e.classe) {
                             if (typeof e.classe === 'object') classId = e.classe._id || e.classe.id;
                             else if (isMongoId(e.classe)) classId = e.classe;
                         }
-                        
+
                         // Fallback : Chercher dans e.matiere.classe si non trouvé
                         if (!classId && e.matiere && e.matiere.classe) {
                             if (typeof e.matiere.classe === 'object') classId = e.matiere.classe._id || e.matiere.classe.id;
                             else if (isMongoId(e.matiere.classe)) classId = e.matiere.classe;
                         }
-                        
+
                         // Si l'examId n'est pas bon
                         if (!isMongoId(e._id)) {
                             throw new Error("Impossible : vous avez sélectionné un examen de démonstration. Veuillez choisir un examen en base.");
                         }
-                        
+
                         // Si la classe est introuvable ou n'est pas un MongoId
                         if (!isMongoId(classId)) {
-                             // Au lieu de bloquer, essayons de tricher ou avertissons
-                             throw new Error("L'examen sélectionné n'a pas de classe associée avec un ID MongoDB valide dans la base de données. ID trouvé : " + encodeURIComponent(classId || "Aucun"));
+                            // Au lieu de bloquer, essayons de tricher ou avertissons
+                            throw new Error("L'examen sélectionné n'a pas de classe associée avec un ID MongoDB valide dans la base de données. ID trouvé : " + encodeURIComponent(classId || "Aucun"));
                         }
 
                         let parsedDuree = 120;
@@ -2024,7 +2048,7 @@
                         let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
                         const manualUrlBody = document.getElementById('urlInput')?.value.trim();
                         if (!urlToLink && manualUrlBody) {
-                             urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
+                            urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
                         }
 
                         const formData = new FormData();
@@ -2033,9 +2057,9 @@
                         formData.append('duration', parsedDuree.toString());
                         formData.append('testType', 'DESKTOP_APP');
                         formData.append('allowedApps', JSON.stringify(ides.length ? ides : ['vscode']));
-                        
+
                         if (urlToLink) formData.append('link', urlToLink);
-                        
+
                         const pdfInput = document.getElementById('pdfFile');
                         if (pdfInput.files && pdfInput.files[0]) {
                             formData.append('pdfFile', pdfInput.files[0]);
@@ -2050,14 +2074,14 @@
                         // Appel à l'API practical-test
                         const resp = await fetch(`${API_BASE}/practical-tests`, {
                             method: 'POST',
-                            headers: { 
-                                'Authorization': `Bearer ${token}` 
+                            headers: {
+                                'Authorization': `Bearer ${token}`
                             },
                             body: formData
                         });
 
                         const data = await resp.json();
-                        
+
                         btnGen.innerHTML = oriHtml;
                         btnGen.disabled = false;
 
@@ -2093,7 +2117,7 @@
                         const classId = document.getElementById('n_classe').value;
                         const subject = document.getElementById('n_matiere').value.trim();
                         const dureeRaw = document.getElementById('n_duree').value;
-                        
+
                         const isMongoId = id => id && /^[0-9a-fA-F]{24}$/.test(String(id));
                         if (!isMongoId(classId)) {
                             throw new Error("Veuillez sélectionner une classe valide venant de la base de données.");
@@ -2112,7 +2136,7 @@
                         let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
                         const manualUrlBody = document.getElementById('urlInput')?.value.trim();
                         if (!urlToLink && manualUrlBody) {
-                             urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
+                            urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
                         }
 
                         const formData = new FormData();
@@ -2120,9 +2144,9 @@
                         formData.append('duration', duration.toString());
                         formData.append('testType', 'DESKTOP_APP');
                         formData.append('allowedApps', JSON.stringify(['vscode']));
-                        
+
                         if (urlToLink) formData.append('link', urlToLink);
-                        
+
                         const pdfInput = document.getElementById('pdfFile');
                         if (pdfInput.files && pdfInput.files[0]) {
                             formData.append('pdfFile', pdfInput.files[0]);
@@ -2135,11 +2159,10 @@
 
                         const resp = await fetch(`${API_BASE}/practical-tests`, {
                             method: 'POST',
-                            headers: { 
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}` 
+                            headers: {
+                                'Authorization': `Bearer ${token}`
                             },
-                            body: JSON.stringify(payload)
+                            body: formData
                         });
 
                         const data = await resp.json();
@@ -2148,7 +2171,7 @@
                         if (!resp.ok) throw new Error(data.message || 'Erreur API creation rapide.');
 
                         apiSessionCode = data.sessionCode;
-                        
+
                         // Infos local
                         courseLabel = subject || 'Session rapide';
                         const sel = document.getElementById('n_classe');
@@ -2173,7 +2196,7 @@
                 sessionStorage.setItem('sessionDate', dateLabel);
                 sessionStorage.setItem('sessionDuree', dureeLabel);
                 sessionStorage.setItem('sessionStart', startLabel);
-                
+
                 const ides = [...document.querySelectorAll('.ide-chip.selected')]
                     .map(c => c.querySelector('.ide-chip-label').textContent).join(', ') || 'Aucun';
                 sessionStorage.setItem('allowedIDEs', ides);
@@ -2250,6 +2273,7 @@
             if (e.target === this) ProfVM.closeCreateModal();
         });
     </script>
+    <script src="socket.io.min.js"></script>
 </body>
 
 </html>

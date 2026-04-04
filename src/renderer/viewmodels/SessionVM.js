@@ -58,16 +58,17 @@ class SessionVM {
             sessionStorage.setItem('activeTestId', testId);
             
             if (studentId && testId) {
-                // First join
+                // Register server-side via HTTP (reliable before page navigation)
                 await fetch(`${API_BASE}/practical-tests/${testId}/join`, {
                     method: 'POST',
                     headers: headers,
                     body: JSON.stringify({ studentId }),
                     keepalive: true
                 });
-                
-                // Start heartbeat for continuous "Online" status
-                this.startHeartbeat();
+                // NOTE: Ne pas démarrer le socket WebSocket ICI.
+                // La page va changer (window.location.href) dans 50ms,
+                // ce qui détruirait le socket immédiatement.
+                // Le socket sera créé dans desktop.html via le constructor.
             }
             
             if (sessionData.duration) {
@@ -105,8 +106,7 @@ class SessionVM {
                 await fetch(`${API_BASE}/practical-tests/${testId}/join`, {
                     method: 'POST',
                     headers: headers,
-                    body: JSON.stringify({ studentId }),
-                    keepalive: true
+                    body: JSON.stringify({ studentId })
                 });
             } catch (e) {
                 console.warn("Ping failed", e);
@@ -115,26 +115,46 @@ class SessionVM {
     }
 
     startHeartbeat() {
-        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
-        
-        // Immediate ping
-        this._sendPing();
-        
-        // Use a persistent interval that survives context
-        this.heartbeatInterval = setInterval(() => {
-            this._sendPing();
-        }, 10000); // 10 seconds
+        if (this.socket) {
+            this.socket.disconnect();
+        }
+
+        const API_BASE = this.API_BASE;
+        const testId = sessionStorage.getItem('activeTestId');
+        const studentId = sessionStorage.getItem('studentId');
+
+        if (!testId || !studentId || !window.io) return;
+
+        // Connexion WebSocket en temps réel
+        this.socket = window.io(API_BASE);
+
+        this.socket.on('connect', () => {
+            console.log('[WebSocket] Connecté, inscription à la session...');
+            this.socket.emit('joinSession', { testId, studentId });
+            
+            // Démarrer la pulsation sécurisée
+            if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+            this.heartbeatInterval = setInterval(() => {
+                if (this.socket && this.socket.connected) {
+                    this.socket.emit('heartbeat', { testId, studentId });
+                }
+            }, 3000); // Heartbeat toutes les 3 secondes
+        });
+
+        this.socket.on('disconnect', () => {
+            console.log('[WebSocket] Déconnecté');
+            if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        });
     }
 
     async leaveSession() {
-        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
-        
         const testId = sessionStorage.getItem('activeTestId');
         const studentId = sessionStorage.getItem('studentId');
         const API_BASE = this.API_BASE;
         
         if (testId && studentId) {
             try {
+                // 1. D'abord, envoyer HTTP /leave (garanti même si le WebSocket échoue)
                 const token = sessionStorage.getItem('accessToken');
                 const headers = { 'Content-Type': 'application/json' };
                 if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -145,10 +165,16 @@ class SessionVM {
                     body: JSON.stringify({ studentId }),
                     keepalive: true
                 });
-                console.log("[SessionVM] Participation retirée");
+                console.log("[SessionVM] Participation retirée via HTTP");
             } catch (e) {
-                console.error("[SessionVM] Erreur retrait:", e);
+                console.error("[SessionVM] Erreur retrait HTTP:", e);
             }
+        }
+        
+        // 2. Ensuite, couper le WebSocket (le gateway va aussi notifier les profs)
+        if (this.socket) {
+            this.socket.disconnect();
+            this.socket = null;
         }
     }
 }

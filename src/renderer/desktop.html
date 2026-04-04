@@ -917,6 +917,7 @@
             }
         }
     </script>
+    <script src="socket.io.min.js"></script>
     <script src="./viewmodels/SessionVM.js"></script>
     <script>
         const sessionVM = new SessionVM(() => {});
@@ -930,6 +931,19 @@
                 window.location.href = './login.html';
             }
         }
+        
+        // Sécurité : Si l'étudiant ferme la fenêtre par force
+        window.addEventListener('beforeunload', () => {
+            const testId = sessionStorage.getItem('activeTestId');
+            const studentId = sessionStorage.getItem('studentId');
+            if (testId && studentId) {
+                // sendBeacon est le SEUL moyen fiable d'envoyer des données quand la page se ferme
+                const blob = new Blob([JSON.stringify({ studentId })], { type: 'application/json' });
+                const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
+                navigator.sendBeacon(`${API_BASE}/practical-tests/${testId}/leave`, blob);
+            }
+            if (sessionVM.socket) sessionVM.socket.disconnect();
+        });
     </script>
 </body>
 
