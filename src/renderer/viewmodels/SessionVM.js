@@ -1,4 +1,4 @@
-class SessionVM {
+window.SessionVM = class SessionVM {
     constructor(updateViewCallback) {
         this.code = '';
         this.isLoading = false;
@@ -44,9 +44,9 @@ class SessionVM {
 
             const sessionData = await resp.json();
             
-            const courseTitle = sessionData.classe ? sessionData.classe.nom : 'Session Pratique';
+            const courseTitle = sessionData.classe ? (sessionData.classe.nom || sessionData.classe.name) : 'Session Pratique';
             const profName = sessionData.professors && sessionData.professors.length > 0 
-                ? (sessionData.professors[0].firstName + ' ' + sessionData.professors[0].lastName)
+                ? ((sessionData.professors[0].firstName || sessionData.professors[0].prenom || '') + ' ' + (sessionData.professors[0].lastName || sessionData.professors[0].nom || ''))
                 : 'Enseignant';
 
             sessionStorage.setItem('activeSessionCode', this.code);
@@ -71,16 +71,8 @@ class SessionVM {
                 // Le socket sera créé dans desktop.html via le constructor.
             }
             
-            if (sessionData.duration) {
-                sessionStorage.setItem('sessionDuree', sessionData.duration);
-                sessionStorage.setItem('sessionStartedAt', sessionData.startedAt || new Date().toISOString());
-            }
-
-            if (sessionData.pdfUrl) {
-                sessionStorage.setItem('sessionPdfUrl', sessionData.pdfUrl);
-            } else {
-                sessionStorage.removeItem('sessionPdfUrl');
-            }
+            // 🔥 Synchroniser l'état initial
+            this._updateLocalSessionState(sessionData);
 
             window.location.href = './desktop.html';
 
@@ -92,59 +84,136 @@ class SessionVM {
         }
     }
 
+    /**
+     * Met à jour sessionStorage avec les dernières données du serveur
+     * @param {Object} data Données JSON
+     * @param {String} serverDateHeader Date brute du header HTTP (pour la synchronisation d'horloge)
+     */
+    _updateLocalSessionState(data, serverDateHeader) {
+        if (!data) return;
+
+        // Synchronisation du temps (Clock Calibration)
+        let serverMs = null;
+        if (data.serverTime) {
+            serverMs = new Date(data.serverTime).getTime();
+        } else if (serverDateHeader) {
+            serverMs = new Date(serverDateHeader).getTime();
+        }
+
+        if (serverMs) {
+            const localMs = Date.now();
+            const offset = serverMs - localMs;
+            sessionStorage.setItem('sessionClockOffset', offset);
+        }
+
+        // Temps & Timer
+        sessionStorage.setItem('sessionDuree', data.duration || data.duree || 60);
+        sessionStorage.setItem('sessionStartedAt', data.startedAt || new Date().toISOString());
+        
+        // Convertir explicitement en booléen car le storage ne stocke que des strings
+        const isPaused = data.isPaused === true || data.isPaused === 'true';
+        sessionStorage.setItem('sessionIsPaused', isPaused ? 'true' : 'false');
+        
+        // Toujours stocker le pausedAt même si nul pour forcer le nettoyage si on reprend
+        sessionStorage.setItem('sessionPausedAt', data.pausedAt || '');
+        sessionStorage.setItem('sessionTotalPausedSeconds', data.totalPausedSeconds || 0);
+        sessionStorage.setItem('sessionExtendedDuration', data.extendedDuration || 0);
+        
+        // Contenu (PDF / Lien)
+        if (data.pdfUrl) sessionStorage.setItem('sessionPdfUrl', data.pdfUrl);
+        else sessionStorage.removeItem('sessionPdfUrl');
+
+        if (data.link) sessionStorage.setItem('sessionLink', data.link);
+        else sessionStorage.removeItem('sessionLink');
+
+        // Statut global (pour arrêter l'examen si terminé)
+        const isActive = data.isActive !== false && !data.endedAt;
+        sessionStorage.setItem('sessionIsActive', isActive ? 'true' : 'false');
+
+        // Traceur de battement pour le UI
+        sessionStorage.setItem('lastHeartbeatAt', Date.now());
+        sessionStorage.setItem('lastHeartbeatAttemptAt', Date.now());
+    }
+
     async _sendPing() {
         const testId = sessionStorage.getItem('activeTestId');
         const studentId = sessionStorage.getItem('studentId');
+        const code = sessionStorage.getItem('activeSessionCode');
         const API_BASE = this.API_BASE;
         
-        if (testId && studentId) {
-            try {
-                const token = sessionStorage.getItem('accessToken');
-                const headers = { 'Content-Type': 'application/json' };
-                if (token) headers['Authorization'] = `Bearer ${token}`;
+        // Un ping est possible si on a soit le TestId (préféré) soit le Code
+        if (!testId && !code) {
+            sessionStorage.setItem('heartbeatError', 'IDs manquants (T/C)');
+            return;
+        }
 
-                await fetch(`${API_BASE}/practical-tests/${testId}/join`, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify({ studentId })
-                });
-            } catch (e) {
-                console.warn("Ping failed", e);
+        sessionStorage.setItem('lastHeartbeatAttemptAt', Date.now());
+
+        try {
+            const token = sessionStorage.getItem('accessToken');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            // Si on a un studentId, on utilise l'endpoint /join (comportement étudiant standard)
+            // Sinon, on fait un simple fetch de statut (comportement professeur/moniteur)
+            let url;
+            let method = 'GET';
+            let body = null;
+
+            if (studentId && testId) {
+                url = `${API_BASE}/practical-tests/${testId}/join`;
+                method = 'POST';
+                body = JSON.stringify({ studentId });
+            } else {
+                // Mode moniteur (Professeur)
+                url = testId 
+                    ? `${API_BASE}/practical-tests/${testId}` 
+                    : `${API_BASE}/practical-tests/code/${code}`;
             }
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+            const resp = await fetch(url, {
+                method: method,
+                headers: headers,
+                body: body,
+                signal: controller.signal,
+                keepalive: true
+            });
+            clearTimeout(timeoutId);
+
+            if (resp.ok) {
+                const freshData = await resp.json();
+                
+                // Extraction du header "Date" pour calibration automatique
+                const serverDateHeader = resp.headers.get('Date');
+                this._updateLocalSessionState(freshData, serverDateHeader);
+                
+                sessionStorage.removeItem('heartbeatError');
+                this.isPaused = sessionStorage.getItem('sessionIsPaused') === 'true';
+                window.dispatchEvent(new CustomEvent('session-updated'));
+            } else {
+                const errorData = await resp.json().catch(() => ({}));
+                const msg = errorData.message || `Défaut Srv (${resp.status})`;
+                sessionStorage.setItem('heartbeatError', msg);
+            }
+        } catch (e) {
+            const msg = e.name === 'AbortError' ? 'Erreur: Timeout Réseau' : `Erreur: ${e.message}`;
+            sessionStorage.setItem('heartbeatError', msg);
         }
     }
 
     startHeartbeat() {
-        if (this.socket) {
-            this.socket.disconnect();
-        }
+        if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        
+        // Use a persistent interval that survives context
+        this.heartbeatInterval = setInterval(() => {
+            this._sendPing();
+        }, 1000); // 1 second for "Real Time" sync
 
-        const API_BASE = this.API_BASE;
-        const testId = sessionStorage.getItem('activeTestId');
-        const studentId = sessionStorage.getItem('studentId');
-
-        if (!testId || !studentId || !window.io) return;
-
-        // Connexion WebSocket en temps réel
-        this.socket = window.io(API_BASE);
-
-        this.socket.on('connect', () => {
-            console.log('[WebSocket] Connecté, inscription à la session...');
-            this.socket.emit('joinSession', { testId, studentId });
-            
-            // Démarrer la pulsation sécurisée
-            if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
-            this.heartbeatInterval = setInterval(() => {
-                if (this.socket && this.socket.connected) {
-                    this.socket.emit('heartbeat', { testId, studentId });
-                }
-            }, 3000); // Heartbeat toutes les 3 secondes
-        });
-
-        this.socket.on('disconnect', () => {
-            console.log('[WebSocket] Déconnecté');
-            if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
-        });
+        // Immediate ping after setting interval (to avoid race conditions)
+        this._sendPing();
     }
 
     async leaveSession() {

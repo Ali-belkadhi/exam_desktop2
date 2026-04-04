@@ -46,6 +46,21 @@
             background-color: var(--success);
             display: inline-block;
             margin-right: 6px;
+            transition: background-color 0.3s;
+        }
+
+        .status-dot.paused {
+            background-color: #F59E0B; /* Warning yellow */
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+        }
+
+        /* ── Paused Blink Animation ── */
+        @keyframes blinker {
+            50% { opacity: 0.3; }
+        }
+        .timer-paused {
+            animation: blinker 1.5s linear infinite;
+            color: #F59E0B !important;
         }
 
         /* Fenêtres (Windows) */
@@ -552,6 +567,46 @@
             resize: none;
             outline: none;
         }
+
+        /* ── Pause Overlay ── */
+        .pause-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            user-select: none;
+        }
+
+        .pause-content {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .pause-icon {
+            font-size: 64px;
+            animation: pulse-pause 2s infinite;
+        }
+
+        @keyframes pulse-pause {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 
@@ -571,6 +626,14 @@
             </p>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                 <span class="small" id="widgetTimer" style="color:var(--warning); font-weight:600;">⏱️ —:--:--</span>
+            </div>
+            <!-- Sync Diagnostic (Subtle) -->
+            <div id="syncDiag" style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 10px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 2px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span id="diagVM">VM: ?</span>
+                    <span id="diagPulse">Pulse: —</span>
+                </div>
+                <div id="diagError" style="color: #EF4444; font-weight: 500;"></div>
             </div>
         </div>
 
@@ -716,7 +779,7 @@
 
         <div class="taskbar-right">
             <span>🛜</span>
-            <span id="clockClock">10:45 AM</span>
+            <span id="clockClock">--:-- --</span>
         </div>
     </div>
 
@@ -760,178 +823,296 @@
         </div>
     </div>
 
+    <!-- ViewModels & Views -->
+    <script src="./viewmodels/SessionVM.js"></script>
     <script src="./views/ClassroomDesktopView.js"></script>
     <script src="./views/BrowserView.js"></script>
-    <script>
-        const quitSession = async () => {
-            if (window.electronAPI) {
-                try {
-                    await window.electronAPI.setLocked(false);
-                } catch (e) {
-                    console.error("Erreur lors du déverrouillage :", e);
-                }
-            }
-            sessionStorage.clear();
-            window.location.href = './login.html';
-        };
 
-        // ── Initialisation du widget de session depuis sessionStorage ─────────────
-        document.addEventListener('DOMContentLoaded', () => {
+    <script>
+        /**
+         * ROBUST INITIALIZATION
+         * Ensures the app starts correctly whether the script runs before or after DOMContentLoaded.
+         */
+        function robustInit() {
+            console.log("[App] Running robust initialization...");
+
+            // 1. Initialize SessionVM (The Brain)
+            if (window.SessionVM && !window.sessionVM) {
+                window.sessionVM = new window.SessionVM(() => {});
+                window.sessionVM.startHeartbeat();
+                console.log("[App] SessionVM Instance Created.");
+            }
+
+            // 2. Initialize BrowserVM (The Browser)
+            if (window.BrowserVM && !window.BrowserVM.webview) {
+                const sLink = sessionStorage.getItem('sessionLink');
+                window.BrowserVM.init(sLink);
+                console.log("[App] BrowserVM Initialized.");
+            }
+
+            // 3. Setup Session UI (Timer/Info)
             const role = sessionStorage.getItem('role') || 'student';
             const code = sessionStorage.getItem('activeSessionCode') || '—';
             const course = sessionStorage.getItem('sessionCourse') || 'Session Pratique';
-            const dureeStr = sessionStorage.getItem('sessionDuree') || '';
-            const startedAt = sessionStorage.getItem('sessionStartedAt');
-
-            // Affichage des informations de base
-            document.getElementById('widgetCourse').textContent = course;
-            document.getElementById('widgetCode').textContent = code;
+            
+            if (document.getElementById('widgetCourse')) document.getElementById('widgetCourse').textContent = course;
+            if (document.getElementById('widgetCode')) document.getElementById('widgetCode').textContent = code;
 
             const nom = sessionStorage.getItem('studentNom') || sessionStorage.getItem('userNom') || '';
             const prenom = sessionStorage.getItem('studentPrenom') || sessionStorage.getItem('userPrenom') || '';
-            if (nom || prenom) {
+            const widgetProfInfo = document.getElementById('widgetProfInfo');
+            if (widgetProfInfo && (nom || prenom)) {
                 const fullName = [prenom, nom].filter(Boolean).join(' ');
                 const prefix = role === 'student' ? 'Étudiant' : 'Prof';
-                document.getElementById('widgetProfInfo').textContent = `${prefix} : ${fullName} | `;
+                widgetProfInfo.textContent = `${prefix} : ${fullName} | `;
             }
 
-            // ── PDF Integration ─────────────────────────────────────────────
-            const pdfRelativeUrl = sessionStorage.getItem('sessionPdf');
+            // 4. PDF & Link Integration Logic
             const tbPdf = document.getElementById('tb-pdf');
             const lPDF = document.getElementById('launcher-pdf');
+            const tbBrowser = document.getElementById('tb-browser');
             const pdfIframe = document.getElementById('pdf-iframe');
             
-            if (pdfRelativeUrl) {
-                // Montrer l'icône dans la barre des tâches et le launcher
-                if (tbPdf) tbPdf.style.display = 'flex';
-                if (lPDF) lPDF.style.display = 'flex';
-                
-                // Construire l'URL absolue vers le backend (en utilisant la base configurée)
-                let API_BASE = 'https://safe-exam-db.onrender.com';
-                try {
-                   // Tenter de récupérer l'API_BASE dynamiquement ou utiliser le défaut
-                   // Pour cette démo, on utilise l'URL absolue concaténée
-                   pdfIframe.src = `${API_BASE}/${pdfRelativeUrl}`;
-                   document.getElementById('pdf-header-title').textContent = "Visionneuse PDF - Sujet d'examen";
-                } catch(e) {}
-            } else {
-                if (tbPdf) tbPdf.style.display = 'none';
-                if (lPDF) lPDF.style.display = 'none';
-            }
+            const updateSubjectView = () => {
+                const pdfUrl = sessionStorage.getItem('sessionPdfUrl');
+                const sessionLink = sessionStorage.getItem('sessionLink');
+                const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
 
-            // ── Logique du Timer ─────────────────────────────────────────────
-            let totalSecondsAllowed = 0;
-            if (dureeStr) {
-                // On s'attend à un nombre pur (minutes) ou une chaîne type "2h"
-                if (!isNaN(dureeStr)) {
-                    totalSecondsAllowed = parseInt(dureeStr, 10) * 60;
+                // PDF Visibility
+                if (pdfUrl) {
+                    if (tbPdf) tbPdf.style.display = 'flex';
+                    if (lPDF) lPDF.style.display = 'flex';
+                    const fullPdfUrl = pdfUrl.startsWith('http') ? pdfUrl : `${API_BASE}/${pdfUrl}`;
+                    if (pdfIframe && pdfIframe.src !== fullPdfUrl) pdfIframe.src = fullPdfUrl;
                 } else {
-                    const mH = dureeStr.match(/(\d+)\s*h/);
-                    const mM = dureeStr.match(/(\d+)\s*min/);
-                    const hours = mH ? parseInt(mH[1]) : 0;
-                    const minutes = mM ? parseInt(mM[1]) : (isNaN(dureeStr) ? 0 : parseInt(dureeStr));
-                    totalSecondsAllowed = (hours * 3600) + (minutes * 60);
+                    if (tbPdf) { tbPdf.style.display = 'none'; tbPdf.classList.remove('open'); }
+                    if (lPDF) lPDF.style.display = 'none';
                 }
-            }
 
-            const startTime = startedAt ? new Date(startedAt).getTime() : Date.now();
+                // Smart Browser Navigation (Prevents reload loops)
+                if (sessionLink && sessionLink.length > 5) {
+                    if (tbBrowser) tbBrowser.style.display = 'flex';
+                    if (window.BrowserVM && window.BrowserVM.webview) {
+                        // On n'actualise que si le lien a VÉRITABLEMENT changé par rapport à notre dernière commande
+                        if (window._lastNavigatedLink !== sessionLink) {
+                            console.log(`[App] Nouveau lien détecté : ${sessionLink}`);
+                            window.BrowserVM.navigate(sessionLink);
+                            window._lastNavigatedLink = sessionLink;
+                        }
+                    }
+                } else {
+                    if (tbBrowser) { tbBrowser.style.display = 'none'; tbBrowser.classList.remove('open'); }
+                    window._lastNavigatedLink = null;
+                }
+            };
+            updateSubjectView();
+
+            // 5. Setup synchronization heartbeat results
             const timerEl = document.getElementById('widgetTimer');
-            const pad = n => String(n).padStart(2, '0');
+            const statusDot = document.querySelector('.status-dot');
+            const widgetStatus = document.getElementById('widgetStatus');
+            const pad = n => String(Math.floor(n)).padStart(2, '0');
+
+            const getServerTime = () => {
+                const offset = parseInt(sessionStorage.getItem('sessionClockOffset') || '0', 10);
+                return Date.now() + offset;
+            };
 
             const tick = () => {
-                const now = Date.now();
-                const elapsedSeconds = Math.floor((now - startTime) / 1000);
+                const dureeMin = parseInt(sessionStorage.getItem('sessionDuree') || '60', 10);
+                const extendedMin = parseInt(sessionStorage.getItem('sessionExtendedDuration') || '0', 10);
+                const totalSeconds = (dureeMin + extendedMin) * 60;
 
-                if (totalSecondsAllowed > 0) {
-                    const remaining = Math.max(0, totalSecondsAllowed - elapsedSeconds);
-                    const h = Math.floor(remaining / 3600);
-                    const m = Math.floor((remaining % 3600) / 60);
-                    const s = remaining % 60;
-                    
-                    timerEl.textContent = `⏱️ ${pad(h)}:${pad(m)}:${pad(s)}`;
-                    
-                    // Alerte rouge si moins de 5 minutes
-                    if (remaining < 300) {
-                        timerEl.style.color = '#EF4444';
-                    }
-
-                    if (remaining <= 0) {
-                        timerEl.textContent = '⏱️ Temps écoulé';
-                        clearInterval(timerInterval);
-                        // Fermeture automatique après 3 secondes pour laisser l'utilisateur voir le message
-                        setTimeout(quitSession, 3000); 
+                const startedAtVal = sessionStorage.getItem('sessionStartedAt');
+                const startTime = startedAtVal ? new Date(startedAtVal).getTime() : getServerTime();
+                
+                const isPaused = sessionStorage.getItem('sessionIsPaused') === 'true';
+                const totalPausedSeconds = parseInt(sessionStorage.getItem('sessionTotalPausedSeconds') || '0', 10);
+                const pausedAtStr = sessionStorage.getItem('sessionPausedAt');
+                
+                let effectiveNow = getServerTime();
+                if (isPaused) {
+                    if (pausedAtStr) effectiveNow = new Date(pausedAtStr).getTime();
+                    else {
+                        if (!window._localPauseStartTime) window._localPauseStartTime = getServerTime();
+                        effectiveNow = window._localPauseStartTime;
                     }
                 } else {
-                    // Chrono montant par défaut si aucune limite n'est définie
-                    const h = Math.floor(elapsedSeconds / 3600);
-                    const m = Math.floor((elapsedSeconds % 3600) / 60);
-                    const s = elapsedSeconds % 60;
-                    timerEl.textContent = `⏱️ ${pad(h)}:${pad(m)}:${pad(s)}`;
+                    window._localPauseStartTime = null;
+                }
+                
+                const netElapsed = ((effectiveNow - startTime) / 1000) - totalPausedSeconds;
+                const remaining = Math.max(0, totalSeconds - netElapsed);
+
+                // Pulse Diagnostics
+                const nowMs = Date.now();
+                const lastPulse = parseInt(sessionStorage.getItem('lastHeartbeatAt') || '0', 10);
+                const lastAttempt = parseInt(sessionStorage.getItem('lastHeartbeatAttemptAt') || '0', 10);
+                const isSynced = (nowMs - lastPulse) < 6000; 
+                const heartbeatError = sessionStorage.getItem('heartbeatError');
+                const isAlive = (nowMs - lastAttempt) < 3000;
+
+                if (isPaused) {
+                    if (timerEl) timerEl.classList.add('timer-paused');
+                    if (statusDot) { statusDot.style.backgroundColor = '#F59E0B'; statusDot.style.opacity = '1'; }
+                    if (widgetStatus) widgetStatus.textContent = 'Session en PAUSE';
+                    
+                    const pauseOverlay = document.getElementById('pauseOverlay');
+                    if (pauseOverlay) pauseOverlay.style.display = 'flex';
+                } else {
+                    const pauseOverlay = document.getElementById('pauseOverlay');
+                    if (pauseOverlay) pauseOverlay.style.display = 'none';
+
+                    if (timerEl) {
+                        timerEl.classList.remove('timer-paused');
+                        timerEl.style.color = (remaining < 300) ? '#EF4444' : 'var(--warning)';
+                    }
+                    if (statusDot) {
+                        if (heartbeatError && !isSynced) statusDot.style.backgroundColor = '#EF4444';
+                        else if (lastPulse === 0 && isAlive) statusDot.style.backgroundColor = 'var(--primary)';
+                        else statusDot.style.backgroundColor = 'var(--success)';
+                        statusDot.style.opacity = isSynced ? '1' : '0.4';
+                    }
+                    if (widgetStatus) {
+                        if (heartbeatError && !isSynced) widgetStatus.textContent = 'Erreur Synchro';
+                        else if (lastPulse === 0 && isAlive) widgetStatus.textContent = 'Initialisation...';
+                        else widgetStatus.textContent = isSynced ? 'Session Active' : 'Connexion...';
+                    }
+                }
+
+                // Diagnostics panel
+                const diagVM = document.getElementById('diagVM');
+                const diagPulse = document.getElementById('diagPulse');
+                const diagOffset = document.getElementById('diagOffset');
+                
+                if (diagVM) diagVM.textContent = (window.sessionVM) ? 'VM: OK ✅' : 'VM: NOT LOADED ❌';
+                if (diagPulse) {
+                    const diffS = Math.floor((Date.now() - lastPulse) / 1000);
+                    diagPulse.textContent = `Pulse: ${lastPulse === 0 ? '—' : diffS + 's'}`;
+                    diagPulse.style.color = diffS > 5 ? '#EF4444' : (isSynced ? '#10B981' : '#F59E0B');
+                }
+                if (diagOffset) {
+                    const offset = parseInt(sessionStorage.getItem('sessionClockOffset') || '0', 10);
+                    diagOffset.textContent = `Offset: ${offset >= 0 ? '+' : ''}${Math.round(offset/1000)}s`;
+                    diagOffset.style.opacity = Math.abs(offset) > 5000 ? '1' : '0.4';
+                }
+
+                const diagError = document.getElementById('diagError');
+                if (diagError) diagError.textContent = heartbeatError ? `Err: ${heartbeatError}` : (isPaused ? ' (PAUSÉ SUR SERVEUR)' : '');
+
+                const h = Math.floor(remaining / 3600);
+                const m = Math.floor((remaining % 3600) / 60);
+                const s = Math.floor(remaining % 60);
+                if (timerEl) {
+                    timerEl.textContent = `⏱️ ${pad(h)}:${pad(m)}:${pad(s)}${isPaused ? ' (PAUSE)' : ''}`;
+                    if (isPaused) timerEl.style.color = '#F59E0B';
+                }
+
+                if (remaining <= 0 && totalSeconds > 0 && !isPaused) {
+                    if (timerEl) timerEl.textContent = '⏱️ Temps écoulé';
+                    clearInterval(window._timerInterval);
+                    setTimeout(quitSession, 3000); 
+                }
+                if (sessionStorage.getItem('sessionIsActive') === 'false') {
+                    clearInterval(window._timerInterval);
+                    alert("La session a été terminée par le professeur.");
+                    quitSession(true); // Force quit without second prompt
                 }
             };
 
-            tick();
-            const timerInterval = setInterval(tick, 1000);
-        });
+            window.addEventListener('session-updated', () => {
+                updateSubjectView();
+                tick();
+            });
 
-        /**
-         * Ouvre la page VS Code intégrée en passant optionnellement
-         * un workspacePath via sessionStorage.
-         * @param {string} [projectName] - Nom du projet (affiché) ou chemin complet
-         */
-        function openVSCodeIntegrated(projectName) {
-            if (projectName) {
-                sessionStorage.setItem('vscodeWorkspace', projectName);
-            } else {
-                sessionStorage.removeItem('vscodeWorkspace');
+            tick();
+            if (window._timerInterval) clearInterval(window._timerInterval);
+            window._timerInterval = setInterval(tick, 1000);
+
+            // 6. Final UI Launch (Auto-Open Window)
+            const sessionLink = sessionStorage.getItem('sessionLink');
+            const pdfUrl = sessionStorage.getItem('sessionPdfUrl');
+
+            if (typeof UI !== 'undefined' && UI.openWindow) {
+                if (sessionLink && sessionLink.length > 5) {
+                    UI.openWindow('win-browser');
+                } else if (pdfUrl) {
+                    UI.openWindow('win-pdf');
+                }
+                if (UI.updateClock) UI.updateClock();
             }
+        }
+
+        // --- ATTACH INITIALIZATION ---
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', robustInit);
+        } else {
+            robustInit();
+        }
+
+        // --- GLOBAL FUNCTIONS ---
+        const quitSession = async (force = false) => {
+            if (force || confirm("Êtes-vous sûr de vouloir quitter la session ?")) {
+                const vm = window.sessionVM;
+                if (vm) await vm.leaveSession();
+                if (window.electronAPI) await window.electronAPI.setLocked(false);
+                sessionStorage.clear();
+                window.location.href = './login.html';
+            }
+        };
+
+        function openVSCodeIntegrated(projectName) {
+            if (projectName) sessionStorage.setItem('vscodeWorkspace', projectName);
+            else sessionStorage.removeItem('vscodeWorkspace');
             window.location.href = './vscode.html';
         }
 
-        // ── Logique Calculatrice ──
+        // --- CALCULATOR ---
         let calcExpr = "";
         function calcInput(val) {
             const display = document.getElementById('calc-display');
             if (calcExpr === "0" && val !== ".") calcExpr = "";
             calcExpr += val;
-            display.value = calcExpr || "0";
+            if (display) display.value = calcExpr || "0";
         }
         function calcClear() {
             calcExpr = "";
-            document.getElementById('calc-display').value = "0";
+            const display = document.getElementById('calc-display');
+            if (display) display.value = "0";
         }
         function calcBackspace() {
             calcExpr = calcExpr.slice(0, -1);
-            document.getElementById('calc-display').value = calcExpr || "0";
+            const display = document.getElementById('calc-display');
+            if (display) display.value = calcExpr || "0";
         }
         function calcResult() {
             try {
-                // Utilisation de Function('return ...') car eval() est déconseillé
-                // (Ici limité à un contexte simple de calculatrice)
                 const result = new Function('return ' + calcExpr)();
                 calcExpr = String(result);
-                document.getElementById('calc-display').value = calcExpr;
+                const display = document.getElementById('calc-display');
+                if (display) display.value = calcExpr;
             } catch (e) {
-                document.getElementById('calc-display').value = "Erreur";
+                const display = document.getElementById('calc-display');
+                if (display) display.value = "Erreur";
                 calcExpr = "";
             }
         }
     </script>
-    <script src="socket.io.min.js"></script>
-    <script src="./viewmodels/SessionVM.js"></script>
+    <!-- Overlay de Pause -->
+    <div class="pause-overlay" id="pauseOverlay">
+        <div class="pause-content">
+            <div class="pause-icon">⏸️</div>
+            <h1 style="font-size: 28px; font-weight: 700;">SESSION EN PAUSE</h1>
+            <p style="font-size: 16px; opacity: 0.8; max-width: 300px;">
+                L'examen est temporairement suspendu par le professeur.
+            </p>
+            <div class="small" style="margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.1); border-radius: 20px;">
+                Attendez les instructions...
+            </div>
+        </div>
+    </div>
+
     <script>
-        const sessionVM = new SessionVM(() => {});
-        
-        // ── Navigation (Quitter) ──
-        async function quitSession() {
-            if (confirm("Êtes-vous sûr de vouloir quitter la session ? Cela signalera votre départ au professeur.")) {
-                await sessionVM.leaveSession(); // Signal au prof
-                if (window.electronAPI) await window.electronAPI.setLocked(false);
-                sessionStorage.clear();
-                window.location.href = './login.html';
-            }
-        }
-        
         // Sécurité : Si l'étudiant ferme la fenêtre par force
         window.addEventListener('beforeunload', () => {
             const testId = sessionStorage.getItem('activeTestId');
@@ -942,7 +1123,7 @@
                 const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
                 navigator.sendBeacon(`${API_BASE}/practical-tests/${testId}/leave`, blob);
             }
-            if (sessionVM.socket) sessionVM.socket.disconnect();
+            if (window.sessionVM && window.sessionVM.socket) window.sessionVM.socket.disconnect();
         });
     </script>
 </body>

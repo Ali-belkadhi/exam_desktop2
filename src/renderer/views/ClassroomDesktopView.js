@@ -47,10 +47,13 @@ const UI = {
 
     updateClock() {
         const now = new Date();
-        document.getElementById('clockClock').textContent =
-            now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const clockEl = document.getElementById('clockClock');
+        if (clockEl) {
+            clockEl.textContent = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        }
     }
 };
+window.UI = UI;
 
 // Window Drag Logic
 let draggingElement = null;
@@ -147,14 +150,3 @@ const AppActions = {
 
 // Initialisation
 setInterval(UI.updateClock, 1000);
-document.addEventListener('DOMContentLoaded', () => {
-    UI.updateClock();
-    
-    // Si un lien de session existe, on ouvre le navigateur. Sinon, on peut ouvrir le PDF par défaut.
-    const sessionLink = sessionStorage.getItem('sessionLink');
-    if (sessionLink && document.getElementById('win-browser')) {
-        UI.openWindow('win-browser');
-    } else if (document.getElementById('win-pdf')) {
-        UI.openWindow('win-pdf');
-    }
-});

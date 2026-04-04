@@ -612,6 +612,61 @@
             border-color: rgba(255, 255, 255, 0.2) !important;
         }
 
+        /* ── Control Panel for Session ── */
+        .control-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .cp-btn {
+            height: 40px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            -webkit-app-region: no-drag;
+        }
+
+        .cp-btn.pause {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+        .cp-btn.pause:hover { background: rgba(245, 158, 11, 0.25); }
+
+        .cp-btn.resume {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        .cp-btn.resume:hover { background: rgba(16, 185, 129, 0.25); }
+
+        .cp-btn.end {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        .cp-btn.end:hover { background: rgba(239, 68, 68, 0.25); }
+
+        .cp-btn.extend {
+            background: rgba(139, 92, 246, 0.15);
+            color: #8b5cf6;
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+        .cp-btn.extend:hover { background: rgba(139, 92, 246, 0.25); }
+
         .student-item {
             display: flex;
             align-items: center;
@@ -1354,8 +1409,13 @@
             </div>
 
             <div id="detailsContent" style="padding:16px 24px; flex:1; overflow-y:auto; min-height:100px;">
-                <div style="display:flex; justify-content:center; align-items:center; height:150px;">
-                    <div class="spin-ring" style="width:24px; height:24px;"></div>
+                <!-- Session control buttons will be injected here -->
+                <div id="sessionControls" style="display:none; margin-bottom: 20px;"></div>
+                
+                <div id="participantsList">
+                    <div style="display:flex; justify-content:center; align-items:center; height:150px;">
+                        <div class="spin-ring" style="width:24px; height:24px;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1707,15 +1767,17 @@
             },
 
             async refreshSessionDetails(id, isSilent = false) {
-                const content = document.getElementById('detailsContent');
+                const participantsList = document.getElementById('participantsList');
+                const controls = document.getElementById('sessionControls');
                 const subheader = document.getElementById('detailsSubheader');
 
                 if (!isSilent) {
-                    content.innerHTML = `
+                    participantsList.innerHTML = `
                         <div style="display:flex; justify-content:center; align-items:center; height:150px;">
                             <div class="spin-ring" style="width:24px; height:24px;"></div>
                         </div>
                     `;
+                    controls.style.display = 'none';
                     subheader.textContent = 'Récupération des données...';
                 }
 
@@ -1729,11 +1791,29 @@
                     const data = await resp.json();
 
                     if (data.classe && data.classe.nom) {
-                        subheader.textContent = `Session ${data.sessionCode} · Classe: ${data.classe.nom}`;
+                        subheader.textContent = `Session ${data.sessionCode} · ${data.classe.nom}`;
                     } else {
                         subheader.textContent = `Session ${data.sessionCode}`;
                     }
 
+                    // ── Injecter les contrôles de session active ──
+                    if (data.isActive !== false && !data.endedAt) {
+                        controls.style.display = 'block';
+                        const pauseLabel = data.isPaused ? '▶️ Reprendre l\'examen' : '⏸️ Mettre en pause';
+                        const pauseClass = data.isPaused ? 'resume' : 'pause';
+                        
+                        controls.innerHTML = `
+                            <div class="control-panel">
+                                <button class="cp-btn ${pauseClass}" onclick="ProfVM.togglePause('${id}', ${data.isPaused})">${pauseLabel}</button>
+                                <button class="cp-btn end" onclick="ProfVM.endSession('${id}')">⏹️ Terminer la session</button>
+                                <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 10)">➕ 10 min</button>
+                                <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 30)">➕ 30 min</button>
+                            </div>
+                            <div class="modal-section-title" style="margin-bottom:12px;">👥 Étudiants connectés</div>
+                        `;
+                    } else {
+                        controls.style.display = 'none';
+                    }
                     const students = data.classe && data.classe.students ? data.classe.students : [];
                     const participants = data.participants || [];
 
@@ -1741,7 +1821,7 @@
 
 
                     if (students.length === 0) {
-                        content.innerHTML = `
+                        participantsList.innerHTML = `
                             <div style="text-align:center; padding:40px; color:rgba(255,255,255,0.3);">
                                 <span style="font-size:32px; display:block; margin-bottom:12px;">📭</span>
                                 Aucun étudiant n'est inscrit dans cette classe.
@@ -1772,11 +1852,11 @@
                                 </div>
                             `;
                         });
-                        content.innerHTML = html;
+                        participantsList.innerHTML = html;
                     }
                 } catch (e) {
                     if (!isSilent) {
-                        content.innerHTML = `
+                        participantsList.innerHTML = `
                             <div style="text-align:center; padding:40px; color:#ed4245;">
                                 ⚠️ ${e.message}
                             </div>
@@ -1995,7 +2075,14 @@
                 modalError.style.display = 'none';
 
                 let apiSessionCode = null;
-                let courseLabel, classeLabel, dateLabel, dureeLabel, startLabel, endLabel;
+                let data = null;
+                let courseLabel, classeLabel, dateLabel, dureeLabel, startLabel;
+
+                // On capture le bouton pour pouvoir le réinitialiser en cas d'erreur
+                const btnGen = document.querySelector('#modalActions .btn-indigo') || 
+                               document.querySelector('#modalActions .btn-green') ||
+                               document.querySelector('#modalActions .btn-primary'); // Fallback sur plusieurs classes possibles
+                const oriHtml = btnGen ? btnGen.innerHTML : 'Générer le code session';
 
                 // ── 1. Création via le BACKEND (uniquement si examen existant sélectionné) ──
                 if (this.mode === 'existant') {
@@ -2006,7 +2093,7 @@
                         const e = this.selectedExam;
 
                         // Extraire l'ID MongoDB de la classe avec vérification approfondie
-                        const isMongoId = id => id && /^[0-9a-fA-F]{24}$/.test(String(id));
+                        const isMongoId = id => id && /^[0-9a-f]{24}$/i.test(String(id));
                         let classId = null;
 
                         // Chercher dans e.classe (_id, id, string brut)
@@ -2021,13 +2108,7 @@
                             else if (isMongoId(e.matiere.classe)) classId = e.matiere.classe;
                         }
 
-                        // Si l'examId n'est pas bon
-                        if (!isMongoId(e._id)) {
-                            throw new Error("Impossible : vous avez sélectionné un examen de démonstration. Veuillez choisir un examen en base.");
-                        }
-
-                        // Si la classe est introuvable ou n'est pas un MongoId
-                        if (!isMongoId(classId)) {
+                        if (!classId) {
                             // Au lieu de bloquer, essayons de tricher ou avertissons
                             throw new Error("L'examen sélectionné n'a pas de classe associée avec un ID MongoDB valide dans la base de données. ID trouvé : " + encodeURIComponent(classId || "Aucun"));
                         }
@@ -2066,10 +2147,10 @@
                         }
 
                         // Afficher le chargement
-                        const btnGen = document.querySelector('#modalActions .btn-indigo');
-                        const oriHtml = btnGen.innerHTML;
-                        btnGen.innerHTML = '<div class="spin-ring" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></div> Patientez...';
-                        btnGen.disabled = true;
+                        if (btnGen) {
+                            btnGen.innerHTML = '<div class="spin-ring" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></div> Patientez...';
+                            btnGen.disabled = true;
+                        }
 
                         // Appel à l'API practical-test
                         const resp = await fetch(`${API_BASE}/practical-tests`, {
@@ -2080,10 +2161,12 @@
                             body: formData
                         });
 
-                        const data = await resp.json();
+                        data = await resp.json();
 
-                        btnGen.innerHTML = oriHtml;
-                        btnGen.disabled = false;
+                        if (btnGen) {
+                            btnGen.innerHTML = oriHtml;
+                            btnGen.disabled = false;
+                        }
 
                         if (!resp.ok) {
                             let detailedMsg = data.message || 'Erreur lors de la communication avec le serveur.';
@@ -2106,6 +2189,10 @@
                         startLabel = document.getElementById('af_start').value || '—';
 
                     } catch (err) {
+                        if (btnGen) {
+                            btnGen.innerHTML = oriHtml;
+                            btnGen.disabled = false;
+                        }
                         modalError.innerHTML = `<strong>Échec:</strong> ${err.message}`;
                         modalError.style.display = 'block';
                         return; // On arrête là si le backend échoue
@@ -2115,10 +2202,10 @@
                     try {
                         const token = sessionStorage.getItem('accessToken');
                         const classId = document.getElementById('n_classe').value;
-                        const subject = document.getElementById('n_matiere').value.trim();
+                        const subjectValue = document.getElementById('n_matiere').value.trim();
                         const dureeRaw = document.getElementById('n_duree').value;
 
-                        const isMongoId = id => id && /^[0-9a-fA-F]{24}$/.test(String(id));
+                        const isMongoId = id => id && /^[0-9a-f]{24}$/i.test(String(id));
                         if (!isMongoId(classId)) {
                             throw new Error("Veuillez sélectionner une classe valide venant de la base de données.");
                         }
@@ -2130,21 +2217,23 @@
                             duration = (parseInt(parts[0] || 0) * 60) + (parseInt(parts[1] || 0));
                         } else if (dureeRaw.includes('min')) {
                             duration = parseInt(dureeRaw);
+                        } else if (!isNaN(dureeRaw) && dureeRaw.trim() !== '') {
+                            duration = parseInt(dureeRaw);
                         }
-
-                        // S'assurer qu'un lien tapé mais non ajouté via "+" est quand même envoyé
-                        let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
-                        const manualUrlBody = document.getElementById('urlInput')?.value.trim();
-                        if (!urlToLink && manualUrlBody) {
-                            urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
-                        }
-
+                        
                         const formData = new FormData();
                         formData.append('classe', classId);
                         formData.append('duration', duration.toString());
                         formData.append('testType', 'DESKTOP_APP');
+                        formData.append('subject', subjectValue); // Ajout manuel du champ subject pour le backend
                         formData.append('allowedApps', JSON.stringify(['vscode']));
-
+                        
+                        // S'assurer qu'un lien tapé mais non ajouté via "+" est quand même envoyé
+                        let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
+                        const manualUrlBody = document.getElementById('urlInput')?.value.trim();
+                        if (!urlToLink && manualUrlBody) {
+                             urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
+                        }
                         if (urlToLink) formData.append('link', urlToLink);
 
                         const pdfInput = document.getElementById('pdfFile');
@@ -2152,10 +2241,11 @@
                             formData.append('pdfFile', pdfInput.files[0]);
                         }
 
-                        const btnGen = document.querySelector('#modalActions .btn-indigo');
-                        const oriHtml = btnGen.innerHTML;
-                        btnGen.innerHTML = '<div class="spin-ring" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></div>...';
-                        btnGen.disabled = true;
+                        // Afficher le chargement
+                        if (btnGen) {
+                            btnGen.innerHTML = '<div class="spin-ring" style="width:14px;height:14px;border-width:2px;margin-right:6px;"></div> Patientez...';
+                            btnGen.disabled = true;
+                        }
 
                         const resp = await fetch(`${API_BASE}/practical-tests`, {
                             method: 'POST',
@@ -2165,15 +2255,19 @@
                             body: formData
                         });
 
-                        const data = await resp.json();
-                        btnGen.innerHTML = oriHtml; btnGen.disabled = false;
+                        data = await resp.json();
+                        
+                        if (btnGen) {
+                            btnGen.innerHTML = oriHtml; 
+                            btnGen.disabled = false;
+                        }
 
-                        if (!resp.ok) throw new Error(data.message || 'Erreur API creation rapide.');
+                        if (!resp.ok) throw new Error(data.message || 'Erreur API création rapide.');
 
                         apiSessionCode = data.sessionCode;
 
                         // Infos local
-                        courseLabel = subject || 'Session rapide';
+                        courseLabel = subjectValue || 'Session rapide';
                         const sel = document.getElementById('n_classe');
                         classeLabel = sel.options[sel.selectedIndex].text;
                         dateLabel = document.getElementById('n_date').value;
@@ -2181,6 +2275,10 @@
                         startLabel = document.getElementById('n_start').value || '—';
 
                     } catch (err) {
+                        if (btnGen) {
+                            btnGen.innerHTML = oriHtml;
+                            btnGen.disabled = false;
+                        }
                         modalError.innerHTML = `<strong>Échec mode rapide:</strong> ${err.message}`;
                         modalError.style.display = 'block';
                         return;
@@ -2188,9 +2286,13 @@
                 }
 
                 // ── 2. Succès : Mise à jour de l'UI avec le code serveur ──
+                if (!data) return; // Sécurité
+
                 const code = apiSessionCode;
+                const testId = data._id || data.id;
 
                 sessionStorage.setItem('activeSessionCode', code);
+                sessionStorage.setItem('activeTestId', testId);
                 sessionStorage.setItem('sessionCourse', courseLabel);
                 sessionStorage.setItem('sessionClasse', classeLabel);
                 sessionStorage.setItem('sessionDate', dateLabel);
@@ -2204,28 +2306,40 @@
                 sessionStorage.setItem('sharedUrls', JSON.stringify(this.sharedUrls));
 
                 const gc = document.getElementById('generatedCode');
-                gc.style.display = 'block'; gc.textContent = code;
+                if (gc) {
+                    gc.style.display = 'block'; 
+                    gc.textContent = code;
+                }
+
                 const sum = document.getElementById('codeSummary');
-                sum.style.display = 'block';
-                const isRawId = s => /^[0-9a-f]{24}$/i.test(s);
-                const classeDisplay = (!classeLabel || classeLabel === '—' || isRawId(classeLabel)) ? '' : ` · ${classeLabel}`;
-                const timeDisplay = (startLabel !== '—') ? ` · [${startLabel}]` : '';
-                sum.innerHTML = `${courseLabel}${classeDisplay} · ${dureeLabel}${timeDisplay}`;
+                if (sum) {
+                    sum.style.display = 'block';
+                    const isRawId = s => /^[0-9a-f]{24}$/i.test(s);
+                    const classeDisplay = (!classeLabel || classeLabel === '—' || isRawId(classeLabel)) ? '' : ` · ${classeLabel}`;
+                    const timeDisplay = (startLabel !== '—') ? ` · [${startLabel}]` : '';
+                    sum.innerHTML = `${courseLabel}${classeDisplay} · ${dureeLabel}${timeDisplay}`;
+                }
 
                 ProfData.sessions.unshift({ code, course: courseLabel, date: 'À l\'instant', status: 'active' });
-                document.getElementById('stat-count').textContent = ProfData.sessions.length;
+                const statCount = document.getElementById('stat-count');
+                if (statCount) statCount.textContent = ProfData.sessions.length;
+                
                 this.renderSessions();
 
-                document.getElementById('modalActions').innerHTML = `
-                <button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Fermer</button>
-                <button class="btn btn-ghost" id="copyBtn"
-                    onclick="navigator.clipboard.writeText('${code}').then(()=>document.getElementById('copyBtn').textContent='✅ Copié!')"
-                >📋 Copier</button>
-                <button class="btn btn-green" onclick="ProfVM.launchSession('${code}')">🚀 Lancer</button>`;
+                const modalActions = document.getElementById('modalActions');
+                if (modalActions) {
+                    modalActions.innerHTML = `
+                    <button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Fermer</button>
+                    <button class="btn btn-ghost" id="copyBtn"
+                        onclick="navigator.clipboard.writeText('${code}').then(()=>document.getElementById('copyBtn').textContent='✅ Copié!')"
+                    >📋 Copier</button>
+                    <button class="btn btn-green" onclick="ProfVM.launchSession('${code}', '${testId}')">🚀 Lancer</button>`;
+                }
             },
 
-            launchSession(code) {
+            launchSession(code, testId) {
                 sessionStorage.setItem('activeSessionCode', code);
+                if (testId) sessionStorage.setItem('activeTestId', testId);
                 this.closeCreateModal();
                 window.location.href = './desktop.html';
             },
@@ -2265,6 +2379,67 @@
                     </div>
                     <button class="file-remove" onclick="ProfVM.removeUrl('${url.replace(/'/g, "\\'")}')">✕</button>
                 </div>`).join('');
+            },
+
+            // ── Contrôles de session en direct ──
+            async togglePause(id, isPaused) {
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    const resp = await fetch(`${API_BASE}/practical-tests/${id}/pause`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (resp.ok) {
+                        this.refreshSessionDetails(id, true);
+                    } else {
+                        const err = await resp.json();
+                        alert("Erreur lors de la pause: " + (err.message || "Erreur inconnue"));
+                    }
+                } catch (e) {
+                    console.error("Pause failed:", e);
+                }
+            },
+
+            async extendSession(id, minutes) {
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    const resp = await fetch(`${API_BASE}/practical-tests/${id}/extend`, {
+                        method: 'POST',
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ minutes })
+                    });
+                    if (resp.ok) {
+                        this.refreshSessionDetails(id, true);
+                    } else {
+                        const err = await resp.json();
+                        alert("Erreur lors de l'extension: " + (err.message || "Erreur inconnue"));
+                    }
+                } catch (e) {
+                    console.error("Extend failed:", e);
+                }
+            },
+
+            async endSession(id) {
+                if (!confirm("⚠️ Voulez-vous vraiment terminer cette session ?\n\nLes étudiants seront déconnectés et ne pourront plus soumettre leur travail.")) return;
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    const resp = await fetch(`${API_BASE}/practical-tests/${id}/end`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (resp.ok) {
+                        this.closeDetailsModal();
+                        this.fetchRecentSessions();
+                    } else {
+                        const err = await resp.json();
+                        alert("Erreur lors de la fermeture: " + (err.message || "Erreur inconnue"));
+                    }
+                } catch (e) {
+                    console.error("End session failed:", e);
+                }
             }
         };
 
