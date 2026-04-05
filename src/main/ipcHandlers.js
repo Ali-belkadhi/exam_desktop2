@@ -1,4 +1,4 @@
-const { dialog, app, screen, BrowserWindow } = require('electron');
+const { dialog, app, screen, BrowserWindow, desktopCapturer } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const net = require('net');
@@ -372,6 +372,21 @@ module.exports = (ipcMain, mainWindow) => {
     });
 
     ipcMain.handle('os:launchExternalIDE', async () => ({ success: true, message: 'OK' }));
+
+    // ── Capture d'écran (Screen sharing) ─────────────────────────────────────
+    ipcMain.handle('screen:capture', async () => {
+        try {
+            const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1280, height: 720 } });
+            if (sources && sources.length > 0) {
+                // Retourne l'image en base64 pour envoi via WebSocket
+                return sources[0].thumbnail.toDataURL(); 
+            }
+            return null;
+        } catch (e) {
+            console.error('Screen capture failed:', e);
+            return null;
+        }
+    });
 
     // ── Contrôle de la fenêtre (Safe Mode) ───────────────────────────────────
     ipcMain.handle('window:setLocked', async (event, locked) => {

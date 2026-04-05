@@ -1202,7 +1202,7 @@
     <div class="modal-overlay" id="createModal">
         <div class="modal-box">
             <h2>✨ Nouvelle session</h2>
-            <p>Choisissez un examen existant ou créez-en un nouveau.</p>
+            <p>Choisissez un examen existant ou créez-en un nouveau quiz.</p>
 
             <!-- Sélecteur de mode -->
             <div class="mode-tabs">
@@ -1214,7 +1214,7 @@
                 </div>
                 <div class="mode-tab" id="modeNouveau" onclick="ProfVM.setMode('nouveau')">
                     <span class="mtab-icon">➕</span>
-                    Nouveau examen
+                    Nouveau quiz
                     <small style="font-weight:400;font-size:11px;color:rgba(255,255,255,0.4)">saisie manuelle</small>
                 </div>
             </div>
@@ -1275,9 +1275,9 @@
                 </div>
             </div>
 
-            <!-- ── ZONE NOUVEAU EXAMEN ── -->
+            <!-- ── ZONE NOUVEAU QUIZ ── -->
             <div id="zoneNouveau" style="display:none;">
-                <div class="modal-section-title">📋 Informations de l'examen</div>
+                <div class="modal-section-title">📋 Informations du quiz</div>
                 <div class="modal-field">
                     <label>Matière / Devoir *</label>
                     <input type="text" id="n_matiere" placeholder="ex: Architecture POO – Devoir 1" />
@@ -1423,6 +1423,29 @@
                 style="padding:16px 24px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); display:flex; justify-content:flex-end;">
                 <button class="btn btn-ghost" style="font-size:13px; font-weight:600; padding:10px 24px;"
                     onclick="ProfVM.closeDetailsModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="screenModal">
+        <div class="modal" style="width:800px; max-width:90vw; height:600px; max-height:90vh; border:1px solid rgba(255,255,255,.15); background: #1a1b1e; display:flex; flex-direction:column; padding:0;">
+            <div style="padding:16px 24px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
+                <h2 id="screenModalTitle" style="font-size:16px; font-weight:600; margin:0;">📺 Écran de l'étudiant</h2>
+                <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;"
+                    onclick="ProfVM.closeScreenModal()">×</button>
+            </div>
+
+            <!-- Conteneur vidéo -->
+            <div id="screenVideoContainer" style="flex:1; background:#000; position:relative; display:flex; align-items:center; justify-content:center;">
+                <!-- Placeholder avant l'arrivée du flux vidéo -->
+            </div>
+
+            <div style="padding:12px 24px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:12px; color:rgba(255,255,255,0.4);">
+                    🔴 En direct 
+                </div>
+                <button class="btn btn-ghost" style="font-size:13px; font-weight:600; padding:8px 24px;"
+                    onclick="ProfVM.closeScreenModal()">Fermer la vue</button>
             </div>
         </div>
     </div>
@@ -1848,7 +1871,10 @@
                                         <div style="color:rgba(255,255,255,.9); font-size:14px; font-weight:500;">${st.prenom} ${st.nom} ${isActif ? '⚡' : ''}</div>
                                         <div style="color:rgba(255,255,255,.4); font-size:11px;">NC: ${st.studentCardNumber || 'N/A'}</div>
                                     </div>
-                                    <div class="student-badge ${statusClass}">${statusLabel}</div>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        ${isActif ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:16px; border:1px solid rgba(88,101,242,0.4);" onclick="ProfVM.viewStudentScreen('${st._id}', '${st.prenom} ${st.nom}')" title="Regarder l'écran en direct">📺</button>` : ''}
+                                        <div class="student-badge ${statusClass}">${statusLabel}</div>
+                                    </div>
                                 </div>
                             `;
                         });
@@ -2439,6 +2465,63 @@
                     }
                 } catch (e) {
                     console.error("End session failed:", e);
+                }
+            },
+
+            // ── Fonctionnalité Visionnage d'écran ──
+            viewStudentScreen(studentId, studentName) {
+                const modal = document.getElementById('screenModal');
+                const title = document.getElementById('screenModalTitle');
+                
+                if (modal && title) {
+                    title.innerHTML = `📺 Écran en direct de <strong>${studentName}</strong>`;
+                    modal.classList.add('open');
+                    
+                    const screenContainer = document.getElementById('screenVideoContainer');
+                    screenContainer.innerHTML = `
+                        <img id="studentScreenImage" style="max-width:100%; max-height:100%; object-fit:contain; z-index:10; display:none;" src="" alt="En attente de l'écran..." />
+                        <div id="screenLoading" style="position:absolute; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:rgba(255,255,255,0.5);">
+                            <div class="spin-ring" style="width:40px; height:40px; border-width:3px; margin-bottom:15px;"></div>
+                            <p>Connexion au flux vidéo de ${studentId} en cours...</p>
+                        </div>
+                    `;
+
+                    // L'ID de l'étudiant actuellement surveillé
+                    ProfData.watchingStudentId = studentId;
+
+                    if (this.socket) {
+                        // 1. Demander au backend (et à l'étudiant) de commencer à envoyer le flux d'écran
+                        this.socket.emit('request-screen-start', { studentId: studentId });
+
+                        // 2. Écouter la réception des images "capture" du flux (Base64)
+                        this.socket.off('student-screen-frame'); // On supprime d'anciens écouteurs
+                        this.socket.on('student-screen-frame', (data) => {
+                            if (data.studentId === ProfData.watchingStudentId || data.studentId === studentId) {
+                                const loading = document.getElementById('screenLoading');
+                                if (loading) loading.style.display = 'none';
+
+                                const img = document.getElementById('studentScreenImage');
+                                if (img && data.imageBase64) {
+                                    img.src = data.imageBase64;
+                                    img.style.display = 'block'; // Fait apparaitre la vidéo
+                                }
+                            }
+                        });
+                    }
+                }
+            },
+            
+            closeScreenModal() {
+                const modal = document.getElementById('screenModal');
+                if (modal) {
+                    modal.classList.remove('open');
+                    document.getElementById('screenVideoContainer').innerHTML = ''; // Arrêter l'affichage
+                    
+                    if (this.socket && ProfData.watchingStudentId) {
+                        // On indique qu'on arrête de regarder cet écran
+                        this.socket.emit('request-screen-stop', { studentId: ProfData.watchingStudentId });
+                    }
+                    ProfData.watchingStudentId = null;
                 }
             }
         };

@@ -27,4 +27,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Gestion de la fenêtre
     setLocked: (locked) => ipcRenderer.invoke('window:setLocked', locked),
+
+    // Capture d'écran (API exposée pour la surveillance professeur)
+    captureScreen: () => ipcRenderer.invoke('screen:capture'),
 });

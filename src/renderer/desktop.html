@@ -824,6 +824,7 @@
     </div>
 
     <!-- ViewModels & Views -->
+    <script src="socket.io.min.js"></script>
     <script src="./viewmodels/SessionVM.js"></script>
     <script src="./views/ClassroomDesktopView.js"></script>
     <script src="./views/BrowserView.js"></script>
@@ -841,6 +842,40 @@
                 window.sessionVM = new window.SessionVM(() => {});
                 window.sessionVM.startHeartbeat();
                 console.log("[App] SessionVM Instance Created.");
+
+                // --- Initialiser le WebSocket pour l'étudiant ---
+                const testId = sessionStorage.getItem('activeTestId');
+                const studentId = sessionStorage.getItem('studentId');
+                if (testId && studentId && window.io) {
+                    const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
+                    window.sessionVM.socket = window.io(API_BASE);
+
+                    window.sessionVM.socket.on('connect', () => {
+                        window.sessionVM.socket.emit('joinSession', { testId, studentId });
+                        console.log('[WebSocket] Connecté au serveur en tant qu\'étudiant');
+                    });
+
+                    window.sessionVM.socket.on('start-sharing-screen', () => {
+                        console.log('[WebSocket] Demande de partage d\'écran reçue');
+                        if (window._screenInterval) clearInterval(window._screenInterval);
+                        window._screenInterval = setInterval(async () => {
+                            if (window.electronAPI && window.electronAPI.captureScreen) {
+                                const imageBase64 = await window.electronAPI.captureScreen();
+                                if (imageBase64) {
+                                    window.sessionVM.socket.emit('send-screen-frame', {
+                                        studentId: studentId,
+                                        imageBase64: imageBase64
+                                    });
+                                }
+                            }
+                        }, 1000); // 1 capture par seconde par défaut
+                    });
+
+                    window.sessionVM.socket.on('stop-sharing-screen', () => {
+                        console.log('[WebSocket] Arrêt du partage d\'écran');
+                        if (window._screenInterval) clearInterval(window._screenInterval);
+                    });
+                }
             }
 
             // 2. Initialize BrowserVM (The Browser)
