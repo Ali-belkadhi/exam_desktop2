@@ -755,6 +755,26 @@
             </div>
         </div>
 
+        <!-- FENETRE 6 : Quiz -->
+        <div class="os-window" id="win-quiz" style="left: 50px; top: 50px; width: 800px; height: 600px;">
+            <div class="window-header">
+                <h2>✍️ Quiz en cours</h2>
+                <div class="window-controls">
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-quiz')" title="Réduire"></button>
+                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-quiz')" title="Agrandir"></button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-quiz')" title="Fermer"></button>
+                </div>
+            </div>
+            <div class="window-content" id="quiz-body" style="background-color: var(--window-bg); flex:1; overflow-y:auto; padding:30px;">
+                <div id="quiz-container">
+                    <!-- Quiz questions will be injected here -->
+                </div>
+                <div id="quiz-footer" style="margin-top:20px; text-align:right;">
+                    <button class="btn btn-primary" style="width:auto; padding:0 30px;" onclick="QuizVM.submitQuiz()">Terminer le quiz</button>
+                </div>
+            </div>
+        </div>
+
 
     </div>
 
@@ -775,6 +795,7 @@
             <div class="taskbar-icon" onclick="UI.openWindow('win-browser')" title="Navigateur" id="tb-browser">🌐</div>
             <div class="taskbar-icon" onclick="UI.openWindow('win-notepad')" title="Bloc-notes" id="tb-notepad">📝</div>
             <div class="taskbar-icon" onclick="UI.openWindow('win-calc')" title="Calculatrice" id="tb-calc">🔢</div>
+            <div class="taskbar-icon" onclick="UI.openWindow('win-quiz')" title="Quiz" id="tb-quiz" style="display:none;">🧠</div>
         </div>
 
         <div class="taskbar-right">
@@ -826,6 +847,7 @@
     <!-- ViewModels & Views -->
     <script src="socket.io.min.js"></script>
     <script src="./viewmodels/SessionVM.js"></script>
+    <script src="./viewmodels/QuizVM.js"></script>
     <script src="./views/ClassroomDesktopView.js"></script>
     <script src="./views/BrowserView.js"></script>
 
@@ -836,6 +858,11 @@
          */
         function robustInit() {
             console.log("[App] Running robust initialization...");
+
+            // 0. Initialize QuizVM
+            if (window.QuizVM) {
+                window.QuizVM.init();
+            }
 
             // 1. Initialize SessionVM (The Brain)
             if (window.SessionVM && !window.sessionVM) {

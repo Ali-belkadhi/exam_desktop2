@@ -87,16 +87,16 @@
 
         /* Top Bar */
         .topbar {
-            height: 52px;
+            height: 64px;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 32px;
-            border-bottom: 1px solid rgba(255, 255, 255, .06);
-            background: rgba(10, 10, 15, .7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            padding: 0 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+            background: linear-gradient(180deg, rgba(15, 17, 26, 0.8) 0%, rgba(10, 10, 15, 0.4) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             position: relative;
             z-index: 20;
             -webkit-app-region: drag;
@@ -105,7 +105,7 @@
         .topbar-brand {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             -webkit-app-region: no-drag;
         }
 
@@ -200,36 +200,49 @@
 
         .container {
             width: 100%;
-            max-width: 700px;
+            max-width: 1200px;
+            padding: 0 20px;
         }
 
         /* Welcome */
         .welcome-section {
-            text-align: center;
+            text-align: left;
             margin-bottom: 40px;
             animation: fadeUp .5s ease both;
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
         .welcome-emoji {
-            font-size: 48px;
-            margin-bottom: 16px;
-            display: block;
+            font-size: 56px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .welcome-text {
+            display: flex;
+            flex-direction: column;
         }
 
         .welcome-title {
-            font-size: clamp(24px, 3vw, 34px);
+            font-size: clamp(28px, 4vw, 38px);
             font-weight: 800;
-            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, .55) 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #a0a5b1 100%);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             letter-spacing: -.5px;
         }
 
         .welcome-sub {
-            font-size: 15px;
+            font-size: 16px;
             color: rgba(255, 255, 255, .4);
+            font-weight: 400;
         }
 
         @keyframes fadeUp {
@@ -248,69 +261,94 @@
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 32px;
+            gap: 24px;
+            margin-bottom: 40px;
             animation: fadeUp .5s ease .1s both;
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, .04);
-            border: 1px solid rgba(255, 255, 255, .07);
-            border-radius: 16px;
-            padding: 20px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, .05);
+            border-top: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 20px;
+            padding: 24px;
             backdrop-filter: blur(20px);
-            text-align: center;
-            transition: border-color .2s, transform .2s;
+            text-align: left;
+            transition: all .3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
         }
 
         .stat-card:hover {
             border-color: rgba(88, 101, 242, .4);
-            transform: translateY(-2px);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
         }
 
         .stat-icon {
-            font-size: 24px;
-            margin-bottom: 10px;
-            display: block;
+            font-size: 32px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .stat-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .stat-value {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 800;
             color: #fff;
-            margin-bottom: 4px;
+            margin-bottom: -2px;
+            letter-spacing: -0.5px;
         }
 
         .stat-label {
-            font-size: 12px;
-            color: rgba(255, 255, 255, .4);
+            font-size: 13px;
+            color: rgba(255, 255, 255, .5);
             font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .stat-card.online .stat-value {
             color: #23d160;
+            text-shadow: 0 0 10px rgba(35, 209, 96, 0.3);
+        }
+
+        .stat-card.online .stat-icon {
+            position: relative;
         }
 
         .stat-card.online .stat-icon::after {
             content: '';
-            display: inline-block;
-            width: 8px;
-            height: 8px;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: #23d160;
-            margin-left: 6px;
             animation: pulse-dot 2s ease-in-out infinite;
         }
 
         @keyframes pulse-dot {
-
             0%,
             100% {
                 box-shadow: 0 0 0 0 rgba(35, 209, 96, .4)
             }
-
             50% {
-                box-shadow: 0 0 0 6px rgba(35, 209, 96, 0)
+                box-shadow: 0 0 0 5px rgba(35, 209, 96, 0)
             }
         }
 
@@ -318,22 +356,23 @@
         .actions {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 24px;
             animation: fadeUp .5s ease .2s both;
         }
 
         .action-card {
-            background: rgba(255, 255, 255, .04);
-            border: 1px solid rgba(255, 255, 255, .07);
-            border-radius: 16px;
-            padding: 28px 24px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-top: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 24px;
+            padding: 32px;
             backdrop-filter: blur(20px);
             cursor: pointer;
-            transition: all .2s;
+            transition: all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 12px;
+            gap: 16px;
             position: relative;
             overflow: hidden;
         }
@@ -343,76 +382,86 @@
             position: absolute;
             inset: 0;
             opacity: 0;
-            transition: opacity .2s;
-            background: linear-gradient(135deg, rgba(88, 101, 242, .1), transparent);
+            transition: opacity .4s ease;
+            background: radial-gradient(circle at top left, rgba(88, 101, 242, 0.15), transparent 70%);
         }
 
         .action-card:hover {
-            border-color: rgba(88, 101, 242, .5);
-            transform: translateY(-3px);
-            box-shadow: 0 12px 32px rgba(0, 0, 0, .3);
+            border-color: rgba(88, 101, 242, .6);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, .4);
         }
 
         .action-card:hover::before {
             opacity: 1;
         }
 
+        .action-card:hover .action-arrow {
+            transform: translateX(5px);
+        }
+
         .action-card:active {
-            transform: scale(.98);
+            transform: scale(.97);
         }
 
         .action-card.primary-card {
-            background: linear-gradient(135deg, rgba(88, 101, 242, .2), rgba(88, 101, 242, .05));
-            border-color: rgba(88, 101, 242, .3);
+            background: linear-gradient(145deg, rgba(88, 101, 242, .15), rgba(88, 101, 242, .02));
+            border-color: rgba(88, 101, 242, .4);
+            border-top-color: rgba(88, 101, 242, .7);
         }
 
         .action-card.primary-card:hover {
-            border-color: rgba(88, 101, 242, .6);
-            box-shadow: 0 12px 40px rgba(88, 101, 242, .25);
+            border-color: rgba(88, 101, 242, .8);
+            box-shadow: 0 20px 50px rgba(88, 101, 242, .25);
         }
 
         .action-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-            background: rgba(88, 101, 242, .2);
-            border: 1px solid rgba(88, 101, 242, .3);
+            font-size: 26px;
+            background: linear-gradient(135deg, rgba(88, 101, 242, 0.3), rgba(88, 101, 242, 0.1));
+            border: 1px solid rgba(88, 101, 242, .4);
         }
 
         .action-card:nth-child(2) .action-icon {
-            background: rgba(0, 212, 255, .15);
-            border-color: rgba(0, 212, 255, .3);
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.05));
+            border-color: rgba(0, 212, 255, .4);
         }
 
         .action-title {
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: 800;
             color: #fff;
+            letter-spacing: -0.5px;
         }
 
         .action-desc {
-            font-size: 13px;
-            color: rgba(255, 255, 255, .45);
-            line-height: 1.5;
+            font-size: 14px;
+            color: rgba(255, 255, 255, .5);
+            line-height: 1.6;
         }
 
         .action-arrow {
             margin-top: auto;
-            font-size: 18px;
-            color: rgba(88, 101, 242, .7);
+            font-size: 20px;
+            color: #5865f2;
+            transition: transform 0.3s ease;
         }
 
         /* Sessions card */
         .sessions-card {
-            background: rgba(255, 255, 255, .04);
-            border: 1px solid rgba(255, 255, 255, .07);
-            border-radius: 16px;
-            padding: 24px;
-            margin-top: 16px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, .05);
+            border-top: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 24px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             animation: fadeUp .5s ease .3s both;
             display: none;
         }
@@ -503,14 +552,28 @@
             animation: fadeUp .3s ease both;
         }
 
-        .modal-box h2 {
+        .modal-box-large {
+            background: #1a1b1e;
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 20px;
+            padding: 40px 48px;
+            width: 1000px;
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, .6);
+            animation: fadeUp .3s ease both;
+        }
+
+        .modal-box h2, .modal-box-large h2 {
             font-size: 20px;
             font-weight: 700;
             color: #fff;
             margin-bottom: 6px;
         }
 
-        .modal-box>p {
+        .modal-box > p, .modal-box-large > p {
             font-size: 14px;
             color: rgba(255, 255, 255, .4);
             margin-bottom: 20px;
@@ -1114,6 +1177,79 @@
             color: #fff;
             box-shadow: 0 4px 16px rgba(35, 209, 96, .3);
         }
+
+        /* Quiz Editor Styles */
+        .quiz-config-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(88, 101, 242, 0.05);
+            border: 1px solid rgba(88, 101, 242, 0.2);
+            border-radius: 12px;
+        }
+
+        .question-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .question-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .correct-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .remove-btn {
+            color: #ed4245;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .quiz-type-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .quiz-type-chip {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .quiz-type-chip.selected {
+            background: rgba(88, 101, 242, 0.2);
+            border-color: #5865f2;
+            color: #fff;
+        }
     </style>
 </head>
 
@@ -1137,26 +1273,34 @@
         <div class="container">
 
             <div class="welcome-section">
-                <span class="welcome-emoji">👨‍🏫</span>
-                <h1 class="welcome-title" id="welcomeTitle">Bienvenue Professeur</h1>
-                <p class="welcome-sub">Gérez vos sessions de cours depuis votre espace dédié.</p>
+                <div class="welcome-emoji">👨‍🏫</div>
+                <div class="welcome-text">
+                    <h1 class="welcome-title" id="welcomeTitle">Bienvenue Professeur</h1>
+                    <p class="welcome-sub">Gérez vos réunions, évaluations et statistiques en toute simplicité.</p>
+                </div>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card online">
-                    <span class="stat-icon">🟢</span>
-                    <div class="stat-value">En ligne</div>
-                    <div class="stat-label">État de connexion</div>
+                    <div class="stat-icon">🟢</div>
+                    <div class="stat-content">
+                        <div class="stat-value">En ligne</div>
+                        <div class="stat-label">Statut système</div>
+                    </div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-icon">📚</span>
-                    <div class="stat-value" id="stat-count">0</div>
-                    <div class="stat-label">Sessions créées</div>
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="stat-count">0</div>
+                        <div class="stat-label">Sessions générées</div>
+                    </div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-icon">🕐</span>
-                    <div class="stat-value" id="stat-last" style="font-size:16px;padding-top:4px;">Aujourd'hui</div>
-                    <div class="stat-label">Dernière session</div>
+                    <div class="stat-icon">🕐</div>
+                    <div class="stat-content">
+                        <div class="stat-value" id="stat-last" style="font-size:24px;">Aujourd'hui</div>
+                        <div class="stat-label">Dernière activité</div>
+                    </div>
                 </div>
             </div>
 
@@ -1200,7 +1344,7 @@
 
     <!-- ══ MODAL NOUVELLE SESSION ══ -->
     <div class="modal-overlay" id="createModal">
-        <div class="modal-box">
+        <div class="modal-box-large">
             <h2>✨ Nouvelle session</h2>
             <p>Choisissez un examen existant ou créez-en un nouveau quiz.</p>
 
@@ -1220,115 +1364,145 @@
             </div>
 
             <!-- ── ZONE EXAMEN EXISTANT ── -->
-            <div id="zoneExistant">
-                <div class="modal-section-title">📚 Sélectionner un examen</div>
-                <div style="position:relative;margin-bottom:10px;">
-                    <input type="text" id="examSearch" placeholder="Rechercher un examen..."
-                        style="width:100%;height:36px;padding:0 12px 0 34px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;outline:none;font-family:'Inter',sans-serif;"
-                        oninput="ProfVM.filterExams(this.value)" />
-                    <span
-                        style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.3);font-size:14px;">🔍</span>
-                </div>
-                <div class="exam-list" id="examList">
-                    <div class="exam-loading">
-                        <div class="spin-ring"></div>
-                        Chargement des examens depuis la base...
+            <div id="zoneExistant" style="display:grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: start;">
+                <div class="zone-existant-left">
+                    <div class="modal-section-title">📚 Sélectionner un examen</div>
+                    <div style="position:relative;margin-bottom:10px;">
+                        <input type="text" id="examSearch" placeholder="Rechercher un examen..."
+                            style="width:100%;height:36px;padding:0 12px 0 34px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;outline:none;font-family:'Inter',sans-serif;"
+                            oninput="ProfVM.filterExams(this.value)" />
+                        <span
+                            style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.3);font-size:14px;">🔍</span>
+                    </div>
+                    <div class="exam-list" id="examList" style="max-height: 400px;">
+                        <div class="exam-loading">
+                            <div class="spin-ring"></div>
+                            Chargement des examens depuis la base...
+                        </div>
                     </div>
                 </div>
-                <hr class="modal-divider" />
-                <!-- Détails auto-remplis -->
-                <div id="autoFilledFields" style="display:none;">
-                    <div class="modal-section-title">📝 Détails de l'examen sélectionné<span class="autofill-badge">✦
-                            AUTO</span></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div class="modal-field">
-                            <label>Matière / Devoir</label>
-                            <input type="text" id="af_matiere" readonly
-                                style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
+
+                <div class="zone-existant-right">
+                    <!-- Détails auto-remplis -->
+                    <div id="autoFilledFields" style="display:none; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); padding:20px; border-radius:15px;">
+                        <div class="modal-section-title">📝 Détails de l'examen sélectionné<span class="autofill-badge" style="float:right;">✦ AUTO</span></div>
+                        <div style="display:grid;grid-template-columns:1fr;gap:12px;">
+                            <div class="modal-field">
+                                <label>Matière / Devoir</label>
+                                <input type="text" id="af_matiere" readonly
+                                    style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
+                            </div>
+                            <div class="modal-field">
+                                <label>Classe</label>
+                                <input type="text" id="af_classe" placeholder="Corriger si besoin (ex: 4SIM1)"
+                                    style="background:rgba(255,255,255,.06); border:1px solid rgba(255,185,0,.3);" />
+                                <div style="font-size:10px; color:rgba(255,185,0,.6); margin-top:4px;">⚠ Vérifier le nom de
+                                    la classe</div>
+                            </div>
                         </div>
-                        <div class="modal-field">
-                            <label>Classe</label>
-                            <input type="text" id="af_classe" placeholder="Corriger si besoin (ex: 4SIM1)"
-                                style="background:rgba(255,255,255,.06); border:1px solid rgba(255,185,0,.3);" />
-                            <div style="font-size:10px; color:rgba(255,185,0,.6); margin-top:4px;">⚠ Vérifier le nom de
-                                la classe</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div class="modal-field">
+                                <label>Date de l'examen</label>
+                                <input type="text" id="af_date" readonly
+                                    style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
+                            </div>
+                            <div class="modal-field">
+                                <label>Durée</label>
+                                <input type="text" id="af_duree" readonly
+                                    style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px;">
+                            <div class="modal-field">
+                                <label>Heure de début</label>
+                                <input type="time" id="af_start" />
+                            </div>
                         </div>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div class="modal-field">
-                            <label>Date de l'examen</label>
-                            <input type="text" id="af_date" readonly
-                                style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
-                        </div>
-                        <div class="modal-field">
-                            <label>Durée</label>
-                            <input type="text" id="af_duree" readonly
-                                style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
-                        </div>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px;">
-                        <div class="modal-field">
-                            <label>Heure de début</label>
-                            <input type="time" id="af_start" />
-                        </div>
+                    <div id="noExamSelectedMsg" style="text-align:center; padding:60px 20px; color:rgba(255,255,255,0.2);">
+                        <div style="font-size:40px; margin-bottom:10px;">👈</div>
+                        Sélectionnez un examen dans la liste pour voir les détails
                     </div>
                 </div>
             </div>
 
             <!-- ── ZONE NOUVEAU QUIZ ── -->
-            <div id="zoneNouveau" style="display:none;">
-                <div class="modal-section-title">📋 Informations du quiz</div>
-                <div class="modal-field">
-                    <label>Matière / Devoir *</label>
-                    <input type="text" id="n_matiere" placeholder="ex: Architecture POO – Devoir 1" />
+            <div id="zoneNouveau" style="display:none; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: start;">
+                <div class="zone-nouveau-left">
+                    <div class="modal-section-title">📋 Informations du quiz</div>
+                    <div class="modal-field">
+                        <label>Matière / Devoir *</label>
+                        <input type="text" id="n_matiere" placeholder="ex: Architecture POO – Devoir 1" />
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="modal-field">
+                            <label>Date *</label>
+                            <input type="date" id="n_date" />
+                        </div>
+                        <div class="modal-field">
+                            <label>Durée *</label>
+                            <select id="n_duree">
+                                <option value="30min">30 minutes</option>
+                                <option value="1h">1 heure</option>
+                                <option value="1h30" selected>1h30</option>
+                                <option value="2h">2 heures</option>
+                                <option value="2h30">2h30</option>
+                                <option value="3h">3 heures</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr;gap:12px;">
+                        <div class="modal-field">
+                            <label>Heure de début *</label>
+                            <input type="time" id="n_start" />
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div class="modal-field">
+                            <label>Classe *</label>
+                            <select id="n_classe">
+                                <option value="">— Chargement... —</option>
+                            </select>
+                        </div>
+                        <div class="modal-field">
+                            <label>Niveau</label>
+                            <select id="n_niveau">
+                                <option>1er</option>
+                                <option>2eme</option>
+                                <option>3eme</option>
+                                <option>4eme</option>
+                                <option>5eme</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-field">
+                        <label>Description / Consignes</label>
+                        <textarea id="n_desc" rows="3" placeholder="Instructions pour les étudiants..."
+                            style="width:100%;padding:10px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:vertical;line-height:1.5;transition:border-color .2s;"
+                            onfocus="this.style.borderColor='rgba(88,101,242,.7)'"
+                            onblur="this.style.borderColor='rgba(255,255,255,.1)'"></textarea>
+                    </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div class="modal-field">
-                        <label>Date *</label>
-                        <input type="date" id="n_date" />
+
+                <div class="zone-nouveau-right" style="position: sticky; top: 0;">
+                    <div class="quiz-config-section" style="margin-top: 0;">
+                        <div class="modal-section-title">🧠 Configuration du Quiz</div>
+                        <div class="quiz-type-selector">
+                            <div class="quiz-type-chip selected" data-type="QCM" onclick="ProfVM.toggleQuizType(this)">QCM</div>
+                            <div class="quiz-type-chip" data-type="QCMImage" onclick="ProfVM.toggleQuizType(this)">QCM Image</div>
+                            <div class="quiz-type-chip" data-type="VraiFaux" onclick="ProfVM.toggleQuizType(this)">Vrai / Faux</div>
+                            <div class="quiz-type-chip" data-type="Libre" onclick="ProfVM.toggleQuizType(this)">Réponse libre</div>
+                            <div class="quiz-type-chip" data-type="Classement" onclick="ProfVM.toggleQuizType(this)">Classement</div>
+                        </div>
+                        
+                        <div id="quizQuestionsContainer" style="max-height: 55vh; overflow-y: auto; padding-right: 10px; scrollbar-width: thin; margin-bottom: 10px;">
+                            <!-- Questions will be dynamically added here -->
+                        </div>
+                        
+                        <button class="btn btn-ghost" style="width:100%; border-style:dashed;" onclick="ProfVM.addQuestion()">
+                            ➕ Ajouter une question
+                        </button>
                     </div>
-                    <div class="modal-field">
-                        <label>Durée *</label>
-                        <select id="n_duree">
-                            <option value="30min">30 minutes</option>
-                            <option value="1h">1 heure</option>
-                            <option value="1h30" selected>1h30</option>
-                            <option value="2h">2 heures</option>
-                            <option value="2h30">2h30</option>
-                            <option value="3h">3 heures</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr;gap:12px;">
-                    <div class="modal-field">
-                        <label>Heure de début *</label>
-                        <input type="time" id="n_start" />
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div class="modal-field">
-                        <label>Classe *</label>
-                        <select id="n_classe">
-                            <option value="">— Chargement... —</option>
-                        </select>
-                    </div>
-                    <div class="modal-field">
-                        <label>Niveau</label>
-                        <select id="n_niveau">
-                            <option>L1</option>
-                            <option>L2</option>
-                            <option>L3</option>
-                            <option>M1</option>
-                            <option>M2</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-field">
-                    <label>Description / Consignes</label>
-                    <textarea id="n_desc" rows="3" placeholder="Instructions pour les étudiants..."
-                        style="width:100%;padding:10px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:vertical;line-height:1.5;transition:border-color .2s;"
-                        onfocus="this.style.borderColor='rgba(88,101,242,.7)'"
-                        onblur="this.style.borderColor='rgba(255,255,255,.1)'"></textarea>
                 </div>
             </div>
 
@@ -1676,6 +1850,7 @@
             openCreateModal() {
                 this.sharedUrls = [];
                 this.selectedExam = null;
+                this.quizQuestions = [];
                 const gc = document.getElementById('generatedCode');
                 if (gc) { gc.style.display = 'none'; gc.textContent = ''; }
 
@@ -1854,22 +2029,35 @@
                         let html = '';
                         students.forEach(st => {
                             const pObj = participants.find(p => {
-                                let studentRef = p.student || p;
-                                let refId = (typeof studentRef === 'string') ? studentRef :
-                                    (studentRef._id || studentRef.id || studentRef.toString());
-                                return refId === st._id.toString();
+                                // Extract the ID from the participant object
+                                let pid = '';
+                                if (p.student) {
+                                    pid = (typeof p.student === 'object') ? (p.student._id || p.student.id) : p.student;
+                                } else {
+                                    pid = p._id || p.id || p;
+                                }
+                                
+                                const sid = st._id || st.id || st;
+                                return pid && sid && pid.toString() === sid.toString();
                             });
 
                             const isActif = pObj ? (pObj.status === 'actif') : false;
                             const statusClass = isActif ? 'actif' : '';
                             const statusLabel = isActif ? 'Actif' : 'Inscrit';
+                            const hasNote = pObj && pObj.quizResult;
 
                             html += `
-                                <div class="student-item">
+                                <div class="student-item" style="${hasNote ? 'border-left: 4px solid #23d160; background: rgba(35, 209, 96, 0.05);' : ''}">
                                     <div class="student-avatar" style="${isActif ? 'background:linear-gradient(135deg, #10b981, #059669);' : ''}">${(st.prenom && st.nom) ? (st.prenom[0] + st.nom[0]).toUpperCase() : '??'}</div>
                                     <div style="flex:1;">
-                                        <div style="color:rgba(255,255,255,.9); font-size:14px; font-weight:500;">${st.prenom} ${st.nom} ${isActif ? '⚡' : ''}</div>
-                                        <div style="color:rgba(255,255,255,.4); font-size:11px;">NC: ${st.studentCardNumber || 'N/A'}</div>
+                                        <div style="color:rgba(255,255,255,.9); font-size:14px; font-weight:500;">
+                                            ${st.prenom} ${st.nom} ${isActif ? '⚡' : ''}
+                                            ${hasNote ? '<span style="background:#23d160; color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; margin-left:8px; vertical-align:middle; font-weight:800;">Note Reçue 📝</span>' : ''}
+                                        </div>
+                                        <div style="color:rgba(255,255,255,.4); font-size:11px;">
+                                            NC: ${st.studentCardNumber || 'N/A'} 
+                                            ${hasNote ? `<span style="margin-left:8px; color:#23d160; font-weight:800; font-size:13px; border:1px solid rgba(35,209,96,0.3); padding:2px 6px; border-radius:4px; background:rgba(35,209,96,0.1);">🎯 Note: ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>` : ''}
+                                        </div>
                                     </div>
                                     <div style="display:flex; align-items:center; gap:8px;">
                                         ${isActif ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:16px; border:1px solid rgba(88,101,242,0.4);" onclick="ProfVM.viewStudentScreen('${st._id}', '${st.prenom} ${st.nom}')" title="Regarder l'écran en direct">📺</button>` : ''}
@@ -1905,10 +2093,186 @@
                 this.mode = mode;
                 document.getElementById('modeExistant').classList.toggle('active', mode === 'existant');
                 document.getElementById('modeNouveau').classList.toggle('active', mode === 'nouveau');
-                document.getElementById('zoneExistant').style.display = mode === 'existant' ? 'block' : 'none';
-                document.getElementById('zoneNouveau').style.display = mode === 'nouveau' ? 'block' : 'none';
+                document.getElementById('zoneExistant').style.display = mode === 'existant' ? 'grid' : 'none';
+                document.getElementById('zoneNouveau').style.display = mode === 'nouveau' ? 'grid' : 'none';
                 if (mode === 'nouveau') {
                     document.getElementById('n_date').value = new Date().toISOString().split('T')[0];
+                }
+            },
+
+            quizQuestions: [],
+            selectedQuizType: 'QCM',
+
+            toggleQuizType(el) {
+                document.querySelectorAll('.quiz-type-chip').forEach(c => c.classList.remove('selected'));
+                el.classList.add('selected');
+                this.selectedQuizType = el.getAttribute('data-type');
+            },
+
+            addQuestion() {
+                const id = Date.now().toString();
+                const type = this.selectedQuizType;
+                let q = { id, type, text: '', points: 1, options: [], correctAnswers: [] };
+
+                if (type === 'QCM' || type === 'QCMImage') {
+                    q.options = ['', ''];
+                    q.correctAnswers = [];
+                } else if (type === 'VraiFaux') {
+                    q.options = ['Vrai', 'Faux'];
+                    q.correctAnswers = ['Vrai'];
+                } else if (type === 'Classement') {
+                    q.options = ['', ''];
+                    q.correctAnswers = []; // Order defined by options order
+                }
+
+                this.quizQuestions.push(q);
+                this.renderQuizQuestions();
+            },
+
+            removeQuestion(id) {
+                this.quizQuestions = this.quizQuestions.filter(q => q.id !== id);
+                this.renderQuizQuestions();
+            },
+
+            renderQuizQuestions() {
+                const container = document.getElementById('quizQuestionsContainer');
+                if (!container) return;
+
+                container.innerHTML = this.quizQuestions.map((q, idx) => {
+                    let optionsHtml = '';
+                    if (q.type === 'QCM') {
+                        optionsHtml = q.options.map((opt, oIdx) => `
+                            <div class="option-row">
+                                <input type="checkbox" class="correct-checkbox" ${q.correctAnswers.includes(oIdx.toString()) ? 'checked' : ''} onchange="ProfVM.updateCorrectAnswer('${q.id}', '${oIdx}', this.checked)">
+                                <input type="text" placeholder="Option ${oIdx + 1}" value="${opt}" oninput="ProfVM.updateOption('${q.id}', ${oIdx}, this.value)" style="flex:1; height:30px; font-size:12px;">
+                                <span class="remove-btn" onclick="ProfVM.removeOption('${q.id}', ${oIdx})">×</span>
+                            </div>
+                        `).join('') + `<button class="btn btn-ghost" style="height:25px; font-size:10px;" onclick="ProfVM.addOption('${q.id}')">+ Ajouter une option</button>`;
+                    } else if (q.type === 'QCMImage') {
+                        optionsHtml = `<div style="font-size:11px; color:rgba(255,255,255,0.4); margin-bottom: 5px;">Sélectionnez les images et cochez la (les) bonne(s) réponse(s)</div>` + 
+                        q.options.map((opt, oIdx) => `
+                            <div class="option-row" style="align-items: flex-start; background: rgba(255,255,255,0.02); padding: 5px; border-radius: 8px;">
+                                <input type="checkbox" class="correct-checkbox" ${q.correctAnswers.includes(oIdx.toString()) ? 'checked' : ''} onchange="ProfVM.updateCorrectAnswer('${q.id}', '${oIdx}', this.checked)" style="margin-top: 5px;">
+                                <div style="flex:1; display:flex; flex-direction:column; gap:5px;">
+                                    ${opt ? `<img src="${opt}" style="max-height: 80px; object-fit: contain; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);"/>` : `<div style="height:40px; background:rgba(0,0,0,0.2); border:1px dashed rgba(255,255,255,0.2); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:rgba(255,255,255,0.3);">Aucune image</div>`}
+                                    <input type="file" accept="image/*" onchange="ProfVM.handleImageUpload(event, '${q.id}', ${oIdx})" style="font-size: 11px;">
+                                </div>
+                                <span class="remove-btn" onclick="ProfVM.removeOption('${q.id}', ${oIdx})" style="margin-top: 5px;">×</span>
+                            </div>
+                        `).join('') + `<button class="btn btn-ghost" style="height:25px; font-size:10px; margin-top:5px;" onclick="ProfVM.addOption('${q.id}')">+ Ajouter une image</button>`;
+                    } else if (q.type === 'VraiFaux') {
+                        optionsHtml = `
+                            <div style="display:flex; gap:20px;">
+                                <label style="display:flex; align-items:center; gap:5px; font-size:12px;">
+                                    <input type="radio" name="vf_${q.id}" ${q.correctAnswers[0] === 'Vrai' ? 'checked' : ''} onchange="ProfVM.updateCorrectAnswer('${q.id}', 'Vrai', true)"> Vrai
+                                </label>
+                                <label style="display:flex; align-items:center; gap:5px; font-size:12px;">
+                                    <input type="radio" name="vf_${q.id}" ${q.correctAnswers[0] === 'Faux' ? 'checked' : ''} onchange="ProfVM.updateCorrectAnswer('${q.id}', 'Faux', true)"> Faux
+                                </label>
+                            </div>
+                        `;
+                    } else if (q.type === 'Libre') {
+                        optionsHtml = `<div style="font-size:11px; color:rgba(255,255,255,0.4);">Réponse libre (texte saisi par l'étudiant)</div>`;
+                    } else if (q.type === 'Classement') {
+                        optionsHtml = `
+                            <div style="font-size:11px; color:rgba(255,185,0,.7); margin-bottom:5px;">L'ordre saisi ici est l'ordre correct.</div>
+                            ` + q.options.map((opt, oIdx) => `
+                            <div class="option-row">
+                                <span style="font-size:12px; color:rgba(255,255,255,.4);">${oIdx + 1}.</span>
+                                <input type="text" placeholder="Élément" value="${opt}" oninput="ProfVM.updateOption('${q.id}', ${oIdx}, this.value)" style="flex:1; height:30px; font-size:12px;">
+                                <span class="remove-btn" onclick="ProfVM.removeOption('${q.id}', ${oIdx})">×</span>
+                            </div>
+                        `).join('') + `<button class="btn btn-ghost" style="height:25px; font-size:10px;" onclick="ProfVM.addOption('${q.id}')">+ Ajouter un élément</button>`;
+                    }
+
+                    return `
+                        <div class="question-card">
+                            <div class="question-header">
+                                <span style="font-size:12px; font-weight:700; color:var(--primary);">#${idx + 1} - ${q.type}</span>
+                                <span class="remove-btn" onclick="ProfVM.removeQuestion('${q.id}')">🗑️</span>
+                            </div>
+                            <div class="question-content">
+                                <input type="text" placeholder="Question..." value="${q.text}" oninput="ProfVM.updateQuestionText('${q.id}', this.value)" style="width:100%; height:36px; font-size:13px; font-weight:500;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <label style="font-size:11px; color:rgba(255,255,255,0.4);">Points:</label>
+                                    <input type="number" value="${q.points}" oninput="ProfVM.updateQuestionPoints('${q.id}', this.value)" style="width:50px; height:24px; font-size:11px;">
+                                </div>
+                                <div class="options-container">
+                                    ${optionsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            updateQuestionText(id, text) {
+                const q = this.quizQuestions.find(q => q.id === id);
+                if (q) q.text = text;
+            },
+
+            updateQuestionPoints(id, points) {
+                const q = this.quizQuestions.find(q => q.id === id);
+                if (q) q.points = parseInt(points) || 1;
+            },
+
+            updateOption(id, oIdx, val) {
+                const q = this.quizQuestions.find(q => q.id === id);
+                if (q) {
+                    q.options[oIdx] = val;
+                    if (q.type === 'Classement') {
+                        q.correctAnswers = [...q.options]; // The correct order is the defined order
+                    }
+                }
+            },
+
+            addOption(id) {
+                const q = this.quizQuestions.find(q => q.id === id);
+                if (q) {
+                    q.options.push('');
+                    this.renderQuizQuestions();
+                }
+            },
+
+            handleImageUpload(event, id, oIdx) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64 = e.target.result;
+                    this.updateOption(id, oIdx, base64);
+                    this.renderQuizQuestions(); // Refresh UI to show the image preview
+                };
+                reader.readAsDataURL(file);
+            },
+
+            removeOption(id, oIdx) {
+                const q = this.quizQuestions.find(q => q.id === id);
+                if (q && q.options.length > 1) {
+                    q.options.splice(oIdx, 1);
+                    // Update correct answers indices for QCM / QCMImage
+                    if (q.type === 'QCM' || q.type === 'QCMImage') {
+                        q.correctAnswers = q.correctAnswers
+                            .map(a => parseInt(a))
+                            .filter(a => a !== oIdx)
+                            .map(a => (a > oIdx ? a - 1 : a).toString());
+                    }
+                    this.renderQuizQuestions();
+                }
+            },
+
+            updateCorrectAnswer(id, val, isChecked) {
+                const q = this.quizQuestions.find(q => q.id === id);
+                if (q) {
+                    if (q.type === 'QCM' || q.type === 'QCMImage') {
+                        if (isChecked) {
+                            if (!q.correctAnswers.includes(val)) q.correctAnswers.push(val);
+                        } else {
+                            q.correctAnswers = q.correctAnswers.filter(a => a !== val);
+                        }
+                    } else if (q.type === 'VraiFaux') {
+                        q.correctAnswers = [val];
+                    }
                 }
             },
 
@@ -2058,8 +2422,11 @@
                 const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
                 document.getElementById('af_start').value = timeStr;
 
+                const noExamMsg = document.getElementById('noExamSelectedMsg');
+                if (noExamMsg) noExamMsg.style.display = 'none';
+
                 document.getElementById('autoFilledFields').style.display = 'block';
-                document.getElementById('autoFilledFields').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                // Remove scrollIntoView since right column is sticky/fixed now and won't need scrolling
             },
 
             filterExams(q) {
@@ -2250,9 +2617,19 @@
                         const formData = new FormData();
                         formData.append('classe', classId);
                         formData.append('duration', duration.toString());
-                        formData.append('testType', 'DESKTOP_APP');
-                        formData.append('subject', subjectValue); // Ajout manuel du champ subject pour le backend
-                        formData.append('allowedApps', JSON.stringify(['vscode']));
+                        
+                        // Decide if it's a QUIZ or DESKTOP_APP
+                        const isQuiz = this.quizQuestions.length > 0;
+                        formData.append('testType', isQuiz ? 'QUIZ' : 'DESKTOP_APP');
+                        
+                        if (isQuiz) {
+                            formData.append('quizData', JSON.stringify({ questions: this.quizQuestions }));
+                        }
+                        
+                        formData.append('subject', subjectValue);
+                        if (!isQuiz) {
+                            formData.append('allowedApps', JSON.stringify(['vscode']));
+                        }
                         
                         // S'assurer qu'un lien tapé mais non ajouté via "+" est quand même envoyé
                         let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;

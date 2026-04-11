@@ -129,6 +129,14 @@ window.SessionVM = class SessionVM {
         // Statut global (pour arrêter l'examen si terminé)
         const isActive = data.isActive !== false && !data.endedAt;
         sessionStorage.setItem('sessionIsActive', isActive ? 'true' : 'false');
+        
+        sessionStorage.setItem('sessionTestType', data.testType || 'DESKTOP_APP');
+        if (data.quizData) {
+            const quizVal = typeof data.quizData === 'string' ? data.quizData : JSON.stringify(data.quizData);
+            sessionStorage.setItem('sessionQuizData', quizVal);
+        } else {
+            sessionStorage.removeItem('sessionQuizData');
+        }
 
         // Traceur de battement pour le UI
         sessionStorage.setItem('lastHeartbeatAt', Date.now());
