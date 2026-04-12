@@ -355,7 +355,7 @@
         /* Actions */
         .actions {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 24px;
             animation: fadeUp .5s ease .2s both;
         }
@@ -430,6 +430,11 @@
         .action-card:nth-child(2) .action-icon {
             background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.05));
             border-color: rgba(0, 212, 255, .4);
+        }
+
+        .action-card:nth-child(3) .action-icon {
+            background: linear-gradient(135deg, rgba(255, 185, 0, 0.2), rgba(255, 185, 0, 0.05));
+            border-color: rgba(255, 185, 0, .4);
         }
 
         .action-title {
@@ -1314,7 +1319,7 @@
                     </div>
                     <div class="action-arrow">→</div>
                 </div>
-                <div class="action-card" onclick="ProfVM.toggleSessions()">
+                <div class="action-card" onclick="ProfVM.toggleSessions('recent')">
                     <div class="action-icon">📋</div>
                     <div>
                         <div class="action-title">Voir mes sessions</div>
@@ -1322,11 +1327,19 @@
                     </div>
                     <div class="action-arrow">→</div>
                 </div>
+                <div class="action-card" onclick="ProfVM.toggleSessions('archive')">
+                    <div class="action-icon">🗄️</div>
+                    <div>
+                        <div class="action-title">Archives</div>
+                        <div class="action-desc">Consultez vos sessions archivées.</div>
+                    </div>
+                    <div class="action-arrow">→</div>
+                </div>
             </div>
 
             <div class="sessions-card" id="sessionsCard">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <h3 style="margin:0">📋 Mes sessions récentes</h3>
+                    <h3 id="sessionsCardTitle" style="margin:0">📋 Mes sessions récentes</h3>
                     <div
                         style="font-size:10px; color:rgba(255,255,255,0.3); background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px;">
                         Serveur :
@@ -1499,8 +1512,12 @@
                             <!-- Questions will be dynamically added here -->
                         </div>
                         
+                        <button class="btn btn-ghost" style="width:100%; border-style:dashed; margin-bottom:10px; background: rgba(88, 101, 242, 0.1); color: #5865f2; border-color: rgba(88, 101, 242, 0.4);" onclick="ProfVM.openAIModal()">
+                            🤖 Importer un cours et générer le quiz avec l'IA
+                        </button>
+
                         <button class="btn btn-ghost" style="width:100%; border-style:dashed;" onclick="ProfVM.addQuestion()">
-                            ➕ Ajouter une question
+                            ➕ Ajouter une question manuellement
                         </button>
                     </div>
                 </div>
@@ -1624,6 +1641,51 @@
         </div>
     </div>
 
+    <!-- ── AI GENERATOR MODAL ── -->
+    <div class="modal-overlay" id="aiModal">
+        <div class="modal" style="width:600px; max-width:90vw; border:1px solid rgba(88,101,242,.4); background:#1a1b1e; display:flex; flex-direction:column; padding:0;">
+            <div style="padding:20px 24px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="font-size:18px; font-weight:600; margin:0;">🤖 IA : Générateur de Quiz (Together AI)</h2>
+                <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;" onclick="ProfVM.closeAIModal()">×</button>
+            </div>
+            <div style="padding:24px; flex:1; overflow-y:auto;">
+                <div style="margin-bottom:15px; font-size:13px; color:rgba(255,255,255,.6);">
+                    Téléchargez un cours (PDF, Word, TXT) ou collez directement le texte brut pour générer automatiquement des questions de QCM avec l'IA.
+                </div>
+                
+                <div class="modal-field">
+                    <label>Fichier de cours (PDF, Word, TXT)</label>
+                    <input type="file" id="aiFileInput" accept=".pdf,.doc,.docx,.txt" style="display:block; padding: 6px; font-size: 13px;" onchange="ProfVM.handleAIFiles(this)">
+                </div>
+
+                <div style="text-align:center; color:rgba(255,255,255,.3); margin: 10px 0;">— OU —</div>
+
+                <div class="modal-field">
+                    <label>Texte Brut</label>
+                    <textarea id="aiTextInput" rows="5" placeholder="Collez le texte ou le résumé ici..." style="width:100%;padding:10px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:vertical;"></textarea>
+                </div>
+                
+                <div class="modal-field">
+                    <label>Nombre de questions souhaité</label>
+                    <input type="number" id="aiQuestionCount" value="5" min="1" max="20" style="width:100px;">
+                </div>
+                
+                <div id="aiLoading" style="display:none; text-align:center; padding:15px; color:#5865f2;">
+                    <div class="spin-ring" style="width:24px; height:24px; border-width:3px; margin: 0 auto 10px;"></div>
+                    <span>Analyse et génération par Together AI en cours... Veuillez patienter.</span>
+                </div>
+            </div>
+            <div style="padding:16px 24px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn btn-ghost" onclick="ProfVM.closeAIModal()">Annuler</button>
+                <button class="btn btn-indigo" onclick="ProfVM.generateAIQuiz()">🚀 Lancer l'IA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CDNs pour l'extracteur de texte IA -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+
     <script>
         let API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
 
@@ -1715,6 +1777,7 @@
 
         const ProfVM = {
             sessionsOpen: false,
+            viewingArchive: false,
             sharedFiles: [],
             sharedUrls: [],
             mode: 'existant',
@@ -1793,7 +1856,8 @@
                             course: displayTitle,
                             meta: `${mode}${dur}`,
                             date,
-                            status
+                            status,
+                            isArchived: s.isArchived === true
                         };
                     });
 
@@ -1821,27 +1885,64 @@
                     el.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.2); font-size:13px;">Aucune session récente trouvée.</div>`;
                     return;
                 }
-                el.innerHTML = ProfData.sessions.map(s => `
+                
+                const filtered = ProfData.sessions.filter(s => this.viewingArchive ? s.isArchived : !s.isArchived);
+
+                if (filtered.length === 0) {
+                    el.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.2); font-size:13px;">Aucune session trouvée dans cette catégorie.</div>`;
+                    return;
+                }
+
+                el.innerHTML = filtered.map(s => `
                 <div class="session-row" onclick="ProfVM.showSessionDetails('${s.id}')" style="cursor:pointer; transition: transform .2s, background-color .2s;">
-                    <div>
+                    <div style="flex:1;">
                         <div class="session-code">${s.code}</div>
                         <div class="session-meta" style="margin-top:2px;">
                             <strong style="color:rgba(255,255,255,.9); font-size:13.5px;">${s.course}</strong><br/>
                             <small style="color:rgba(255,255,255,.45); font-size:11.5px;">${s.meta} · ${s.date}</small>
                         </div>
                     </div>
-                    <span class="session-badge ${s.status}" style="font-weight:600;">${s.status === 'active' ? '🟢 Active' : '⚫ Terminée'}</span>
+                    <div style="display:flex; align-items:center; gap: 15px;">
+                        ${!this.viewingArchive ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height: 26px; border-color: rgba(255,255,255,.2);" onclick="event.stopPropagation(); ProfVM.archiveSession('${s.id}')">🗃️ Archiver</button>` : ''}
+                        <span class="session-badge ${s.status}" style="font-weight:600;">${s.status === 'active' ? '🟢 Active' : '⚫ Terminée'}</span>
+                    </div>
                 </div>`).join('');
             },
 
-            toggleSessions() {
-                this.sessionsOpen = !this.sessionsOpen;
+            async archiveSession(id) {
+                if(!confirm('Voulez-vous archiver cette session ?')) return;
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    const resp = await fetch(`${API_BASE}/practical-tests/${id}/archive`, {
+                        method: 'PATCH',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if(resp.ok) {
+                        this.fetchRecentSessions();
+                    } else {
+                        alert("Erreur lors de l'archivage.");
+                    }
+                } catch(e) {
+                    console.error(e);
+                    alert("Erreur réseau");
+                }
+            },
+
+            toggleSessions(mode = 'recent') {
+                const wantsArchive = mode === 'archive';
+                if (this.sessionsOpen && this.viewingArchive === wantsArchive) {
+                    this.sessionsOpen = false;
+                } else {
+                    this.sessionsOpen = true;
+                    this.viewingArchive = wantsArchive;
+                }
+                
                 const card = document.getElementById('sessionsCard');
                 card.classList.toggle('visible', this.sessionsOpen);
                 card.style.display = this.sessionsOpen ? 'block' : 'none';
 
-                // Charger les données à la demande
                 if (this.sessionsOpen) {
+                    document.getElementById('sessionsCardTitle').innerHTML = wantsArchive ? '🗄️ Mes sessions archivées' : '📋 Mes sessions récentes';
                     this.fetchRecentSessions();
                     card.scrollIntoView({ behavior: 'smooth' });
                 }
@@ -2107,6 +2208,116 @@
                 document.querySelectorAll('.quiz-type-chip').forEach(c => c.classList.remove('selected'));
                 el.classList.add('selected');
                 this.selectedQuizType = el.getAttribute('data-type');
+            },
+
+            openAIModal() {
+                document.getElementById('aiFileInput').value = '';
+                document.getElementById('aiTextInput').value = '';
+                document.getElementById('aiLoading').style.display = 'none';
+                document.getElementById('aiModal').classList.add('open');
+            },
+
+            closeAIModal() {
+                document.getElementById('aiModal').classList.remove('open');
+            },
+
+            async handleAIFiles(input) {
+                const file = input.files[0];
+                if (!file) return;
+                
+                const ext = file.name.split('.').pop().toLowerCase();
+                const reader = new FileReader();
+
+                if (ext === 'txt') {
+                    reader.onload = (e) => {
+                        document.getElementById('aiTextInput').value = e.target.result;
+                    };
+                    reader.readAsText(file);
+                } else if (ext === 'pdf') {
+                    reader.onload = async function() {
+                        try {
+                            const typedarray = new Uint8Array(this.result);
+                            const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                            if(!pdfjsLib) { alert("Le module PDF n'est pas prêt."); return; }
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                            
+                            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                            let fullText = '';
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                const page = await pdf.getPage(i);
+                                const textContent = await page.getTextContent();
+                                fullText += textContent.items.map(s => s.str).join(' ') + '\n';
+                            }
+                            document.getElementById('aiTextInput').value = fullText;
+                        } catch(e) {
+                            alert("Impossible de lire ce PDF: " + e.message);
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else if (ext === 'doc' || ext === 'docx') {
+                    reader.onload = async (e) => {
+                        try {
+                            if(!window.mammoth) { alert("Le module Word n'est pas prêt."); return; }
+                            const arrayBuffer = e.target.result;
+                            const result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
+                            document.getElementById('aiTextInput').value = result.value;
+                        } catch(err) {
+                            alert("Impossible de lire ce Word: " + err.message);
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    alert("Format non supporté !");
+                }
+            },
+
+            async generateAIQuiz() {
+                const text = document.getElementById('aiTextInput').value.trim();
+                const count = parseInt(document.getElementById('aiQuestionCount').value) || 5;
+
+                if (!text) {
+                    alert("Veuillez fournir un texte ou importer un document de cours !");
+                    return;
+                }
+                
+                document.getElementById('aiLoading').style.display = 'block';
+
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    const response = await fetch(`${API_BASE}/practical-tests/generate-quiz`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text, count })
+                    });
+
+                    const questions = await response.json();
+                    if (!response.ok) throw new Error(questions.message || "Erreur Backend");
+                    
+                    if(Array.isArray(questions)) {
+                        questions.forEach(q => {
+                            q.id = Date.now().toString() + Math.random().toString().slice(2, 6);
+                            // ensure correct answers is always an array of strings
+                            if(q.correctAnswers) {
+                                q.correctAnswers = q.correctAnswers.map(ans => ans.toString());
+                            } else {
+                                q.correctAnswers = ["0"];
+                            }
+                            this.quizQuestions.push(q);
+                        });
+                        this.renderQuizQuestions();
+                        this.closeAIModal();
+                    } else {
+                        throw new Error("Le format renvoyé n'est pas un tableau valide.");
+                    }
+                } catch (err) {
+                    console.error("AI Error:", err);
+                    alert("Erreur lors de la génération avec l'IA: " + err.message);
+                } finally {
+                    document.getElementById('aiLoading').style.display = 'none';
+                }
             },
 
             addQuestion() {

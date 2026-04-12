@@ -117,12 +117,18 @@
         }
 
         .win-btn {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             border-radius: 50%;
             border: none;
             cursor: pointer;
             transition: 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: rgba(0,0,0,0.6);
+            font-weight: 900;
         }
 
         .win-btn.close {
@@ -644,9 +650,9 @@
             <div class="window-header">
                 <h2 id="pdf-header-title">Visionneuse PDF - Sujet</h2>
                 <div class="window-controls">
-                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-pdf')" title="Réduire"></button>
-                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-pdf')" title="Agrandir"></button>
-                    <button class="win-btn close" onclick="UI.closeWindow('win-pdf')" title="Fermer"></button>
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-pdf')" title="Réduire">−</button>
+                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-pdf')" title="Agrandir">□</button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-pdf')" title="Fermer">×</button>
                 </div>
             </div>
             <div class="window-content" id="pdf-body" style="background-color: #525659; flex:1; overflow:hidden; display:flex;">
@@ -664,9 +670,9 @@
                         Nouvel onglet</h2>
                 </div>
                 <div class="window-controls">
-                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-browser')" title="Réduire"></button>
-                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-browser')" title="Agrandir"></button>
-                    <button class="win-btn close" onclick="UI.closeWindow('win-browser')" title="Fermer"></button>
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-browser')" title="Réduire">−</button>
+                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-browser')" title="Agrandir">□</button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-browser')" title="Fermer">×</button>
                 </div>
             </div>
 
@@ -710,9 +716,9 @@
             <div class="window-header">
                 <h2>Bloc-notes</h2>
                 <div class="window-controls">
-                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-notepad')" title="Réduire"></button>
-                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-notepad')" title="Agrandir"></button>
-                    <button class="win-btn close" onclick="UI.closeWindow('win-notepad')" title="Fermer"></button>
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-notepad')" title="Réduire">−</button>
+                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-notepad')" title="Agrandir">□</button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-notepad')" title="Fermer">×</button>
                 </div>
             </div>
             <textarea class="notepad-area" placeholder="Commencez à écrire ici..." spellcheck="false"></textarea>
@@ -723,9 +729,9 @@
             <div class="window-header">
                 <h2>Calculatrice</h2>
                 <div class="window-controls">
-                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-calc')" title="Réduire"></button>
-                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-calc')" title="Agrandir"></button>
-                    <button class="win-btn close" onclick="UI.closeWindow('win-calc')" title="Fermer"></button>
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-calc')" title="Réduire">−</button>
+                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-calc')" title="Agrandir">□</button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-calc')" title="Fermer">×</button>
                 </div>
             </div>
             <input type="text" id="calc-display" readonly value="0">
@@ -760,9 +766,9 @@
             <div class="window-header">
                 <h2>✍️ Quiz en cours</h2>
                 <div class="window-controls">
-                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-quiz')" title="Réduire"></button>
-                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-quiz')" title="Agrandir"></button>
-                    <button class="win-btn close" onclick="UI.closeWindow('win-quiz')" title="Fermer"></button>
+                    <button class="win-btn minimize" onclick="UI.minimizeWindow('win-quiz')" title="Réduire">−</button>
+                    <button class="win-btn maximize" onclick="UI.toggleMaximizeWindow('win-quiz')" title="Agrandir">□</button>
+                    <button class="win-btn close" onclick="UI.closeWindow('win-quiz')" title="Fermer">×</button>
                 </div>
             </div>
             <div class="window-content" id="quiz-body" style="background-color: var(--window-bg); flex:1; overflow-y:auto; padding:30px;">
@@ -770,7 +776,7 @@
                     <!-- Quiz questions will be injected here -->
                 </div>
                 <div id="quiz-footer" style="margin-top:20px; text-align:right;">
-                    <button class="btn btn-primary" style="width:auto; padding:0 30px;" onclick="QuizVM.submitQuiz()">Terminer le quiz</button>
+                    <button class="primary" style="padding: 14px 36px; font-size: 15px; font-weight: 700; border-radius: 20px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 10px;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(37, 99, 235, 0.4)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(37, 99, 235, 0.3)';" onclick="QuizVM.submitQuiz()"><span>🚀</span> Terminer le quiz</button>
                 </div>
             </div>
         </div>
