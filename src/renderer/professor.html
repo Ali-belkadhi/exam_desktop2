@@ -1425,19 +1425,24 @@
                                     style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
                             </div>
                         </div>
-                        <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px;">
                             <div class="modal-field">
                                 <label>Heure de début</label>
                                 <input type="time" id="af_start" />
                             </div>
+                        
+                        <div class="modal-field" style="margin-top:12px;">
+                            <label>Applications Autorisées (Whitelist) <span style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des virgules</span></label>
+                            <input type="text" id="af_whitelist" placeholder="ex: vscode, chrome, node, python" 
+                                style="background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#fff; padding:10px 14px; font-size:13px; width:100%; transition:all .2s;" />
                         </div>
-                    </div>
+                    </div> <!-- fin autoFilledFields -->
+                    
                     <div id="noExamSelectedMsg" style="text-align:center; padding:60px 20px; color:rgba(255,255,255,0.2);">
                         <div style="font-size:40px; margin-bottom:10px;">👈</div>
                         Sélectionnez un examen dans la liste pour voir les détails
                     </div>
-                </div>
-            </div>
+                </div> <!-- fin zone-existant-right -->
+            </div> <!-- fin zoneExistant -->
 
             <!-- ── ZONE NOUVEAU QUIZ ── -->
             <div id="zoneNouveau" style="display:none; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: start;">
@@ -1469,6 +1474,11 @@
                             <label>Heure de début *</label>
                             <input type="time" id="n_start" />
                         </div>
+                    </div>
+                    <div class="modal-field" style="margin-top:12px;">
+                        <label>Applications Autorisées (Whitelist) <span style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des virgules</span></label>
+                        <input type="text" id="n_whitelist" placeholder="ex: vscode, chrome, node, pycharm" 
+                            style="background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#fff; padding:10px 14px; font-size:13px; width:100%; transition:all .2s;" />
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                         <div class="modal-field">
@@ -1641,6 +1651,51 @@
         </div>
     </div>
 
+    <!-- ── STUDENT MONITOR MODAL (Task Manager Style) ── -->
+    <div class="modal-overlay" id="monitorModal">
+        <div class="modal" style="width:920px; max-width:95vw; height:85vh; border:1px solid rgba(249,115,22,0.3); background:#0f1012; display:flex; flex-direction:column; padding:0; font-family:'Consolas','Courier New',monospace;">
+            <div style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center; background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(15,16,18,0));">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-size:20px;">🔍</span>
+                    <div>
+                        <h2 id="monitorStudentName" style="font-size:16px; font-weight:700; margin:0; color:#f97316;">Surveillance : Étudiant</h2>
+                        <div id="monitorStatusBar" style="font-size:11px; color:rgba(255,255,255,.4); margin-top:2px;">En attente des données...</div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <span id="monitorRiskBadge" style="font-size:11px; padding:3px 10px; border-radius:20px; background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); font-weight:700;">✅ FAIBLE</span>
+                    <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;" onclick="ProfVM.closeMonitorModal()">×</button>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,.05); border-bottom:1px solid rgba(255,255,255,.08);">
+                <div style="padding:10px 16px; background:#0f1012;"><div style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">Fenêtre Active</div><div id="monitorActiveWindow" style="font-size:12px; color:#f97316; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">—</div></div>
+                <div style="padding:10px 16px; background:#0f1012;"><div style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">Changements Focus</div><div id="monitorFocusCount" style="font-size:18px; font-weight:700; color:#fff;">0</div></div>
+                <div style="padding:10px 16px; background:#0f1012;"><div style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">Processus Total</div><div id="monitorProcessCount" style="font-size:18px; font-weight:700; color:#fff;">0</div></div>
+                <div style="padding:10px 16px; background:#0f1012;"><div style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">Dernière MAJ</div><div id="monitorLastUpdate" style="font-size:12px; color:rgba(255,255,255,.6);">—</div></div>
+            </div>
+            <div style="display:flex; flex:1; overflow:hidden;">
+                <div style="flex:2; display:flex; flex-direction:column; overflow:hidden; border-right:1px solid rgba(255,255,255,.05);">
+                    <div style="display:grid; grid-template-columns:2fr 60px 70px 2fr 90px; padding:8px 12px; font-size:10px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,.06); background:#0a0b0d;">
+                        <span>Process Name</span><span>PID</span><span>Memory</span><span>Window Title</span><span>Risk</span>
+                    </div>
+                    <div id="monitorProcessTable" style="flex:1; overflow-y:auto; font-size:11px;">
+                        <div style="text-align:center; padding:40px; color:rgba(255,255,255,.2);">En attente des données de surveillance...</div>
+                    </div>
+                </div>
+                <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+                    <div style="padding:10px 14px; font-size:10px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,.06); background:#0a0b0d;">⚠️ Historique des Alertes</div>
+                    <div id="monitorAlertList" style="flex:1; overflow-y:auto; padding:8px;">
+                        <div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte</div>
+                    </div>
+                </div>
+            </div>
+            <div style="padding:10px 16px; border-top:1px solid rgba(255,255,255,.08); background:#0a0b0d; display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:11px; color:rgba(255,255,255,.3);">🟢 Surveillance active — Mise à jour toutes les 4 secondes</div>
+                <button class="btn btn-ghost" style="font-size:12px;" onclick="ProfVM.closeMonitorModal()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ── AI GENERATOR MODAL ── -->
     <div class="modal-overlay" id="aiModal">
         <div class="modal" style="width:600px; max-width:90vw; border:1px solid rgba(88,101,242,.4); background:#1a1b1e; display:flex; flex-direction:column; padding:0;">
@@ -1650,12 +1705,12 @@
             </div>
             <div style="padding:24px; flex:1; overflow-y:auto;">
                 <div style="margin-bottom:15px; font-size:13px; color:rgba(255,255,255,.6);">
-                    Téléchargez un cours (PDF, Word, TXT) ou collez directement le texte brut pour générer automatiquement des questions de QCM avec l'IA.
+                    Téléchargez un cours (PDF, Word, TXT, PowerPoint) ou collez directement le texte brut pour générer automatiquement des questions de QCM avec l'IA.
                 </div>
                 
                 <div class="modal-field">
-                    <label>Fichier de cours (PDF, Word, TXT)</label>
-                    <input type="file" id="aiFileInput" accept=".pdf,.doc,.docx,.txt" style="display:block; padding: 6px; font-size: 13px;" onchange="ProfVM.handleAIFiles(this)">
+                    <label>Fichier de cours (PDF, Word, TXT, PowerPoint)</label>
+                    <input type="file" id="aiFileInput" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx" style="display:block; padding: 6px; font-size: 13px;" onchange="ProfVM.handleAIFiles(this)">
                 </div>
 
                 <div style="text-align:center; color:rgba(255,255,255,.3); margin: 10px 0;">— OU —</div>
@@ -1685,6 +1740,7 @@
     <!-- CDNs pour l'extracteur de texte IA -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <script>
         let API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
@@ -1772,7 +1828,8 @@
             sessions: [],
             allExams: [],
             filteredExams: [],
-            detailsInterval: null
+            detailsInterval: null,
+            currentSessionDetails: null
         };
 
         const ProfVM = {
@@ -2088,6 +2145,7 @@
 
                     if (!resp.ok) throw new Error("Erreur serveur lors de la récupération des détails.");
                     const data = await resp.json();
+                    ProfData.currentSessionDetails = data;
 
                     if (data.classe && data.classe.nom) {
                         subheader.textContent = `Session ${data.sessionCode} · ${data.classe.nom}`;
@@ -2162,6 +2220,7 @@
                                     </div>
                                     <div style="display:flex; align-items:center; gap:8px;">
                                         ${isActif ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:16px; border:1px solid rgba(88,101,242,0.4);" onclick="ProfVM.viewStudentScreen('${st._id}', '${st.prenom} ${st.nom}')" title="Regarder l'écran en direct">📺</button>` : ''}
+                                        ${isActif ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:13px; border:1px solid rgba(255,165,0,0.5); color:#f97316; background:rgba(249,115,22,0.08);" onclick="ProfVM.openMonitorModal('${st._id}', '${st.prenom} ${st.nom}')" title="Surveiller les processus">🔍 Monitor</button>` : ''}
                                         <div class="student-badge ${statusClass}">${statusLabel}</div>
                                     </div>
                                 </div>
@@ -2263,6 +2322,33 @@
                             document.getElementById('aiTextInput').value = result.value;
                         } catch(err) {
                             alert("Impossible de lire ce Word: " + err.message);
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else if (ext === 'ppt' || ext === 'pptx') {
+                    reader.onload = async (e) => {
+                        try {
+                            if(!window.JSZip) { alert("Le module JSZip n'est pas prêt."); return; }
+                            const zip = await JSZip.loadAsync(e.target.result);
+                            let fullText = '';
+                            // Les slides PowerPoint sont dans ppt/slides/slide*.xml
+                            const slideFiles = Object.keys(zip.files).filter(f => f.match(/ppt\/slides\/slide[0-9]+\.xml/));
+                            // On trie par numéro de slide
+                            slideFiles.sort((a, b) => {
+                                const numA = parseInt(a.replace(/[^0-9]/g, ''));
+                                const numB = parseInt(b.replace(/[^0-9]/g, ''));
+                                return numA - numB;
+                            });
+                            for (const slideFile of slideFiles) {
+                                const xmlStr = await zip.files[slideFile].async('string');
+                                // Extraction du texte des balises <a:t>
+                                const matches = xmlStr.match(/\u003ca:t\u003e([^<]+)\u003c\/a:t\u003e/g) || [];
+                                const slideText = matches.map(m => m.replace(/\u003c[^>]+\u003e/g, '')).join(' ');
+                                fullText += slideText + '\n';
+                            }
+                            document.getElementById('aiTextInput').value = fullText.trim() || '(Aucun texte extrait du PowerPoint)';
+                        } catch(err) {
+                            alert("Impossible de lire ce PowerPoint: " + err.message);
                         }
                     };
                     reader.readAsArrayBuffer(file);
@@ -2736,12 +2822,17 @@
                             urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
                         }
 
+                        const customWhitelist = (document.getElementById('af_whitelist')?.value || '').split(',')
+                            .map(s => s.trim().toLowerCase())
+                            .filter(s => s.length > 0);
+                        const finalAllowedApps = [...new Set([...ides, ...customWhitelist])];
+
                         const formData = new FormData();
                         formData.append('classe', classId);
                         formData.append('examId', e._id);
                         formData.append('duration', parsedDuree.toString());
                         formData.append('testType', 'DESKTOP_APP');
-                        formData.append('allowedApps', JSON.stringify(ides.length ? ides : ['vscode']));
+                        formData.append('allowedApps', JSON.stringify(finalAllowedApps.length ? finalAllowedApps : ['vscode']));
 
                         if (urlToLink) formData.append('link', urlToLink);
 
@@ -2838,9 +2929,14 @@
                         }
                         
                         formData.append('subject', subjectValue);
-                        if (!isQuiz) {
-                            formData.append('allowedApps', JSON.stringify(['vscode']));
-                        }
+                        
+                        // Ajouter les apps de la whitelist (n_whitelist)
+                        const customWhitelist = document.getElementById('n_whitelist').value.split(',')
+                            .map(s => s.trim().toLowerCase())
+                            .filter(s => s.length > 0);
+                        
+                        const finalAllowedApps = customWhitelist.length ? customWhitelist : ['vscode'];
+                        formData.append('allowedApps', JSON.stringify(finalAllowedApps));
                         
                         // S'assurer qu'un lien tapé mais non ajouté via "+" est quand même envoyé
                         let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
@@ -3111,8 +3207,138 @@
                     }
                     ProfData.watchingStudentId = null;
                 }
-            }
+            },
+
+            // ── Monitoring des processus étudiants ────────────────────────────
+            _monitoringStudentId: null,
+            _monitorAlerts: [],
+
+            // Catégories de risque (liste noire)
+            _riskyProcesses: {
+                HIGH: ['discord', 'telegram', 'whatsapp', 'teamviewer', 'anydesk', 'vnc', 'rdp', 'mstsc', 'chrome', 'firefox', 'msedge', 'opera', 'brave', 'vivaldi', 'slack', 'zoom', 'teams', 'skype', 'obs', 'wireshark'],
+                MEDIUM: ['powershell', 'cmd', 'windowsterminal', 'wt', 'python', 'node', 'code', 'devenv', 'idea', 'pycharm', 'eclipse', 'notepad++', 'sublime_text', 'atom'],
+                LOW: []
+            },
+
+            openMonitorModal(studentId, studentName) {
+                this._monitoringStudentId = studentId;
+                this._monitorAlerts = [];
+                document.getElementById('monitorStudentName').textContent = `🔍 Surveillance : ${studentName}`;
+                document.getElementById('monitorStatusBar').textContent = 'En attente des données...';
+                document.getElementById('monitorActiveWindow').textContent = '—';
+                document.getElementById('monitorFocusCount').textContent = '0';
+                document.getElementById('monitorProcessCount').textContent = '0';
+                document.getElementById('monitorLastUpdate').textContent = '—';
+                document.getElementById('monitorProcessTable').innerHTML = '<div style="text-align:center; padding:40px; color:rgba(255,255,255,.2);">En attente des données de surveillance...</div>';
+                document.getElementById('monitorAlertList').innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte</div>';
+                document.getElementById('monitorModal').classList.add('open');
+
+                // Listen for monitoring updates from this student
+                if (this.socket) {
+                    this.socket.off('student-monitoring-update');
+                    this.socket.on('student-monitoring-update', (data) => {
+                        if (data.studentId !== this._monitoringStudentId) return;
+                        this._renderMonitorData(data);
+                    });
+                }
+            },
+
+            closeMonitorModal() {
+                document.getElementById('monitorModal').classList.remove('open');
+                this._monitoringStudentId = null;
+                if (this.socket) this.socket.off('student-monitoring-update');
+            },
+
+            _getRisk(processName) {
+                const name = (processName || '').toLowerCase();
+                
+                // 1. Check if explicitly whitelisted in session
+                if (ProfData.currentSessionDetails && ProfData.currentSessionDetails.allowedApps) {
+                    const whitelist = ProfData.currentSessionDetails.allowedApps;
+                    if (whitelist.some(app => name.includes(app.toLowerCase()))) {
+                        return 'OK'; // Whitelisted
+                    }
+                }
+
+                // 2. Check risk categories
+                for (const proc of this._riskyProcesses.HIGH) {
+                    if (name.includes(proc)) return 'HIGH';
+                }
+                for (const proc of this._riskyProcesses.MEDIUM) {
+                    if (name.includes(proc)) return 'MEDIUM';
+                }
+                return 'OK';
+            },
+
+            _renderMonitorData(data) {
+                const now = new Date().toLocaleTimeString();
+                document.getElementById('monitorActiveWindow').textContent = data.activeWindow || '—';
+                document.getElementById('monitorFocusCount').textContent = data.focusChanges || 0;
+                document.getElementById('monitorLastUpdate').textContent = now;
+                document.getElementById('monitorStatusBar').textContent = `Dernière mise à jour : ${now}`;
+
+                const procs = data.processes || [];
+                document.getElementById('monitorProcessCount').textContent = procs.length;
+
+                // Déterminer le niveau de risque global
+                let globalRisk = 'OK';
+                const newAlerts = data.alerts || [];
+
+                // Render process table - only show interesting processes (non-system)
+                const systemProcs = ['svchost', 'system', 'registry', 'smss', 'csrss', 'wininit', 'winlogon', 'lsass', 'services', 'dwm', 'fontdrvhost', 'spoolsv', 'wuauclt', 'audiodg', 'searchindexer', 'runtimebroker', 'sihost', 'taskhostw', 'ctfmon', 'conhost'];
+                const visibleProcs = procs.filter(p => !systemProcs.some(s => (p.Name||'').toLowerCase().startsWith(s))).slice(0, 80);
+
+                let tableHtml = visibleProcs.map(p => {
+                    const risk = this._getRisk(p.Name);
+                    if (risk === 'HIGH') globalRisk = 'HIGH';
+                    else if (risk === 'MEDIUM' && globalRisk !== 'HIGH') globalRisk = 'MEDIUM';
+
+                    const riskStyle = risk === 'HIGH' ? 'color:#ef4444; background:rgba(239,68,68,0.1);' : risk === 'MEDIUM' ? 'color:#f59e0b; background:rgba(245,158,11,0.08);' : '';
+                    const riskLabel = risk === 'HIGH' ? '🔴 ÉLEVÉ' : risk === 'MEDIUM' ? '🟡 MOYEN' : '🟢 OK';
+                    const rowBg = risk !== 'OK' ? riskStyle : '';
+
+                    // Add alert if high risk
+                    if (risk === 'HIGH') {
+                        const alertMsg = `[${now}] Application suspecte détectée : ${p.Name}`;
+                        if (!this._monitorAlerts.includes(alertMsg)) {
+                            this._monitorAlerts.unshift(alertMsg);
+                            newAlerts.push(alertMsg);
+                        }
+                    }
+
+                    return `<div style="display:grid; grid-template-columns:2fr 60px 70px 2fr 90px; padding:5px 12px; border-bottom:1px solid rgba(255,255,255,.03); ${rowBg} font-size:11px;">
+                        <span style="color:#e5e7eb; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.Name || '—'}</span>
+                        <span style="color:rgba(255,255,255,.4);">${p.Id || '—'}</span>
+                        <span style="color:rgba(255,255,255,.5);">${p.Memory || 0} MB</span>
+                        <span style="color:rgba(255,255,255,.3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px;">${p.WindowTitle || ''}</span>
+                        <span style="font-weight:700; font-size:10px;">${riskLabel}</span>
+                    </div>`;
+                }).join('');
+
+                document.getElementById('monitorProcessTable').innerHTML = tableHtml || '<div style="padding:20px; color:rgba(255,255,255,.2); text-align:center;">Aucun processus visible</div>';
+
+                // Update risk badge
+                const badge = document.getElementById('monitorRiskBadge');
+                if (globalRisk === 'HIGH') {
+                    badge.style.cssText = 'font-size:11px; padding:3px 10px; border-radius:20px; background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid rgba(239,68,68,0.4); font-weight:700; animation: pulse 1s infinite;';
+                    badge.textContent = '🔴 RISQUE ÉLEVÉ';
+                } else if (globalRisk === 'MEDIUM') {
+                    badge.style.cssText = 'font-size:11px; padding:3px 10px; border-radius:20px; background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); font-weight:700;';
+                    badge.textContent = '🟡 RISQUE MOYEN';
+                } else {
+                    badge.style.cssText = 'font-size:11px; padding:3px 10px; border-radius:20px; background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); font-weight:700;';
+                    badge.textContent = '✅ FAIBLE';
+                }
+
+                // Update alerts
+                if (this._monitorAlerts.length > 0) {
+                    document.getElementById('monitorAlertList').innerHTML = this._monitorAlerts.slice(0, 30).map(a => 
+                        `<div style="padding:6px 8px; margin-bottom:4px; background:rgba(239,68,68,0.1); border-left:3px solid #ef4444; border-radius:4px; font-size:10px; color:#fca5a5;">${a}</div>`
+                    ).join('');
+                }
+            },
         };
+
 
         document.addEventListener('DOMContentLoaded', () => ProfVM.init());
         document.getElementById('createModal').addEventListener('click', function (e) {

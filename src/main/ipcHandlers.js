@@ -388,6 +388,65 @@ module.exports = (ipcMain, mainWindow) => {
         }
     });
 
+    // ── Monitoring des processus (Surveillance) ────────────────────────────────
+    ipcMain.handle('monitor:getProcesses', async () => {
+        return new Promise((resolve) => {
+            const psScript = `
+                $ErrorActionPreference = 'SilentlyContinue'
+                $active = "N/A"
+                try {
+                    $signature = '[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int count);'
+                    $type = Add-Type -MemberDefinition $signature -Name "Win32Utils" -Namespace "Win32Monitoring" -PassThru
+                    $hwnd = $type::GetForegroundWindow()
+                    $sb = New-Object System.Text.StringBuilder 256
+                    $null = $type::GetWindowText($hwnd, $sb, 256)
+                    $active = $sb.ToString()
+                } catch {
+                    $active = "Unknown"
+                }
+
+                try {
+                    $procs = Get-Process | Where-Object { $_.Id -gt 0 } | Select-Object Name, Id, @{N='Memory';E={[math]::Round($_.WorkingSet64/1MB,1)}}, @{N='WindowTitle';E={$_.MainWindowTitle}}
+                    $procsJson = $procs | ConvertTo-Json -Compress
+                } catch {
+                    $procsJson = "[]"
+                }
+
+                $final = @{ processes = $procsJson; activeWindow = $active } | ConvertTo-Json -Compress
+                Write-Output "MONITOR_DATA_START$final"
+            `;
+
+            const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', psScript]);
+            
+            let stdout = '';
+            child.stdout.on('data', (d) => { stdout += d.toString(); });
+            
+            const timer = setTimeout(() => {
+                child.kill();
+                resolve({ processes: [], activeWindow: 'Timeout' });
+            }, 8000);
+
+            child.on('close', () => {
+                clearTimeout(timer);
+                try {
+                    const marker = "MONITOR_DATA_START";
+                    const idx = stdout.indexOf(marker);
+                    if (idx === -1) throw new Error("Marker not found");
+                    
+                    const data = JSON.parse(stdout.substring(idx + marker.length).trim());
+                    let procs = [];
+                    if (data.processes) {
+                        const raw = typeof data.processes === 'string' ? JSON.parse(data.processes) : data.processes;
+                        procs = Array.isArray(raw) ? raw : [raw];
+                    }
+                    resolve({ processes: procs, activeWindow: data.activeWindow });
+                } catch (e) {
+                    resolve({ processes: [], activeWindow: 'Error: ' + e.message });
+                }
+            });
+        });
+    });
+
     // ── Contrôle de la fenêtre (Safe Mode) ───────────────────────────────────
     ipcMain.handle('window:setLocked', async (event, locked) => {
         const win = mainWinRef || require('electron').BrowserWindow.getFocusedWindow();

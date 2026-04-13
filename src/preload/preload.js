@@ -30,4 +30,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Capture d'écran (API exposée pour la surveillance professeur)
     captureScreen: () => ipcRenderer.invoke('screen:capture'),
+
+    // Monitoring des processus (surveillance active)
+    getProcessMonitoring: () => ipcRenderer.invoke('monitor:getProcesses'),
 });

@@ -908,6 +908,55 @@
                         console.log('[WebSocket] Arrêt du partage d\'écran');
                         if (window._screenInterval) clearInterval(window._screenInterval);
                     });
+
+                    // ── Monitoring des processus (Active Surveillance) ─────────────
+                    let _focusChanges = 0;
+                    let _lastWindowTitle = '';
+                    
+                    // Detect focus changes
+                    window.addEventListener('blur', () => {
+                        _focusChanges++;
+                        console.log('[Monitor] Focus lost — total changes:', _focusChanges);
+                    });
+
+                    // Start monitoring interval (every 4 seconds)
+                    if (window.electronAPI && window.electronAPI.getProcessMonitoring) {
+                        // Show surveillance banner
+                        const banner = document.createElement('div');
+                        banner.id = 'surveillanceBanner';
+                        banner.innerHTML = `<span style="display:inline-block; width:8px; height:8px; background:#ef4444; border-radius:50%; margin-right:8px; animation:pulse 1.5s infinite;"></span>🔍 Session surveillée — Vos processus sont transmis au professeur en temps réel`;
+                        banner.style.cssText = 'position:fixed; bottom:0; left:0; right:0; z-index:99999; background:rgba(15,16,18,0.95); border-top:1px solid rgba(239,68,68,0.4); color:rgba(239,68,68,0.9); font-size:11px; padding:8px 16px; text-align:center; backdrop-filter:blur(10px); font-family:monospace;';
+                        document.body.appendChild(banner);
+
+                        window._monitorInterval = setInterval(async () => {
+                            try {
+                                const data = await window.electronAPI.getProcessMonitoring();
+                                
+                                // Detect focus/window change alerts
+                                const alerts = [];
+                                if (data.activeWindow && data.activeWindow !== _lastWindowTitle) {
+                                    if (_lastWindowTitle) {
+                                        alerts.push(`[${new Date().toLocaleTimeString()}] Changement fenêtre: "${data.activeWindow}"`);
+                                    }
+                                    _lastWindowTitle = data.activeWindow;
+                                }
+
+                                const studentName = `${sessionStorage.getItem('studentPrenom') || ''} ${sessionStorage.getItem('studentNom') || ''}`.trim();
+                                
+                                window.sessionVM.socket.emit('student-monitoring', {
+                                    testId,
+                                    studentId,
+                                    studentName,
+                                    processes: data.processes || [],
+                                    activeWindow: data.activeWindow || '',
+                                    focusChanges: _focusChanges,
+                                    alerts
+                                });
+                            } catch (e) {
+                                console.warn('[Monitor] Error collecting data:', e.message);
+                            }
+                        }, 4000);
+                    }
                 }
             }
 
