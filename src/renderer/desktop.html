@@ -509,6 +509,75 @@
             border: 1px solid var(--border);
         }
 
+        .upload-alert {
+            position: fixed;
+            right: 16px;
+            bottom: 74px;
+            z-index: 2600;
+            min-width: 320px;
+            max-width: 420px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(17, 24, 39, 0.96);
+            color: #e5e7eb;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+        }
+
+        .upload-alert.show {
+            display: flex;
+        }
+
+        .upload-alert-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .upload-alert.loading .upload-alert-icon {
+            background: rgba(88, 101, 242, 0.25);
+            color: #a5b4fc;
+            animation: upload-pulse 1s ease-in-out infinite;
+        }
+
+        .upload-alert.success .upload-alert-icon {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .upload-alert.error .upload-alert-icon {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .upload-alert-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 2px;
+        }
+
+        .upload-alert-message {
+            font-size: 12px;
+            color: rgba(229, 231, 235, 0.85);
+            word-break: break-word;
+        }
+
+        @keyframes upload-pulse {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.08); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+
         /* Calculator Styles */
         .calc-grid {
             display: grid;
@@ -799,6 +868,7 @@
 
             <div class="taskbar-icon" onclick="UI.openWindow('win-pdf')" title="PDF Viewer" id="tb-pdf">📄</div>
             <div class="taskbar-icon" onclick="UI.openWindow('win-browser')" title="Navigateur" id="tb-browser">🌐</div>
+            <div class="taskbar-icon" onclick="triggerWorkUpload()" title="Envoyer un fichier .zip au professeur" id="tb-upload-work">📤</div>
             <div class="taskbar-icon" onclick="UI.openWindow('win-notepad')" title="Bloc-notes" id="tb-notepad">📝</div>
             <div class="taskbar-icon" onclick="UI.openWindow('win-calc')" title="Calculatrice" id="tb-calc">🔢</div>
             <div class="taskbar-icon" onclick="UI.openWindow('win-quiz')" title="Quiz" id="tb-quiz" style="display:none;">🧠</div>
@@ -821,6 +891,10 @@
                 <span style="font-size: 24px;">🌐</span>
                 <span class="small">Navigateur</span>
             </div>
+            <div class="launcher-app" onclick="UI.toggleLauncher(); triggerWorkUpload()" id="launcher-upload-work">
+                <span style="font-size: 24px;">📤</span>
+                <span class="small">Envoyer ZIP</span>
+            </div>
             <div class="launcher-app" onclick="UI.toggleLauncher(); UI.openWindow('win-notepad')">
                 <span style="font-size: 24px;">📝</span>
                 <span class="small">Bloc-notes</span>
@@ -834,6 +908,14 @@
                 <span class="small">Sujet PDF</span>
             </div>
 
+        </div>
+    </div>
+    <input type="file" id="workZipInput" accept=".zip,application/zip,application/x-zip-compressed" style="display:none;" onchange="uploadWorkZip(this)" />
+    <div id="uploadAlert" class="upload-alert" role="status" aria-live="polite">
+        <div id="uploadAlertIcon" class="upload-alert-icon">⏳</div>
+        <div>
+            <div id="uploadAlertTitle" class="upload-alert-title">Envoi du fichier</div>
+            <div id="uploadAlertMessage" class="upload-alert-message">Préparation...</div>
         </div>
     </div>
 
@@ -968,6 +1050,12 @@
             if (document.getElementById('widgetCourse')) document.getElementById('widgetCourse').textContent = course;
             if (document.getElementById('widgetCode')) document.getElementById('widgetCode').textContent = code;
 
+            const uploadIcon = document.getElementById('tb-upload-work');
+            const uploadLauncher = document.getElementById('launcher-upload-work');
+            const canUploadWork = role === 'student';
+            if (uploadIcon) uploadIcon.style.display = canUploadWork ? 'flex' : 'none';
+            if (uploadLauncher) uploadLauncher.style.display = canUploadWork ? 'flex' : 'none';
+
             const nom = sessionStorage.getItem('studentNom') || sessionStorage.getItem('userNom') || '';
             const prenom = sessionStorage.getItem('studentPrenom') || sessionStorage.getItem('userPrenom') || '';
             const widgetProfInfo = document.getElementById('widgetProfInfo');
@@ -1033,8 +1121,14 @@
                 const extendedMin = parseInt(sessionStorage.getItem('sessionExtendedDuration') || '0', 10);
                 const totalSeconds = (dureeMin + extendedMin) * 60;
 
+                const scheduledStartVal = sessionStorage.getItem('sessionScheduledStartAt');
+                const scheduledStartMs = scheduledStartVal ? new Date(scheduledStartVal).getTime() : NaN;
                 const startedAtVal = sessionStorage.getItem('sessionStartedAt');
-                const startTime = startedAtVal ? new Date(startedAtVal).getTime() : getServerTime();
+                const startedAtMs = startedAtVal ? new Date(startedAtVal).getTime() : NaN;
+                let startTime = Number.isFinite(startedAtMs) ? startedAtMs : getServerTime();
+                if (Number.isFinite(scheduledStartMs) && (!Number.isFinite(startedAtMs) || startedAtMs > scheduledStartMs)) {
+                    startTime = scheduledStartMs;
+                }
                 
                 const isPaused = sessionStorage.getItem('sessionIsPaused') === 'true';
                 const totalPausedSeconds = parseInt(sessionStorage.getItem('sessionTotalPausedSeconds') || '0', 10);
@@ -1050,6 +1144,12 @@
                 } else {
                     window._localPauseStartTime = null;
                 }
+
+                const nowForState = getServerTime();
+                const isWaitingForStart = Number.isFinite(scheduledStartMs) && nowForState < scheduledStartMs;
+                const waitRemainingSeconds = isWaitingForStart
+                    ? Math.max(0, Math.ceil((scheduledStartMs - nowForState) / 1000))
+                    : 0;
                 
                 const netElapsed = ((effectiveNow - startTime) / 1000) - totalPausedSeconds;
                 const remaining = Math.max(0, totalSeconds - netElapsed);
@@ -1062,15 +1162,39 @@
                 const heartbeatError = sessionStorage.getItem('heartbeatError');
                 const isAlive = (nowMs - lastAttempt) < 3000;
 
-                if (isPaused) {
+                const pauseOverlay = document.getElementById('pauseOverlay');
+                const overlayIcon = document.getElementById('pauseOverlayIcon');
+                const overlayTitle = document.getElementById('pauseOverlayTitle');
+                const overlayText = document.getElementById('pauseOverlayText');
+                const overlayBadge = document.getElementById('pauseOverlayBadge');
+
+                if (isWaitingForStart) {
+                    if (timerEl) timerEl.classList.remove('timer-paused');
+                    if (statusDot) { statusDot.style.backgroundColor = 'var(--primary)'; statusDot.style.opacity = '1'; }
+                    if (widgetStatus) widgetStatus.textContent = 'Session en attente';
+                    if (timerEl) timerEl.style.color = 'var(--primary)';
+
+                    if (pauseOverlay) pauseOverlay.style.display = 'flex';
+                    if (overlayIcon) overlayIcon.textContent = '⏳';
+                    if (overlayTitle) overlayTitle.textContent = 'SESSION EN ATTENTE';
+                    if (overlayText) {
+                        const startText = Number.isFinite(scheduledStartMs)
+                            ? new Date(scheduledStartMs).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+                            : '--:--';
+                        overlayText.textContent = `La session sera declenchee a ${startText}.`;
+                    }
+                    if (overlayBadge) overlayBadge.textContent = 'Attendez le demarrage automatique...';
+                } else if (isPaused) {
                     if (timerEl) timerEl.classList.add('timer-paused');
                     if (statusDot) { statusDot.style.backgroundColor = '#F59E0B'; statusDot.style.opacity = '1'; }
                     if (widgetStatus) widgetStatus.textContent = 'Session en PAUSE';
-                    
-                    const pauseOverlay = document.getElementById('pauseOverlay');
+
                     if (pauseOverlay) pauseOverlay.style.display = 'flex';
+                    if (overlayIcon) overlayIcon.textContent = '⏸️';
+                    if (overlayTitle) overlayTitle.textContent = 'SESSION EN PAUSE';
+                    if (overlayText) overlayText.textContent = "L'examen est temporairement suspendu par le professeur.";
+                    if (overlayBadge) overlayBadge.textContent = 'Attendez les instructions...';
                 } else {
-                    const pauseOverlay = document.getElementById('pauseOverlay');
                     if (pauseOverlay) pauseOverlay.style.display = 'none';
 
                     if (timerEl) {
@@ -1108,17 +1232,27 @@
                 }
 
                 const diagError = document.getElementById('diagError');
-                if (diagError) diagError.textContent = heartbeatError ? `Err: ${heartbeatError}` : (isPaused ? ' (PAUSÉ SUR SERVEUR)' : '');
-
-                const h = Math.floor(remaining / 3600);
-                const m = Math.floor((remaining % 3600) / 60);
-                const s = Math.floor(remaining % 60);
-                if (timerEl) {
-                    timerEl.textContent = `⏱️ ${pad(h)}:${pad(m)}:${pad(s)}${isPaused ? ' (PAUSE)' : ''}`;
-                    if (isPaused) timerEl.style.color = '#F59E0B';
+                if (diagError) {
+                    if (heartbeatError) diagError.textContent = `Err: ${heartbeatError}`;
+                    else if (isWaitingForStart) diagError.textContent = 'En attente du demarrage...';
+                    else diagError.textContent = (isPaused ? ' (PAUSE SUR SERVEUR)' : '');
                 }
 
-                if (remaining <= 0 && totalSeconds > 0 && !isPaused) {
+                const timerSourceSeconds = isWaitingForStart ? waitRemainingSeconds : remaining;
+                const h = Math.floor(timerSourceSeconds / 3600);
+                const m = Math.floor((timerSourceSeconds % 3600) / 60);
+                const s = Math.floor(timerSourceSeconds % 60);
+                if (timerEl) {
+                    if (isWaitingForStart) {
+                        timerEl.textContent = `⏳ Debut dans ${pad(h)}:${pad(m)}:${pad(s)}`;
+                        timerEl.style.color = 'var(--primary)';
+                    } else {
+                        timerEl.textContent = `⏱️ ${pad(h)}:${pad(m)}:${pad(s)}${isPaused ? ' (PAUSE)' : ''}`;
+                        if (isPaused) timerEl.style.color = '#F59E0B';
+                    }
+                }
+
+                if (!isWaitingForStart && remaining <= 0 && totalSeconds > 0 && !isPaused) {
                     if (timerEl) timerEl.textContent = '⏱️ Temps écoulé';
                     clearInterval(window._timerInterval);
                     setTimeout(quitSession, 3000); 
@@ -1171,6 +1305,86 @@
             }
         };
 
+        let _uploadAlertTimeout = null;
+        function showUploadAlert(type, title, message, sticky = false) {
+            const alertEl = document.getElementById('uploadAlert');
+            const iconEl = document.getElementById('uploadAlertIcon');
+            const titleEl = document.getElementById('uploadAlertTitle');
+            const messageEl = document.getElementById('uploadAlertMessage');
+            if (!alertEl || !iconEl || !titleEl || !messageEl) return;
+
+            alertEl.classList.remove('loading', 'success', 'error');
+            alertEl.classList.add(type, 'show');
+            titleEl.textContent = title || 'Upload';
+            messageEl.textContent = message || '';
+            iconEl.textContent = type === 'success' ? '✅' : (type === 'error' ? '❌' : '⏳');
+
+            if (_uploadAlertTimeout) clearTimeout(_uploadAlertTimeout);
+            if (!sticky) {
+                _uploadAlertTimeout = setTimeout(() => {
+                    alertEl.classList.remove('show');
+                }, 2600);
+            }
+        }
+
+        function triggerWorkUpload() {
+            const input = document.getElementById('workZipInput');
+            if (!input) return;
+            input.value = '';
+            input.click();
+        }
+
+        async function uploadWorkZip(inputEl) {
+            const file = inputEl && inputEl.files ? inputEl.files[0] : null;
+            if (!file) return;
+
+            if (!file.name.toLowerCase().endsWith('.zip')) {
+                showUploadAlert('error', 'Fichier invalide', 'Veuillez sélectionner un fichier .zip');
+                inputEl.value = '';
+                return;
+            }
+
+            const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
+            const testId = sessionStorage.getItem('activeTestId');
+            const token = sessionStorage.getItem('accessToken');
+            const studentId = sessionStorage.getItem('studentId') || '';
+            const studentName = `${sessionStorage.getItem('studentPrenom') || ''} ${sessionStorage.getItem('studentNom') || ''}`.trim();
+
+            if (!testId) {
+                showUploadAlert('error', 'Session introuvable', "Impossible d'envoyer le travail.");
+                inputEl.value = '';
+                return;
+            }
+            if (!token) {
+                showUploadAlert('error', 'Session expirée', "Reconnectez-vous puis réessayez.");
+                inputEl.value = '';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            if (studentId) formData.append('studentId', studentId);
+            if (studentName) formData.append('studentName', studentName);
+
+            try {
+                showUploadAlert('loading', 'Envoi en cours...', `${file.name} est en cours de transfert.`, true);
+                const resp = await fetch(`${API_BASE}/practical-tests/${testId}/upload-work`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) {
+                    throw new Error(data.message || `Erreur ${resp.status}`);
+                }
+                showUploadAlert('success', 'Fichier envoyé', `${file.name} a été envoyé au professeur.`);
+            } catch (e) {
+                showUploadAlert('error', "Échec de l'envoi", e.message || 'Erreur réseau');
+            } finally {
+                inputEl.value = '';
+            }
+        }
+
         function openVSCodeIntegrated(projectName) {
             if (projectName) sessionStorage.setItem('vscodeWorkspace', projectName);
             else sessionStorage.removeItem('vscodeWorkspace');
@@ -1211,12 +1425,12 @@
     <!-- Overlay de Pause -->
     <div class="pause-overlay" id="pauseOverlay">
         <div class="pause-content">
-            <div class="pause-icon">⏸️</div>
-            <h1 style="font-size: 28px; font-weight: 700;">SESSION EN PAUSE</h1>
-            <p style="font-size: 16px; opacity: 0.8; max-width: 300px;">
+            <div class="pause-icon" id="pauseOverlayIcon">⏸️</div>
+            <h1 id="pauseOverlayTitle" style="font-size: 28px; font-weight: 700;">SESSION EN PAUSE</h1>
+            <p id="pauseOverlayText" style="font-size: 16px; opacity: 0.8; max-width: 300px;">
                 L'examen est temporairement suspendu par le professeur.
             </p>
-            <div class="small" style="margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.1); border-radius: 20px;">
+            <div id="pauseOverlayBadge" class="small" style="margin-top: 10px; padding: 8px 16px; background: rgba(255,255,255,0.1); border-radius: 20px;">
                 Attendez les instructions...
             </div>
         </div>

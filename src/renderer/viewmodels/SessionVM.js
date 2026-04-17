@@ -109,6 +109,8 @@ window.SessionVM = class SessionVM {
         // Temps & Timer
         sessionStorage.setItem('sessionDuree', data.duration || data.duree || 60);
         sessionStorage.setItem('sessionStartedAt', data.startedAt || new Date().toISOString());
+        if (data.scheduledStartTime) sessionStorage.setItem('sessionScheduledStartAt', data.scheduledStartTime);
+        else sessionStorage.removeItem('sessionScheduledStartAt');
         
         // Convertir explicitement en booléen car le storage ne stocke que des strings
         const isPaused = data.isPaused === true || data.isPaused === 'true';

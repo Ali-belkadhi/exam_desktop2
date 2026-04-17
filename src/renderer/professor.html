@@ -521,6 +521,98 @@
             border: 1px solid rgba(255, 255, 255, .1);
         }
 
+        .stat-card.work-demand {
+            cursor: pointer;
+        }
+
+        .stat-card.work-demand .stat-value {
+            font-size: 26px;
+        }
+
+        .work-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 14px;
+        }
+
+        .work-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.015) 100%);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 14px;
+            padding: 14px;
+            transition: all .2s ease;
+        }
+
+        .work-card.folder {
+            cursor: pointer;
+        }
+
+        .work-card.folder:hover {
+            border-color: rgba(88, 101, 242, .5);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, .22);
+        }
+
+        .work-card-title {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .work-card-meta {
+            color: rgba(255, 255, 255, .45);
+            font-size: 11px;
+        }
+
+        .work-file-list {
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .work-file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .07);
+            border-radius: 10px;
+            padding: 8px 10px;
+        }
+
+        .work-file-name {
+            color: rgba(255, 255, 255, .86);
+            font-size: 12px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 150px;
+        }
+
+        .work-file-btn {
+            border: 1px solid rgba(88, 101, 242, .45);
+            background: rgba(88, 101, 242, .14);
+            color: #cfd6ff;
+            border-radius: 8px;
+            padding: 5px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .work-file-btn:hover {
+            background: rgba(88, 101, 242, .24);
+        }
+
         /* ══ MODAL ══ */
         .modal-overlay {
             position: fixed;
@@ -1364,11 +1456,11 @@
                         <div class="stat-label">Sessions générées</div>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🕐</div>
+                <div class="stat-card work-demand" onclick="ProfVM.openWorkModal()">
+                    <div class="stat-icon">🗂️</div>
                     <div class="stat-content">
-                        <div class="stat-value" id="stat-last" style="font-size:24px;">Aujourd'hui</div>
-                        <div class="stat-label">Dernière activité</div>
+                        <div class="stat-value" id="stat-last">Travail demandé</div>
+                        <div class="stat-label" id="stat-work-count">Ouvrir les dossiers</div>
                     </div>
                 </div>
             </div>
@@ -1404,16 +1496,26 @@
             <div class="sessions-card" id="sessionsCard">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <h3 id="sessionsCardTitle" style="margin:0">📋 Mes sessions récentes</h3>
-                    <div
-                        style="font-size:10px; color:rgba(255,255,255,0.3); background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px;">
-                        Serveur :
-                        <span style="color:var(--primary);cursor:pointer;"
-                            onclick="setApiServer('http://localhost:3000')">Local</span> |
-                        <span style="color:var(--primary);cursor:pointer;"
-                            onclick="setApiServer('https://safe-exam-db.onrender.com')">Render</span>
-                    </div>
                 </div>
                 <div id="sessionsList"></div>
+            </div>
+
+            <div class="modal-overlay" id="workModal">
+                <div class="modal" style="width:1100px; max-width:95vw; max-height:90vh; border:1px solid rgba(255,255,255,.12); background:#1a1b1e; display:flex; flex-direction:column; padding:0;">
+                    <div style="padding:18px 22px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h2 style="font-size:18px; font-weight:700; margin:0;">📁 Travail demandé</h2>
+                            <div id="workBreadcrumb" style="margin-top:6px; font-size:12px; color:rgba(255,255,255,.45);">Classes</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button id="workBackBtn" class="btn btn-ghost" style="display:none; height:32px; padding:0 12px;" onclick="ProfVM.goBackWorkClasses()">← Retour</button>
+                            <button class="btn btn-ghost" style="width:32px; height:32px; padding:0; border-radius:50%;" onclick="ProfVM.closeWorkModal()">×</button>
+                        </div>
+                    </div>
+                    <div style="padding:16px 22px; overflow-y:auto; flex:1;">
+                        <div id="workExplorer" class="work-grid"></div>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -1851,6 +1953,46 @@
             return String(duree); // déjà formatée (ex: "1h30" en mode démo)
         }
 
+        function _toIsoFromDateAndTime(dateInput, timeInput) {
+            const rawDate = (dateInput || '').toString().trim();
+            const rawTime = (timeInput || '').toString().trim();
+            if (!rawDate) return null;
+
+            let d = null;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+                d = new Date(`${rawDate}T00:00:00`);
+            } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(rawDate)) {
+                const [dd, mm, yyyy] = rawDate.split('/').map(v => parseInt(v, 10));
+                d = new Date(yyyy, (mm || 1) - 1, dd || 1, 0, 0, 0, 0);
+            } else {
+                const parsed = new Date(rawDate);
+                if (!isNaN(parsed.getTime())) d = parsed;
+            }
+
+            if (!d || isNaN(d.getTime())) return null;
+
+            let hh = d.getHours();
+            let mi = d.getMinutes();
+            if (/^\d{1,2}:\d{2}$/.test(rawTime)) {
+                const [hStr, mStr] = rawTime.split(':');
+                hh = parseInt(hStr, 10);
+                mi = parseInt(mStr, 10);
+            }
+
+            d.setHours(hh, mi, 0, 0);
+            if (isNaN(d.getTime())) return null;
+            return d.toISOString();
+        }
+
+        function _addMinutesToIso(isoStart, minutes) {
+            if (!isoStart) return null;
+            const start = new Date(isoStart);
+            if (isNaN(start.getTime())) return null;
+            const mins = Number(minutes);
+            if (!Number.isFinite(mins) || mins <= 0) return null;
+            return new Date(start.getTime() + mins * 60 * 1000).toISOString();
+        }
+
         /** 
          * Récupère le nom lisible de la classe avec fallbacks intelligents
          */
@@ -1908,12 +2050,23 @@
             return `${rawTitle}-${rawClasse}`;
         }
 
+        function _escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         const ProfData = {
             sessions: [],
             allExams: [],
             filteredExams: [],
             detailsInterval: null,
-            currentSessionDetails: null
+            currentSessionDetails: null,
+            workFolders: [],
+            workCurrentClass: null
         };
 
         const ProfVM = {
@@ -1954,6 +2107,148 @@
                     statVal.textContent = "Hors ligne";
                     statVal.style.color = "#ed4245";
                     statCard.classList.remove('online');
+                }
+            },
+
+            openWorkModal() {
+                ProfData.workCurrentClass = null;
+                const modal = document.getElementById('workModal');
+                if (modal) modal.classList.add('open');
+                this.fetchWorkFolders();
+            },
+
+            closeWorkModal() {
+                const modal = document.getElementById('workModal');
+                if (modal) modal.classList.remove('open');
+            },
+
+            goBackWorkClasses() {
+                ProfData.workCurrentClass = null;
+                this.renderWorkExplorer();
+            },
+
+            openWorkClass(encodedClassName) {
+                ProfData.workCurrentClass = decodeURIComponent(encodedClassName || '');
+                this.renderWorkExplorer();
+            },
+
+            async fetchWorkFolders() {
+                const explorer = document.getElementById('workExplorer');
+                if (explorer) {
+                    explorer.innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,.5); grid-column:1/-1;"><div class="spin-ring" style="width:22px;height:22px;border-width:2px; margin:0 auto 12px;"></div>Chargement des travaux...</div>`;
+                }
+
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    if (!token) throw new Error('Session expirée');
+
+                    const resp = await fetch(`${API_BASE}/practical-tests/professor/work-folders`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!resp.ok) throw new Error(`Erreur ${resp.status}`);
+
+                    const data = await resp.json();
+                    ProfData.workFolders = Array.isArray(data) ? data : [];
+                    this.renderWorkExplorer();
+
+                    const classesCount = ProfData.workFolders.length;
+                    const filesCount = ProfData.workFolders.reduce((acc, c) => acc + (c.totalFiles || 0), 0);
+                    const stat = document.getElementById('stat-work-count');
+                    if (stat) stat.textContent = `${filesCount} fichier(s) · ${classesCount} classe(s)`;
+                } catch (e) {
+                    if (explorer) {
+                        explorer.innerHTML = `<div style="text-align:center; padding:40px; color:#ed4245; grid-column:1/-1;">⚠️ ${_escapeHtml(e.message || 'Erreur réseau')}</div>`;
+                    }
+                }
+            },
+
+            renderWorkExplorer() {
+                const explorer = document.getElementById('workExplorer');
+                const breadcrumb = document.getElementById('workBreadcrumb');
+                const backBtn = document.getElementById('workBackBtn');
+                if (!explorer || !breadcrumb || !backBtn) return;
+
+                if (!ProfData.workFolders || ProfData.workFolders.length === 0) {
+                    breadcrumb.textContent = 'Classes';
+                    backBtn.style.display = 'none';
+                    explorer.innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,.45); grid-column:1/-1;">Aucun travail reçu pour le moment.</div>`;
+                    return;
+                }
+
+                if (!ProfData.workCurrentClass) {
+                    breadcrumb.textContent = 'Classes';
+                    backBtn.style.display = 'none';
+                    explorer.innerHTML = ProfData.workFolders.map(folder => {
+                        const encodedClass = encodeURIComponent(folder.className || 'Classe');
+                        return `
+                            <div class="work-card folder" onclick="ProfVM.openWorkClass('${encodedClass}')">
+                                <div class="work-card-title">📁 ${_escapeHtml(folder.className || 'Classe inconnue')}</div>
+                                <div class="work-card-meta">${folder.totalFiles || 0} fichier(s) · ${(folder.students || []).length} étudiant(s)</div>
+                            </div>
+                        `;
+                    }).join('');
+                    return;
+                }
+
+                const selected = ProfData.workFolders.find(c => c.className === ProfData.workCurrentClass);
+                breadcrumb.textContent = `Classes / ${ProfData.workCurrentClass}`;
+                backBtn.style.display = 'inline-flex';
+
+                if (!selected) {
+                    explorer.innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,.45); grid-column:1/-1;">Classe introuvable.</div>`;
+                    return;
+                }
+
+                explorer.innerHTML = (selected.students || []).map(student => {
+                    const fileRows = (student.files || []).map(file => {
+                        const encodedFileName = encodeURIComponent(file.fileName || 'travail.zip');
+                        const uploadedAt = file.uploadedAt ? new Date(file.uploadedAt).toLocaleString('fr-FR') : 'Date inconnue';
+                        return `
+                            <div class="work-file-item">
+                                <div>
+                                    <div class="work-file-name" title="${_escapeHtml(file.fileName || 'travail.zip')}">📦 ${_escapeHtml(file.fileName || 'travail.zip')}</div>
+                                    <div class="work-card-meta">${_escapeHtml(file.sessionCode || '------')} · ${_escapeHtml(uploadedAt)}</div>
+                                </div>
+                                <button class="work-file-btn" onclick="event.stopPropagation(); ProfVM.downloadSubmission('${file.submissionId}', '${encodedFileName}')">Télécharger</button>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="work-card">
+                            <div class="work-card-title">🧑‍🎓 ${_escapeHtml(student.studentName || 'Etudiant')}</div>
+                            <div class="work-card-meta">${student.totalFiles || 0} fichier(s)</div>
+                            <div class="work-file-list">${fileRows || '<div class="work-card-meta">Aucun fichier</div>'}</div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            async downloadSubmission(submissionId, encodedFileName) {
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    if (!token) throw new Error('Session expirée');
+
+                    const fileName = decodeURIComponent(encodedFileName || 'travail.zip');
+                    const resp = await fetch(`${API_BASE}/practical-tests/submissions/${submissionId}/download`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!resp.ok) {
+                        const err = await resp.json().catch(() => ({}));
+                        throw new Error(err.message || `Erreur ${resp.status}`);
+                    }
+
+                    const blob = await resp.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName || 'travail.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    alert(`Erreur téléchargement: ${e.message || 'Erreur réseau'}`);
                 }
             },
 
@@ -2818,10 +3113,10 @@
                 document.getElementById('af_date').value = dateStr;
                 document.getElementById('af_duree').value = dureeStr;
 
-                // Heure de début : priorité au startedAt de la base (si session commencée), sinon heure actuelle
-                const startRaw = _resolveStr(exam.startedAt);
-                const now = startRaw ? new Date(startRaw) : new Date();
-                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                // Heure de début : priorité à l'heure planifiée, puis startedAt, puis maintenant
+                const startRaw = _resolveStr(exam.scheduledStartTime) || _resolveStr(exam.startedAt) || _resolveStr(exam.date) || _resolveStr(exam.examDate);
+                const startDate = startRaw ? new Date(startRaw) : new Date();
+                const timeStr = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
                 document.getElementById('af_start').value = timeStr;
 
                 const noExamMsg = document.getElementById('noExamSelectedMsg');
@@ -2853,6 +3148,14 @@
                 if (this.mode === 'nouveau') {
                     if (!document.getElementById('n_matiere').value.trim()) {
                         err.textContent = '⚠ Veuillez saisir la matière / le devoir.';
+                        err.style.display = 'block'; return false;
+                    }
+                    if (!document.getElementById('n_date').value) {
+                        err.textContent = '⚠ Veuillez sélectionner une date de début.';
+                        err.style.display = 'block'; return false;
+                    }
+                    if (!document.getElementById('n_start').value) {
+                        err.textContent = '⚠ Veuillez sélectionner une heure de début.';
                         err.style.display = 'block'; return false;
                     }
                     if (!document.getElementById('n_classe').value) {
@@ -2917,6 +3220,11 @@
                         if (e.durationMinutes) parsedDuree = parseInt(e.durationMinutes, 10);
                         if (isNaN(parsedDuree)) parsedDuree = 120;
 
+                        const examDateSource = _resolveStr(e.scheduledStartTime) || _resolveStr(e.date) || _resolveStr(e.examDate) || _resolveStr(e.scheduledAt);
+                        const examStartRaw = document.getElementById('af_start').value || '';
+                        const scheduledStartIso = _toIsoFromDateAndTime(examDateSource, examStartRaw);
+                        const scheduledEndIso = _addMinutesToIso(scheduledStartIso, parsedDuree);
+
                         // S'assurer qu'un lien tapé mais non ajouté via "+" est quand même envoyé
                         let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
                         const manualUrlBody = document.getElementById('urlInput')?.value.trim();
@@ -2936,6 +3244,8 @@
                         formData.append('classLabel', classeLabel);
                         formData.append('duration', parsedDuree.toString());
                         formData.append('testType', 'DESKTOP_APP');
+                        if (scheduledStartIso) formData.append('scheduledStartTime', scheduledStartIso);
+                        if (scheduledEndIso) formData.append('scheduledEndTime', scheduledEndIso);
                         if (finalAllowedApps.length) {
                             formData.append('allowedApps', JSON.stringify(finalAllowedApps));
                         }
@@ -3018,10 +3328,17 @@
                         } else if (!isNaN(dureeRaw) && dureeRaw.trim() !== '') {
                             duration = parseInt(dureeRaw);
                         }
+
+                        const nDate = document.getElementById('n_date').value;
+                        const nStart = document.getElementById('n_start').value;
+                        const scheduledStartIso = _toIsoFromDateAndTime(nDate, nStart);
+                        const scheduledEndIso = _addMinutesToIso(scheduledStartIso, duration);
                         
                         const formData = new FormData();
                         formData.append('classe', classId);
                         formData.append('duration', duration.toString());
+                        if (scheduledStartIso) formData.append('scheduledStartTime', scheduledStartIso);
+                        if (scheduledEndIso) formData.append('scheduledEndTime', scheduledEndIso);
                         const sel = document.getElementById('n_classe');
                         classeLabel = sel.options[sel.selectedIndex].text;
                         formData.append('classLabel', classeLabel);
@@ -3447,6 +3764,9 @@
         document.addEventListener('DOMContentLoaded', () => ProfVM.init());
         document.getElementById('createModal').addEventListener('click', function (e) {
             if (e.target === this) ProfVM.closeCreateModal();
+        });
+        document.getElementById('workModal').addEventListener('click', function (e) {
+            if (e.target === this) ProfVM.closeWorkModal();
         });
     </script>
     <script src="socket.io.min.js"></script>
