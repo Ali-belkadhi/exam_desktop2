@@ -20,7 +20,8 @@
         html,
         body {
             height: 100%;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
             --primary: #5865f2;
@@ -178,30 +179,22 @@
         /* Main */
         .main {
             flex: 1;
-            overflow-y: auto;
+            overflow: visible;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             padding: 40px 24px;
             position: relative;
             z-index: 10;
             -webkit-app-region: no-drag;
         }
 
-        .main::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .main::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, .1);
-            border-radius: 3px;
-        }
-
         .container {
             width: 100%;
             max-width: 1200px;
             padding: 0 20px;
+            padding-bottom: 40px;
         }
 
         /* Welcome */
@@ -558,16 +551,19 @@
         }
 
         .modal-box-large {
-            background: #1a1b1e;
-            border: 1px solid rgba(255, 255, 255, .1);
-            border-radius: 20px;
-            padding: 40px 48px;
-            width: 1000px;
+            background:
+                linear-gradient(180deg, rgba(31, 33, 42, 0.98) 0%, rgba(24, 25, 31, 0.98) 100%);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 28px;
+            padding: 42px 44px 34px;
+            width: 1320px;
             max-width: 95vw;
             max-height: 95vh;
             overflow-y: auto;
             scrollbar-width: thin;
-            box-shadow: 0 40px 100px rgba(0, 0, 0, .6);
+            box-shadow:
+                0 30px 80px rgba(0, 0, 0, .45),
+                0 0 0 1px rgba(255, 255, 255, .03) inset;
             animation: fadeUp .3s ease both;
         }
 
@@ -582,6 +578,64 @@
             font-size: 14px;
             color: rgba(255, 255, 255, .4);
             margin-bottom: 20px;
+        }
+
+        .session-create-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .session-create-title {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .session-create-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: fit-content;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: rgba(88, 101, 242, .12);
+            border: 1px solid rgba(88, 101, 242, .22);
+            color: #c9d1ff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .session-create-header h2 {
+            font-size: 38px;
+            line-height: 1.02;
+            letter-spacing: -.04em;
+            margin: 0;
+        }
+
+        .session-create-header p {
+            margin: 0;
+            max-width: 720px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, .54);
+        }
+
+        .session-create-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, .045);
+            border: 1px solid rgba(255, 255, 255, .07);
+            color: rgba(255, 255, 255, .68);
+            font-size: 12px;
+            font-weight: 600;
         }
 
         .modal-field {
@@ -638,6 +692,14 @@
             margin-bottom: 12px;
         }
 
+        .session-workspace {
+            background: rgba(255, 255, 255, .025);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: 24px;
+            padding: 22px;
+            margin-bottom: 22px;
+        }
+
         .modal-actions {
             display: flex;
             gap: 10px;
@@ -650,29 +712,31 @@
         .mode-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 22px;
+            gap: 14px;
+            margin-bottom: 26px;
         }
 
         .mode-tab {
-            padding: 12px;
-            border-radius: 10px;
-            border: 1.5px solid rgba(255, 255, 255, .1);
-            background: rgba(255, 255, 255, .04);
+            min-height: 118px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            border: 1.5px solid rgba(255, 255, 255, .08);
+            background: linear-gradient(180deg, rgba(255, 255, 255, .045), rgba(255, 255, 255, .02));
             cursor: pointer;
             text-align: center;
-            transition: all .2s;
-            font-size: 13px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, .5);
+            transition: all .2s ease, transform .2s ease;
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, .58);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            gap: 8px;
         }
 
         .mode-tab .mtab-icon {
-            font-size: 22px;
+            font-size: 28px;
         }
 
         .session-row:hover {
@@ -785,23 +849,56 @@
         .mode-tab:hover {
             border-color: rgba(88, 101, 242, .4);
             color: rgba(255, 255, 255, .8);
+            transform: translateY(-1px);
         }
 
         .mode-tab.active {
             border-color: #5865f2;
-            background: rgba(88, 101, 242, .15);
+            background: linear-gradient(180deg, rgba(88, 101, 242, .18), rgba(88, 101, 242, .1));
             color: #fff;
+            box-shadow: 0 16px 32px rgba(88, 101, 242, .16);
+        }
+
+        .session-grid-existing,
+        .session-grid-new {
+            display: grid;
+            gap: 24px;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+
+        .session-grid-existing {
+            grid-template-columns: minmax(420px, 1.05fr) minmax(420px, 1fr);
+        }
+
+        .session-grid-new {
+            grid-template-columns: minmax(400px, .95fr) minmax(480px, 1.15fr);
+        }
+
+        .session-panel {
+            background: rgba(255, 255, 255, .022);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: 22px;
+            padding: 22px;
+            min-height: 100%;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, .16);
+        }
+
+        .session-panel.soft-highlight {
+            background:
+                radial-gradient(circle at top right, rgba(88, 101, 242, .12), transparent 30%),
+                rgba(255, 255, 255, .024);
         }
 
         /* Exam list */
         .exam-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            max-height: 240px;
+            gap: 12px;
+            max-height: 560px;
             overflow-y: auto;
             scrollbar-width: thin;
-            padding-right: 4px;
+            padding-right: 8px;
             margin-bottom: 4px;
         }
 
@@ -818,8 +915,8 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            padding: 12px 14px;
-            border-radius: 10px;
+            padding: 16px 16px;
+            border-radius: 16px;
             border: 1.5px solid rgba(255, 255, 255, .07);
             background: rgba(255, 255, 255, .03);
             cursor: pointer;
@@ -837,14 +934,14 @@
         }
 
         .exam-card-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
             background: rgba(88, 101, 242, .2);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 22px;
             flex-shrink: 0;
         }
 
@@ -854,8 +951,8 @@
         }
 
         .exam-card-title {
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 15px;
+            font-weight: 700;
             color: #fff;
             white-space: nowrap;
             overflow: hidden;
@@ -863,9 +960,9 @@
         }
 
         .exam-card-meta {
-            font-size: 11px;
-            color: rgba(255, 255, 255, .4);
-            margin-top: 2px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, .45);
+            margin-top: 4px;
         }
 
         .exam-card-radio {
@@ -934,72 +1031,6 @@
             border: 1px solid rgba(35, 209, 96, .3);
             margin-left: 6px;
             vertical-align: middle;
-        }
-
-        /* IDE chips */
-        .ide-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .ide-chip {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, .1);
-            background: rgba(255, 255, 255, .04);
-            cursor: pointer;
-            transition: all .15s;
-            user-select: none;
-        }
-
-        .ide-chip:hover {
-            border-color: rgba(88, 101, 242, .4);
-            background: rgba(88, 101, 242, .08);
-        }
-
-        .ide-chip.selected {
-            border-color: rgba(88, 101, 242, .6);
-            background: rgba(88, 101, 242, .15);
-        }
-
-        .ide-chip input[type=checkbox] {
-            display: none;
-        }
-
-        .ide-chip-check {
-            width: 18px;
-            height: 18px;
-            border-radius: 5px;
-            flex-shrink: 0;
-            border: 1.5px solid rgba(255, 255, 255, .2);
-            background: transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            color: #5865f2;
-            transition: all .15s;
-        }
-
-        .ide-chip.selected .ide-chip-check {
-            background: #5865f2;
-            border-color: #5865f2;
-            color: #fff;
-        }
-
-        .ide-chip-label {
-            font-size: 13px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, .85);
-        }
-
-        .ide-chip-icon {
-            font-size: 18px;
-            flex-shrink: 0;
         }
 
         /* File drop */
@@ -1255,6 +1286,33 @@
             border-color: #5865f2;
             color: #fff;
         }
+
+        .details-empty-state {
+            text-align: center;
+            padding: 90px 28px;
+            border: 1px dashed rgba(255, 255, 255, .08);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, .018);
+            color: rgba(255, 255, 255, .24);
+        }
+
+        .details-empty-state .icon {
+            font-size: 54px;
+            margin-bottom: 14px;
+        }
+
+        .details-empty-state .title {
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, .38);
+            margin-bottom: 8px;
+        }
+
+        .details-empty-state .desc {
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, .26);
+        }
     </style>
 </head>
 
@@ -1358,11 +1416,15 @@
     <!-- ══ MODAL NOUVELLE SESSION ══ -->
     <div class="modal-overlay" id="createModal">
         <div class="modal-box-large">
-            <h2>✨ Nouvelle session</h2>
-            <p>Choisissez un examen existant ou créez-en un nouveau quiz.</p>
+            <div class="session-create-header">
+                <div class="session-create-title">
+                    <h2>Nouvelle session</h2>
+                    <p>Préparez une session d'examen ou un quiz.</p>
+                </div>
+            </div>
 
             <!-- Sélecteur de mode -->
-            <div class="mode-tabs">
+            <div class="mode-tabs session-workspace">
                 <div class="mode-tab active" id="modeExistant" onclick="ProfVM.setMode('existant')">
                     <span class="mtab-icon">📋</span>
                     Examen existant
@@ -1377,8 +1439,8 @@
             </div>
 
             <!-- ── ZONE EXAMEN EXISTANT ── -->
-            <div id="zoneExistant" style="display:grid; grid-template-columns: 1.2fr 1fr; gap: 40px; align-items: start;">
-                <div class="zone-existant-left">
+            <div id="zoneExistant" class="session-grid-existing">
+                <div class="zone-existant-left session-panel soft-highlight">
                     <div class="modal-section-title">📚 Sélectionner un examen</div>
                     <div style="position:relative;margin-bottom:10px;">
                         <input type="text" id="examSearch" placeholder="Rechercher un examen..."
@@ -1387,7 +1449,7 @@
                         <span
                             style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.3);font-size:14px;">🔍</span>
                     </div>
-                    <div class="exam-list" id="examList" style="max-height: 400px;">
+                    <div class="exam-list" id="examList">
                         <div class="exam-loading">
                             <div class="spin-ring"></div>
                             Chargement des examens depuis la base...
@@ -1395,9 +1457,9 @@
                     </div>
                 </div>
 
-                <div class="zone-existant-right">
+                <div class="zone-existant-right session-panel">
                     <!-- Détails auto-remplis -->
-                    <div id="autoFilledFields" style="display:none; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); padding:20px; border-radius:15px;">
+                    <div id="autoFilledFields" style="display:none; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); padding:24px; border-radius:18px;">
                         <div class="modal-section-title">📝 Détails de l'examen sélectionné<span class="autofill-badge" style="float:right;">✦ AUTO</span></div>
                         <div style="display:grid;grid-template-columns:1fr;gap:12px;">
                             <div class="modal-field">
@@ -1445,8 +1507,8 @@
             </div> <!-- fin zoneExistant -->
 
             <!-- ── ZONE NOUVEAU QUIZ ── -->
-            <div id="zoneNouveau" style="display:none; grid-template-columns: 1fr 1.2fr; gap: 40px; align-items: start;">
-                <div class="zone-nouveau-left">
+            <div id="zoneNouveau" class="session-grid-new" style="display:none;">
+                <div class="zone-nouveau-left session-panel soft-highlight">
                     <div class="modal-section-title">📋 Informations du quiz</div>
                     <div class="modal-field">
                         <label>Matière / Devoir *</label>
@@ -1507,7 +1569,7 @@
                     </div>
                 </div>
 
-                <div class="zone-nouveau-right" style="position: sticky; top: 0;">
+                <div class="zone-nouveau-right session-panel" style="position: sticky; top: 0;">
                     <div class="quiz-config-section" style="margin-top: 0;">
                         <div class="modal-section-title">🧠 Configuration du Quiz</div>
                         <div class="quiz-type-selector">
@@ -1550,24 +1612,6 @@
                         fichier sélectionné</span>
                 </div>
             </div>
-
-            <div class="modal-section-title">💻 IDEs autorisés</div>
-            <div class="ide-grid" id="ideGrid">
-                <label class="ide-chip selected" onclick="ProfVM.toggleIde(this)">
-                    <input type="checkbox" value="vscode" checked />
-                    <span class="ide-chip-check">✓</span>
-                    <span class="ide-chip-icon">💙</span>
-                    <span class="ide-chip-label">VS Code</span>
-                </label>
-                <label class="ide-chip" onclick="ProfVM.toggleIde(this)">
-                    <input type="checkbox" value="intellij" />
-                    <span class="ide-chip-check"></span>
-                    <span class="ide-chip-icon">🟠</span>
-                    <span class="ide-chip-label">IntelliJ IDEA</span>
-                </label>
-            </div>
-
-            <hr class="modal-divider" />
 
             <div class="modal-section-title">🔗 Liens URL (Ressources externes)</div>
             <div class="url-input-group">
@@ -1700,7 +1744,7 @@
     <div class="modal-overlay" id="aiModal">
         <div class="modal" style="width:600px; max-width:90vw; border:1px solid rgba(88,101,242,.4); background:#1a1b1e; display:flex; flex-direction:column; padding:0;">
             <div style="padding:20px 24px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="font-size:18px; font-weight:600; margin:0;">🤖 IA : Générateur de Quiz (Together AI)</h2>
+                <h2 style="font-size:18px; font-weight:700; margin:0; color:#5865f2;">Générateur de Quiz</h2>
                 <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;" onclick="ProfVM.closeAIModal()">×</button>
             </div>
             <div style="padding:24px; flex:1; overflow-y:auto;">
@@ -1824,6 +1868,36 @@
             return resolved || '—';
         }
 
+        function _looksLikeObjectId(value) {
+            return typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value.trim());
+        }
+
+        function _getReadableSessionTitle(session) {
+            if (!session) return null;
+
+            const candidates = [
+                _resolveStr(session, 'subject', 'title', 'name', 'nom'),
+                _resolveStr(session.examId, 'title', 'subject', 'name', 'nom'),
+                _resolveStr(session.examId?.matiere, 'nom', 'code', 'name', 'title', 'label'),
+                _resolveStr(session.examId?.subject, 'nom', 'code', 'name', 'title', 'label'),
+                _resolveStr(session.examId?.devoir, 'nom', 'code', 'name', 'title', 'label'),
+                session.testType === 'QUIZ' ? 'Quiz' : null
+            ].map(v => (v || '').toString().trim()).filter(Boolean);
+
+            return candidates.find(v => !_looksLikeObjectId(v)) || null;
+        }
+
+        function _buildSessionTitle(baseTitle, classe) {
+            const rawTitle = (baseTitle || '').toString().trim().replace(/\s+/g, '-').toLowerCase();
+            const rawClasse = (classe || '').toString().trim().replace(/\s+/g, '').toLowerCase();
+
+            if (!rawTitle && !rawClasse) return 'session';
+            if (!rawClasse) return rawTitle || 'session';
+            if (!rawTitle) return rawClasse;
+
+            return `${rawTitle}-${rawClasse}`;
+        }
+
         const ProfData = {
             sessions: [],
             allExams: [],
@@ -1891,12 +1965,12 @@
                     // On mappe les données backend vers le format d'affichage
                     ProfData.sessions = data.map(s => {
                         // 1. Déterminer le titre (Matière/Examen)
-                        let title = _resolveStr(s.examId?.matiere, 'nom') || _resolveStr(s.examId, 'title');
+                        let title = _getReadableSessionTitle(s);
                         if (!title) title = s.testType === 'WEB_LINK' ? "Lien de redirection" : "Environnement de test";
 
                         // 2. Déterminer la classe
                         const classe = _getClasse(s);
-                        const displayTitle = (classe && title.indexOf(classe) === -1) ? `${title} – ${classe}` : title;
+                        const displayTitle = _buildSessionTitle(title, classe);
 
                         // 3. Métadonnées (Mode, Durée)
                         const mode = s.testType === 'WEB_LINK' ? '🔗 URL' : '🖥️ App';
@@ -1953,9 +2027,9 @@
                 el.innerHTML = filtered.map(s => `
                 <div class="session-row" onclick="ProfVM.showSessionDetails('${s.id}')" style="cursor:pointer; transition: transform .2s, background-color .2s;">
                     <div style="flex:1;">
-                        <div class="session-code">${s.code}</div>
+                        <div class="session-code" style="font-family: inherit; font-size: 17px; letter-spacing: normal; color: #fff; text-transform: uppercase; font-weight: 700;">${s.course}</div>
                         <div class="session-meta" style="margin-top:2px;">
-                            <strong style="color:rgba(255,255,255,.9); font-size:13.5px;">${s.course}</strong><br/>
+                            <strong style="color:var(--primary); font-size:13.5px; font-family: monospace; letter-spacing: 1px;">CODE: ${s.code}</strong><br/>
                             <small style="color:rgba(255,255,255,.45); font-size:11.5px;">${s.meta} · ${s.date}</small>
                         </div>
                     </div>
@@ -2001,7 +2075,9 @@
                 if (this.sessionsOpen) {
                     document.getElementById('sessionsCardTitle').innerHTML = wantsArchive ? '🗄️ Mes sessions archivées' : '📋 Mes sessions récentes';
                     this.fetchRecentSessions();
-                    card.scrollIntoView({ behavior: 'smooth' });
+                    window.requestAnimationFrame(() => {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
                 }
             },
 
@@ -2036,12 +2112,6 @@
                     <button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Annuler</button>
                     <button class="btn btn-indigo" onclick="ProfVM.generateCode()">🎲 Générer le code session</button>`;
                 }
-                document.querySelectorAll('.ide-chip').forEach(chip => {
-                    const cb = chip.querySelector('input');
-                    const chk = chip.querySelector('.ide-chip-check');
-                    if (cb.value === 'vscode') { cb.checked = true; chip.classList.add('selected'); chk.textContent = '✓'; }
-                    else { cb.checked = false; chip.classList.remove('selected'); chk.textContent = ''; }
-                });
                 this.setMode('existant');
                 document.getElementById('createModal').classList.add('open');
 
@@ -2808,13 +2878,6 @@
                         if (e.durationMinutes) parsedDuree = parseInt(e.durationMinutes, 10);
                         if (isNaN(parsedDuree)) parsedDuree = 120;
 
-                        // Mapper les IDEs pour le DTO
-                        const ides = [...document.querySelectorAll('.ide-chip.selected')]
-                            .map(c => {
-                                const l = c.querySelector('.ide-chip-label').textContent;
-                                return l === 'VS Code' ? 'vscode' : (l === 'IntelliJ IDEA' ? 'intellij' : l.toLowerCase());
-                            });
-
                         // S'assurer qu'un lien tapé mais non ajouté via "+" est quand même envoyé
                         let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
                         const manualUrlBody = document.getElementById('urlInput')?.value.trim();
@@ -2825,14 +2888,17 @@
                         const customWhitelist = (document.getElementById('af_whitelist')?.value || '').split(',')
                             .map(s => s.trim().toLowerCase())
                             .filter(s => s.length > 0);
-                        const finalAllowedApps = [...new Set([...ides, ...customWhitelist])];
+                        const finalAllowedApps = [...new Set(customWhitelist)];
 
                         const formData = new FormData();
                         formData.append('classe', classId);
                         formData.append('examId', e._id);
+                        formData.append('subject', courseLabel); // Link the subject name explicitly
                         formData.append('duration', parsedDuree.toString());
                         formData.append('testType', 'DESKTOP_APP');
-                        formData.append('allowedApps', JSON.stringify(finalAllowedApps.length ? finalAllowedApps : ['vscode']));
+                        if (finalAllowedApps.length) {
+                            formData.append('allowedApps', JSON.stringify(finalAllowedApps));
+                        }
 
                         if (urlToLink) formData.append('link', urlToLink);
 
@@ -2935,8 +3001,10 @@
                             .map(s => s.trim().toLowerCase())
                             .filter(s => s.length > 0);
                         
-                        const finalAllowedApps = customWhitelist.length ? customWhitelist : ['vscode'];
-                        formData.append('allowedApps', JSON.stringify(finalAllowedApps));
+                        const finalAllowedApps = [...new Set(customWhitelist)];
+                        if (finalAllowedApps.length) {
+                            formData.append('allowedApps', JSON.stringify(finalAllowedApps));
+                        }
                         
                         // S'assurer qu'un lien tapé mais non ajouté via "+" est quand même envoyé
                         let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
@@ -3009,9 +3077,11 @@
                 sessionStorage.setItem('sessionDuree', dureeLabel);
                 sessionStorage.setItem('sessionStart', startLabel);
 
-                const ides = [...document.querySelectorAll('.ide-chip.selected')]
-                    .map(c => c.querySelector('.ide-chip-label').textContent).join(', ') || 'Aucun';
-                sessionStorage.setItem('allowedIDEs', ides);
+                const selectedWhitelist = this.selectedExam
+                    ? (document.getElementById('af_whitelist')?.value || '')
+                    : (document.getElementById('n_whitelist')?.value || '');
+                const allowedAppsLabel = selectedWhitelist.trim() || 'Non défini';
+                sessionStorage.setItem('allowedIDEs', allowedAppsLabel);
                 sessionStorage.setItem('sharedFiles', JSON.stringify(this.sharedFiles.map(f => f.name)));
                 sessionStorage.setItem('sharedUrls', JSON.stringify(this.sharedUrls));
 
@@ -3030,7 +3100,12 @@
                     sum.innerHTML = `${courseLabel}${classeDisplay} · ${dureeLabel}${timeDisplay}`;
                 }
 
-                ProfData.sessions.unshift({ code, course: courseLabel, date: 'À l\'instant', status: 'active' });
+                ProfData.sessions.unshift({
+                    code,
+                    course: _buildSessionTitle(courseLabel, classeLabel),
+                    date: 'À l\'instant',
+                    status: 'active'
+                });
                 const statCount = document.getElementById('stat-count');
                 if (statCount) statCount.textContent = ProfData.sessions.length;
                 
@@ -3042,8 +3117,7 @@
                     <button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Fermer</button>
                     <button class="btn btn-ghost" id="copyBtn"
                         onclick="navigator.clipboard.writeText('${code}').then(()=>document.getElementById('copyBtn').textContent='✅ Copié!')"
-                    >📋 Copier</button>
-                    <button class="btn btn-green" onclick="ProfVM.launchSession('${code}', '${testId}')">🚀 Lancer</button>`;
+                    >📋 Copier</button>`;
                 }
             },
 
@@ -3052,14 +3126,6 @@
                 if (testId) sessionStorage.setItem('activeTestId', testId);
                 this.closeCreateModal();
                 window.location.href = './desktop.html';
-            },
-
-            toggleIde(chip) {
-                const cb = chip.querySelector('input');
-                const chk = chip.querySelector('.ide-chip-check');
-                cb.checked = !cb.checked;
-                chip.classList.toggle('selected', cb.checked);
-                chk.textContent = cb.checked ? '✓' : '';
             },
 
             addUrl() {
