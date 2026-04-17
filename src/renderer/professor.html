@@ -531,6 +531,7 @@
             display: none;
             align-items: center;
             justify-content: center;
+            -webkit-app-region: no-drag;
         }
 
         .modal-overlay.open {
@@ -565,6 +566,11 @@
                 0 30px 80px rgba(0, 0, 0, .45),
                 0 0 0 1px rgba(255, 255, 255, .03) inset;
             animation: fadeUp .3s ease both;
+            -webkit-app-region: no-drag;
+        }
+
+        .modal {
+            -webkit-app-region: no-drag;
         }
 
         .modal-box h2, .modal-box-large h2 {
@@ -1850,6 +1856,10 @@
          */
         function _getClasse(e) {
             if (!e) return '';
+            const explicitLabel = _resolveStr(e.classLabel, 'nom', 'name', 'code', 'label')
+                || _resolveStr(e.classeLabel, 'nom', 'name', 'code', 'label');
+            if (explicitLabel && !_looksLikeObjectId(explicitLabel)) return explicitLabel;
+
             const c = e.classe || (e.examId ? e.examId.classe : null);
             if (!c) return '';
 
@@ -1888,8 +1898,8 @@
         }
 
         function _buildSessionTitle(baseTitle, classe) {
-            const rawTitle = (baseTitle || '').toString().trim().replace(/\s+/g, '-').toLowerCase();
-            const rawClasse = (classe || '').toString().trim().replace(/\s+/g, '').toLowerCase();
+            const rawTitle = (baseTitle || '').toString().trim().replace(/\s+/g, ' ');
+            const rawClasse = (classe || '').toString().trim().replace(/\s+/g, '');
 
             if (!rawTitle && !rawClasse) return 'session';
             if (!rawClasse) return rawTitle || 'session';
@@ -2035,6 +2045,7 @@
                     </div>
                     <div style="display:flex; align-items:center; gap: 15px;">
                         ${!this.viewingArchive ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height: 26px; border-color: rgba(255,255,255,.2);" onclick="event.stopPropagation(); ProfVM.archiveSession('${s.id}')">🗃️ Archiver</button>` : ''}
+                        <button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height:26px; color:#ff7b7b; border-color:rgba(255,123,123,.35);" onclick="event.stopPropagation(); ProfVM.deleteSession('${s.id}')">🗑️ Supprimer</button>
                         <span class="session-badge ${s.status}" style="font-weight:600;">${s.status === 'active' ? '🟢 Active' : '⚫ Terminée'}</span>
                     </div>
                 </div>`).join('');
@@ -2055,6 +2066,30 @@
                     }
                 } catch(e) {
                     console.error(e);
+                    alert("Erreur réseau");
+                }
+            },
+
+            async deleteSession(id) {
+                if (!confirm("⚠️ Voulez-vous vraiment supprimer cette session ?\n\nCette action est définitive.")) return;
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    const resp = await fetch(`${API_BASE}/practical-tests/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (resp.ok) {
+                        if (ProfData.currentSessionDetails && (ProfData.currentSessionDetails._id === id || ProfData.currentSessionDetails.id === id)) {
+                            this.closeDetailsModal();
+                        }
+                        this.fetchRecentSessions();
+                    } else {
+                        const err = await resp.json().catch(() => ({}));
+                        alert("Erreur lors de la suppression: " + (err.message || "Erreur inconnue"));
+                    }
+                } catch (e) {
+                    console.error("Delete session failed:", e);
                     alert("Erreur réseau");
                 }
             },
@@ -2873,6 +2908,10 @@
                             throw new Error("L'examen sélectionné n'a pas de classe associée avec un ID MongoDB valide dans la base de données. ID trouvé : " + encodeURIComponent(classId || "Aucun"));
                         }
 
+                        courseLabel = _resolveStr(e.matiere, 'nom', 'code', 'name')
+                            || _resolveStr(e.subject) || _resolveStr(e.title) || 'Examen';
+                        classeLabel = (document.getElementById('af_classe').value || _getClasse(e) || '').trim() || '—';
+
                         let parsedDuree = 120;
                         if (e.duree) parsedDuree = parseInt(e.duree, 10);
                         if (e.durationMinutes) parsedDuree = parseInt(e.durationMinutes, 10);
@@ -2893,7 +2932,8 @@
                         const formData = new FormData();
                         formData.append('classe', classId);
                         formData.append('examId', e._id);
-                        formData.append('subject', courseLabel); // Link the subject name explicitly
+                        formData.append('subject', courseLabel);
+                        formData.append('classLabel', classeLabel);
                         formData.append('duration', parsedDuree.toString());
                         formData.append('testType', 'DESKTOP_APP');
                         if (finalAllowedApps.length) {
@@ -2941,9 +2981,6 @@
                         apiSessionCode = data.sessionCode;
 
                         // Infos pour affichage local
-                        courseLabel = _resolveStr(e.matiere, 'nom', 'code', 'name')
-                            || _resolveStr(e.subject) || _resolveStr(e.title) || 'Examen';
-                        classeLabel = document.getElementById('af_classe').value || '—';
                         const dr = e.date || e.examDate || e.scheduledAt;
                         dateLabel = dr ? new Date(dr).toLocaleDateString('fr-FR') : '—';
                         dureeLabel = _formatDuree(e.duree ?? e.durationMinutes ?? e.duration);
@@ -2985,6 +3022,9 @@
                         const formData = new FormData();
                         formData.append('classe', classId);
                         formData.append('duration', duration.toString());
+                        const sel = document.getElementById('n_classe');
+                        classeLabel = sel.options[sel.selectedIndex].text;
+                        formData.append('classLabel', classeLabel);
                         
                         // Decide if it's a QUIZ or DESKTOP_APP
                         const isQuiz = this.quizQuestions.length > 0;
@@ -3046,8 +3086,6 @@
 
                         // Infos local
                         courseLabel = subjectValue || 'Session rapide';
-                        const sel = document.getElementById('n_classe');
-                        classeLabel = sel.options[sel.selectedIndex].text;
                         dateLabel = document.getElementById('n_date').value;
                         dureeLabel = dureeRaw;
                         startLabel = document.getElementById('n_start').value || '—';
