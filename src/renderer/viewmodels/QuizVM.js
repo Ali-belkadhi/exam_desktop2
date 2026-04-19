@@ -183,7 +183,7 @@ window.QuizVM = {
 
         const testId = sessionStorage.getItem('activeTestId');
         const studentId = sessionStorage.getItem('studentId');
-        const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-ll3f.onrender.com';
+        const API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
 
         const payload = {
             testId,

@@ -4,9 +4,9 @@ window.SessionVM = class SessionVM {
         this.isLoading = false;
         this.error = '';
         this.updateView = updateViewCallback;
-        this.API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-ll3f.onrender.com';
+        this.API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
         this.heartbeatInterval = null;
-        
+
         // Auto-resume heartbeat if already in a session (for desktop.html)
         if (sessionStorage.getItem('activeTestId') && sessionStorage.getItem('studentId')) {
             this.startHeartbeat();
@@ -43,20 +43,20 @@ window.SessionVM = class SessionVM {
             }
 
             const sessionData = await resp.json();
-            
+
             const courseTitle = sessionData.classe ? (sessionData.classe.nom || sessionData.classe.name) : 'Session Pratique';
-            const profName = sessionData.professors && sessionData.professors.length > 0 
+            const profName = sessionData.professors && sessionData.professors.length > 0
                 ? ((sessionData.professors[0].firstName || sessionData.professors[0].prenom || '') + ' ' + (sessionData.professors[0].lastName || sessionData.professors[0].nom || ''))
                 : 'Enseignant';
 
             sessionStorage.setItem('activeSessionCode', this.code);
             sessionStorage.setItem('sessionCourse', courseTitle);
             sessionStorage.setItem('sessionProf', profName);
-            
+
             const studentId = sessionStorage.getItem('studentId');
             const testId = sessionData._id || sessionData.id;
             sessionStorage.setItem('activeTestId', testId);
-            
+
             if (studentId && testId) {
                 // Register server-side via HTTP (reliable before page navigation)
                 await fetch(`${API_BASE}/practical-tests/${testId}/join`, {
@@ -70,7 +70,7 @@ window.SessionVM = class SessionVM {
                 // ce qui détruirait le socket immédiatement.
                 // Le socket sera créé dans desktop.html via le constructor.
             }
-            
+
             // 🔥 Synchroniser l'état initial
             this._updateLocalSessionState(sessionData);
 
@@ -111,16 +111,16 @@ window.SessionVM = class SessionVM {
         sessionStorage.setItem('sessionStartedAt', data.startedAt || new Date().toISOString());
         if (data.scheduledStartTime) sessionStorage.setItem('sessionScheduledStartAt', data.scheduledStartTime);
         else sessionStorage.removeItem('sessionScheduledStartAt');
-        
+
         // Convertir explicitement en booléen car le storage ne stocke que des strings
         const isPaused = data.isPaused === true || data.isPaused === 'true';
         sessionStorage.setItem('sessionIsPaused', isPaused ? 'true' : 'false');
-        
+
         // Toujours stocker le pausedAt même si nul pour forcer le nettoyage si on reprend
         sessionStorage.setItem('sessionPausedAt', data.pausedAt || '');
         sessionStorage.setItem('sessionTotalPausedSeconds', data.totalPausedSeconds || 0);
         sessionStorage.setItem('sessionExtendedDuration', data.extendedDuration || 0);
-        
+
         // Contenu (PDF / Lien)
         if (data.pdfUrl) sessionStorage.setItem('sessionPdfUrl', data.pdfUrl);
         else sessionStorage.removeItem('sessionPdfUrl');
@@ -131,7 +131,7 @@ window.SessionVM = class SessionVM {
         // Statut global (pour arrêter l'examen si terminé)
         const isActive = data.isActive !== false && !data.endedAt;
         sessionStorage.setItem('sessionIsActive', isActive ? 'true' : 'false');
-        
+
         sessionStorage.setItem('sessionTestType', data.testType || 'DESKTOP_APP');
         if (data.quizData) {
             const quizVal = typeof data.quizData === 'string' ? data.quizData : JSON.stringify(data.quizData);
@@ -150,7 +150,7 @@ window.SessionVM = class SessionVM {
         const studentId = sessionStorage.getItem('studentId');
         const code = sessionStorage.getItem('activeSessionCode');
         const API_BASE = this.API_BASE;
-        
+
         // Un ping est possible si on a soit le TestId (préféré) soit le Code
         if (!testId && !code) {
             sessionStorage.setItem('heartbeatError', 'IDs manquants (T/C)');
@@ -176,11 +176,11 @@ window.SessionVM = class SessionVM {
                 body = JSON.stringify({ studentId });
             } else {
                 // Mode moniteur (Professeur)
-                url = testId 
-                    ? `${API_BASE}/practical-tests/${testId}` 
+                url = testId
+                    ? `${API_BASE}/practical-tests/${testId}`
                     : `${API_BASE}/practical-tests/code/${code}`;
             }
-            
+
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
 
@@ -195,11 +195,11 @@ window.SessionVM = class SessionVM {
 
             if (resp.ok) {
                 const freshData = await resp.json();
-                
+
                 // Extraction du header "Date" pour calibration automatique
                 const serverDateHeader = resp.headers.get('Date');
                 this._updateLocalSessionState(freshData, serverDateHeader);
-                
+
                 sessionStorage.removeItem('heartbeatError');
                 this.isPaused = sessionStorage.getItem('sessionIsPaused') === 'true';
                 window.dispatchEvent(new CustomEvent('session-updated'));
@@ -216,7 +216,7 @@ window.SessionVM = class SessionVM {
 
     startHeartbeat() {
         if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
-        
+
         // Use a persistent interval that survives context
         this.heartbeatInterval = setInterval(() => {
             this._sendPing();
@@ -230,14 +230,14 @@ window.SessionVM = class SessionVM {
         const testId = sessionStorage.getItem('activeTestId');
         const studentId = sessionStorage.getItem('studentId');
         const API_BASE = this.API_BASE;
-        
+
         if (testId && studentId) {
             try {
                 // 1. D'abord, envoyer HTTP /leave (garanti même si le WebSocket échoue)
                 const token = sessionStorage.getItem('accessToken');
                 const headers = { 'Content-Type': 'application/json' };
                 if (token) headers['Authorization'] = `Bearer ${token}`;
-                
+
                 await fetch(`${API_BASE}/practical-tests/${testId}/leave`, {
                     method: 'POST',
                     headers: headers,
@@ -249,7 +249,7 @@ window.SessionVM = class SessionVM {
                 console.error("[SessionVM] Erreur retrait HTTP:", e);
             }
         }
-        
+
         // 2. Ensuite, couper le WebSocket (le gateway va aussi notifier les profs)
         if (this.socket) {
             this.socket.disconnect();

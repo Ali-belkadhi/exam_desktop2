@@ -953,6 +953,460 @@
             border-color: rgba(16, 185, 129, .2);
         }
 
+        /* ══════════════════════════════════════════
+           PARTICIPANTS MODAL — Dashboard 3 colonnes
+           ══════════════════════════════════════════ */
+        .participants-modal-box {
+            background: linear-gradient(180deg, rgba(22, 24, 31, 0.99) 0%, rgba(17, 18, 24, 0.99) 100%);
+            border: 1px solid rgba(255,255,255,.09);
+            border-radius: 20px;
+            width: 96vw;
+            max-width: 1400px;
+            height: 90vh;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 30px 80px rgba(0,0,0,.55);
+            overflow: hidden;
+            -webkit-app-region: no-drag;
+        }
+
+        /* Header */
+        .pm-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 28px;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+            background: rgba(255,255,255,.02);
+            flex-shrink: 0;
+        }
+        .pm-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .pm-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+        }
+        .pm-subtitle {
+            font-size: 12px;
+            color: rgba(255,255,255,.42);
+            margin-top: 3px;
+        }
+        .pm-close-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,.15);
+            background: rgba(255,255,255,.06);
+            color: rgba(255,255,255,.7);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s;
+            -webkit-app-region: no-drag;
+        }
+        .pm-close-btn:hover {
+            background: rgba(239,68,68,.2);
+            border-color: rgba(239,68,68,.4);
+            color: #ef4444;
+        }
+
+        /* Body 3 colonnes */
+        .pm-body {
+            display: grid;
+            grid-template-columns: 260px 1fr 220px;
+            gap: 0;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Labels de section */
+        .pm-section-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: rgba(255,255,255,.38);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,.05);
+        }
+
+        /* COLONNE GAUCHE */
+        .pm-col-left {
+            border-right: 1px solid rgba(255,255,255,.07);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 14px;
+            overflow: hidden;
+        }
+        .pm-students-list {
+            flex: 1;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,.1) transparent;
+        }
+
+        /* Student items dans nouveau layout */
+        .pm-student-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background .18s;
+            border: 1px solid transparent;
+            margin-bottom: 4px;
+        }
+        .pm-student-item:hover {
+            background: rgba(255,255,255,.04);
+            border-color: rgba(255,255,255,.06);
+        }
+        .pm-student-item.selected {
+            background: rgba(88,101,242,.12);
+            border-color: rgba(88,101,242,.3);
+        }
+        .pm-student-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #5865f2, #4752c4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            position: relative;
+        }
+        /* Risk dot sur l'avatar */
+        .pm-risk-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            border: 2px solid rgba(22,24,31,.99);
+        }
+        .pm-risk-dot.high {
+            background: #ef4444;
+            box-shadow: 0 0 6px rgba(239,68,68,.7);
+            animation: pulse-risk 1.2s ease-in-out infinite;
+        }
+        .pm-risk-dot.medium {
+            background: #f59e0b;
+            box-shadow: 0 0 6px rgba(245,158,11,.5);
+        }
+        .pm-risk-dot.low {
+            background: #10b981;
+            box-shadow: 0 0 5px rgba(16,185,129,.4);
+        }
+        .pm-risk-dot.inactive {
+            background: #6b7280;
+        }
+        @keyframes pulse-risk {
+            0%, 100% { box-shadow: 0 0 6px rgba(239,68,68,.7); }
+            50% { box-shadow: 0 0 12px rgba(239,68,68,1); }
+        }
+
+        .pm-student-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .pm-student-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .pm-student-nc {
+            font-size: 10px;
+            color: rgba(255,255,255,.38);
+            margin-top: 1px;
+        }
+        .pm-student-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .pm-action-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,.12);
+            background: rgba(255,255,255,.06);
+            color: rgba(255,255,255,.6);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .18s;
+        }
+        .pm-action-btn:hover {
+            background: rgba(88,101,242,.2);
+            border-color: rgba(88,101,242,.4);
+            color: #fff;
+        }
+        .pm-student-badge {
+            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            background: rgba(255,255,255,.08);
+            color: rgba(255,255,255,.5);
+            border: 1px solid rgba(255,255,255,.1);
+        }
+        .pm-student-badge.actif {
+            background: rgba(16,185,129,.12);
+            color: #10b981;
+            border-color: rgba(16,185,129,.25);
+        }
+
+        /* COLONNE CENTRE */
+        .pm-col-center {
+            display: flex;
+            flex-direction: column;
+            padding: 16px 18px;
+            gap: 14px;
+            overflow: hidden;
+            border-right: 1px solid rgba(255,255,255,.07);
+        }
+
+        /* Zone Screen */
+        .pm-screen-section {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .pm-screen-box {
+            flex: 1;
+            background: #0a0a10;
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pm-screen-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+        }
+        .pm-screen-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            cursor: pointer;
+        }
+
+        /* Mode Plein Écran pour le Screen */
+        .pm-screen-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 99999 !important;
+            background: #000 !important;
+            border-radius: 0 !important;
+            border: none !important;
+        }
+        
+        .pm-screen-fullscreen-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .pm-screen-fullscreen-btn:hover {
+            background: rgba(255,255,255,0.15);
+            transform: scale(1.05);
+        }
+
+        .pm-live-indicator {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            animation: pm-pulse 1.5s infinite;
+        }
+        @keyframes pm-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Zone Alertes */
+        .pm-alerts-section {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .pm-alerts-box {
+            flex: 1;
+            background: rgba(0,0,0,.2);
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 12px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            padding: 8px;
+        }
+        .pm-alert-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            background: rgba(239,68,68,.08);
+            border-left: 3px solid #ef4444;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #fca5a5;
+            line-height: 1.4;
+        }
+        .pm-alert-item.medium {
+            background: rgba(245,158,11,.08);
+            border-left-color: #f59e0b;
+            color: #fcd34d;
+        }
+        .pm-alerts-badge {
+            background: rgba(239,68,68,.2);
+            color: #ef4444;
+            border: 1px solid rgba(239,68,68,.35);
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 7px;
+            margin-left: 6px;
+        }
+
+        /* COLONNE DROITE */
+        .pm-col-right {
+            display: flex;
+            flex-direction: column;
+            padding: 16px 14px;
+            gap: 14px;
+        }
+
+        /* Controls (4 buttons) */
+        .pm-controls-box .cp-btn {
+            width: 100%;
+            margin-bottom: 8px;
+            height: 38px;
+            font-size: 12px;
+        }
+        .pm-controls-box .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            padding: 0;
+            background: transparent;
+            border: none;
+            margin: 0;
+        }
+
+        /* Stats box */
+        .pm-stats-box {
+            background: rgba(255,255,255,.03);
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 14px;
+            padding: 16px;
+            flex-shrink: 0;
+        }
+        .pm-stat-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,.05);
+        }
+        .pm-stat-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .pm-stat-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .pm-dot-green {
+            background: #10b981;
+            box-shadow: 0 0 8px rgba(16,185,129,.5);
+        }
+        .pm-dot-gray {
+            background: #6b7280;
+        }
+        .pm-stat-num {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+        .pm-stat-lbl {
+            font-size: 11px;
+            color: rgba(255,255,255,.4);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+
+        /* Fermer button */
+        .pm-fermer-btn {
+            width: 100%;
+            height: 38px;
+            border-radius: 9px;
+            border: 1px solid rgba(255,255,255,.12);
+            background: rgba(255,255,255,.06);
+            color: rgba(255,255,255,.65);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            margin-top: auto;
+            -webkit-app-region: no-drag;
+        }
+        .pm-fermer-btn:hover {
+            background: rgba(239,68,68,.15);
+            border-color: rgba(239,68,68,.35);
+            color: #ef4444;
+        }
+
+
         .mode-tab:hover {
             border-color: rgba(88, 101, 242, .4);
             color: rgba(255, 255, 255, .8);
@@ -1610,8 +2064,8 @@
                             </div>
                         
                         <div class="modal-field" style="margin-top:12px;">
-                            <label>Applications Autorisées (Whitelist) <span style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des virgules</span></label>
-                            <input type="text" id="af_whitelist" placeholder="ex: vscode, chrome, node, python" 
+                            <label>Applications Interdites (Blacklist) <span style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des virgules</span></label>
+                            <input type="text" id="af_whitelist" placeholder="ex: facebook, youtube, steam, spotify" 
                                 style="background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#fff; padding:10px 14px; font-size:13px; width:100%; transition:all .2s;" />
                         </div>
                     </div> <!-- fin autoFilledFields -->
@@ -1655,8 +2109,8 @@
                         </div>
                     </div>
                     <div class="modal-field" style="margin-top:12px;">
-                        <label>Applications Autorisées (Whitelist) <span style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des virgules</span></label>
-                        <input type="text" id="n_whitelist" placeholder="ex: vscode, chrome, node, pycharm" 
+                        <label>Applications Interdites (Blacklist) <span style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des virgules</span></label>
+                        <input type="text" id="n_whitelist" placeholder="ex: facebook, youtube, steam, spotify" 
                             style="background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#fff; padding:10px 14px; font-size:13px; width:100%; transition:all .2s;" />
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -1755,59 +2209,111 @@
         </div>
     </div>
 
-    <!-- ── DETAILED SESSION MODAL ── -->
+    <!-- ══════════════════════════════════════════════
+         MODAL PARTICIPANTS — Dashboard 3 colonnes
+         ══════════════════════════════════════════════ -->
     <div class="modal-overlay" id="detailsModal">
-        <div class="modal"
-            style="width:500px; max-height:85vh; border:1px solid rgba(255,255,255,.15); background: #1a1b1e; display:flex; flex-direction:column; padding:0;">
-            <div style="padding:24px 24px 16px; border-bottom:1px solid rgba(255,255,255,.08);">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2 style="font-size:18px; font-weight:600;"><span
-                            style="color:#5865f2; margin-right:8px;">👥</span> Participants à la session</h2>
-                    <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;"
-                        onclick="ProfVM.closeDetailsModal()">×</button>
-                </div>
-                <div id="detailsSubheader" style="margin-top:4px; font-size:13px; color:rgba(255,255,255,.45);">
-                    Chargement des informations...</div>
-            </div>
+        <div class="participants-modal-box">
 
-            <div id="detailsContent" style="padding:16px 24px; flex:1; overflow-y:auto; min-height:100px;">
-                <!-- Session control buttons will be injected here -->
-                <div id="sessionControls" style="display:none; margin-bottom: 20px;"></div>
-                
-                <div id="participantsList">
-                    <div style="display:flex; justify-content:center; align-items:center; height:150px;">
-                        <div class="spin-ring" style="width:24px; height:24px;"></div>
+            <!-- Header -->
+            <div class="pm-header">
+                <div class="pm-header-left">
+                    <span style="font-size:20px;">👥</span>
+                    <div>
+                        <h2 class="pm-title">Participants à la session</h2>
+                        <div id="detailsSubheader" class="pm-subtitle">Chargement...</div>
                     </div>
                 </div>
+                <button class="pm-close-btn" onclick="ProfVM.closeDetailsModal()">×</button>
             </div>
 
-            <div
-                style="padding:16px 24px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); display:flex; justify-content:flex-end;">
-                <button class="btn btn-ghost" style="font-size:13px; font-weight:600; padding:10px 24px;"
-                    onclick="ProfVM.closeDetailsModal()">Fermer</button>
-            </div>
-        </div>
-    </div>
+            <!-- Corps 3 colonnes -->
+            <div class="pm-body">
 
-    <div class="modal-overlay" id="screenModal">
-        <div class="modal" style="width:800px; max-width:90vw; height:600px; max-height:90vh; border:1px solid rgba(255,255,255,.15); background: #1a1b1e; display:flex; flex-direction:column; padding:0;">
-            <div style="padding:16px 24px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
-                <h2 id="screenModalTitle" style="font-size:16px; font-weight:600; margin:0;">📺 Écran de l'étudiant</h2>
-                <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;"
-                    onclick="ProfVM.closeScreenModal()">×</button>
-            </div>
-
-            <!-- Conteneur vidéo -->
-            <div id="screenVideoContainer" style="flex:1; background:#000; position:relative; display:flex; align-items:center; justify-content:center;">
-                <!-- Placeholder avant l'arrivée du flux vidéo -->
-            </div>
-
-            <div style="padding:12px 24px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); display:flex; justify-content:space-between; align-items:center;">
-                <div style="font-size:12px; color:rgba(255,255,255,0.4);">
-                    🔴 En direct 
+                <!-- COLONNE GAUCHE : Liste étudiants -->
+                <div class="pm-col-left">
+                    <div class="pm-section-label">
+                        <span>📋</span> Étudiants
+                    </div>
+                    <div id="participantsList" class="pm-students-list">
+                        <div style="display:flex;justify-content:center;align-items:center;height:120px;">
+                            <div class="spin-ring" style="width:24px;height:24px;"></div>
+                        </div>
+                    </div>
                 </div>
-                <button class="btn btn-ghost" style="font-size:13px; font-weight:600; padding:8px 24px;"
-                    onclick="ProfVM.closeScreenModal()">Fermer la vue</button>
+
+                <!-- COLONNE CENTRE : Screen + Alertes -->
+                <div class="pm-col-center">
+
+                    <!-- Zone Screen -->
+                    <div class="pm-screen-section">
+                        <div class="pm-section-label" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                            <div style="display:flex; align-items:center;">
+                                <span>📺</span> Screen :
+                                <span id="pm-screen-status" style="margin-left:8px; font-size:10px; font-weight:700; color:#ef4444; display:none; align-items:center;">
+                                    <span class="pm-live-indicator"></span> EN DIRECT — 
+                                </span>
+                                <span id="pm-screen-student-name" style="color:rgba(255,255,255,.5);font-weight:400;font-size:11px;margin-left:4px;">— Sélectionnez un étudiant actif</span>
+                            </div>
+                            <button class="pm-screen-fullscreen-btn" id="pm-btn-fullscreen" style="display:none;" onclick="ProfVM.toggleScreenFullscreen()" title="Plein écran">
+                                ⛶ 
+                            </button>
+                        </div>
+                        <div class="pm-screen-box" id="pm-screen-container">
+                            <div class="pm-screen-placeholder" id="pm-screen-placeholder">
+                                <span style="font-size:38px;">🖥️</span>
+                                <p style="margin-top:10px;color:rgba(255,255,255,.3);font-size:12px;text-align:center;">Cliquez sur 📺 d'un étudiant actif<br>pour voir son écran en direct</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Zone Alertes -->
+                    <div class="pm-alerts-section">
+                        <div class="pm-section-label">
+                            <span>⚠️</span> Alertes :
+                            <span id="pm-alerts-count" class="pm-alerts-badge" style="display:none;">0</span>
+                        </div>
+                        <div class="pm-alerts-box" id="pm-global-alerts">
+                            <div style="text-align:center;padding:16px;color:rgba(255,255,255,.25);font-size:11px;">
+                                Aucune alerte détectée
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- COLONNE DROITE : Contrôles + Stats -->
+                <div class="pm-col-right">
+
+                    <!-- Boutons session -->
+                    <div id="sessionControls" class="pm-controls-box" style="display:none;"></div>
+
+                    <!-- Compteurs -->
+                    <div class="pm-stats-box">
+                        <div class="pm-section-label" style="margin-bottom:14px;">
+                            <span>📊</span> Total
+                        </div>
+                        <div class="pm-stat-row">
+                            <div class="pm-stat-dot pm-dot-green"></div>
+                            <div>
+                                <div class="pm-stat-num" id="pm-count-actif">0</div>
+                                <div class="pm-stat-lbl">Actif</div>
+                            </div>
+                        </div>
+                        <div class="pm-stat-row">
+                            <div class="pm-stat-dot pm-dot-gray"></div>
+                            <div>
+                                <div class="pm-stat-num" id="pm-count-inactif">0</div>
+                                <div class="pm-stat-lbl">Non actif</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fermer -->
+                    <button class="pm-fermer-btn" onclick="ProfVM.closeDetailsModal()">✖ Fermer</button>
+
+                </div>
+
             </div>
         </div>
     </div>
@@ -1904,7 +2410,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <script>
-        let API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-ll3f.onrender.com';
+        let API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
 
         function setApiServer(url) {
             API_BASE = url;
@@ -2099,6 +2605,16 @@
                 this.fetchClasses();
                 this.fetchRecentSessions();
                 this.checkConnection();
+
+                // Gestionnaire global pour quitter le plein écran du screen avec Échap
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        const container = document.getElementById('pm-screen-container');
+                        if (container && container.classList.contains('pm-screen-fullscreen')) {
+                            this.toggleScreenFullscreen();
+                        }
+                    }
+                });
             },
 
             async checkConnection() {
@@ -2507,6 +3023,11 @@
                 const modal = document.getElementById('detailsModal');
                 modal.classList.add('open');
 
+                // Reset alerts panel
+                this._pmAlerts = [];
+                this._pmAlertCount = 0;
+                this._studentRiskMap = {};
+
                 // Fetch first time
                 await this.refreshSessionDetails(id);
 
@@ -2522,6 +3043,41 @@
                     this.socket.on('studentPresenceChanged', () => {
                         this.refreshSessionDetails(id, true);
                     });
+
+                    // ── Écouter les alertes monitoring de tous les étudiants ──
+                    this.socket.on('student-monitoring-update', (data) => {
+                        // Only process if we're not already in the monitor modal for this student
+                        if (data.studentId === this._monitoringStudentId) return; // handled by monitor modal
+                        
+                        const procs = data.processes || [];
+                        const systemProcs = ['svchost','system','registry','smss','csrss','wininit','winlogon','lsass','services','dwm','fontdrvhost','spoolsv','wuauclt','audiodg','searchindexer','runtimebroker','sihost','taskhostw','ctfmon','conhost'];
+                        const visible = procs.filter(p => !systemProcs.some(s => (p.Name||'').toLowerCase().startsWith(s)));
+
+                        let globalRisk = 'low';
+                        visible.forEach(p => {
+                            const risk = this._getRisk(p.Name);
+                            if (risk === 'HIGH') {
+                                globalRisk = 'high';
+                                const msg = `Application suspecte : ${p.Name}`;
+                                this.addGlobalAlert(data.studentName || 'Étudiant', data.studentId, msg, 'high');
+                            } else if (risk === 'MEDIUM' && globalRisk !== 'high') {
+                                globalRisk = 'medium';
+                                const msg = `Application risque moyen : ${p.Name}`;
+                                this.addGlobalAlert(data.studentName || 'Étudiant', data.studentId, msg, 'medium');
+                            }
+                        });
+
+                        // Update risk dot for this student
+                        const sid = data.studentId ? data.studentId.toString() : '';
+                        if (sid && globalRisk !== 'low') {
+                            this._studentRiskMap[sid] = globalRisk;
+                            const studentEl = document.getElementById(`pm-student-${sid}`);
+                            if (studentEl) {
+                                const dot = studentEl.querySelector('.pm-risk-dot');
+                                if (dot) dot.className = `pm-risk-dot ${globalRisk}`;
+                            }
+                        }
+                    });
                 }
 
                 // Fallback lent en arrière plan au cas où
@@ -2531,6 +3087,9 @@
                 }, 15000);
             },
 
+            // ── Carte des risques par étudiant (mis à jour via monitoring) ──
+            _studentRiskMap: {}, // { studentId: 'high'|'medium'|'low'|'inactive' }
+
             async refreshSessionDetails(id, isSilent = false) {
                 const participantsList = document.getElementById('participantsList');
                 const controls = document.getElementById('sessionControls');
@@ -2538,8 +3097,8 @@
 
                 if (!isSilent) {
                     participantsList.innerHTML = `
-                        <div style="display:flex; justify-content:center; align-items:center; height:150px;">
-                            <div class="spin-ring" style="width:24px; height:24px;"></div>
+                        <div style="display:flex;justify-content:center;align-items:center;height:120px;">
+                            <div class="spin-ring" style="width:24px;height:24px;"></div>
                         </div>
                     `;
                     controls.style.display = 'none';
@@ -2565,82 +3124,102 @@
                     // ── Injecter les contrôles de session active ──
                     if (data.isActive !== false && !data.endedAt) {
                         controls.style.display = 'block';
-                        const pauseLabel = data.isPaused ? '▶️ Reprendre l\'examen' : '⏸️ Mettre en pause';
+                        const pauseLabel = data.isPaused ? '▶️ Reprendre' : '⏸️ Mettre en pause';
                         const pauseClass = data.isPaused ? 'resume' : 'pause';
                         
                         controls.innerHTML = `
                             <div class="control-panel">
                                 <button class="cp-btn ${pauseClass}" onclick="ProfVM.togglePause('${id}', ${data.isPaused})">${pauseLabel}</button>
-                                <button class="cp-btn end" onclick="ProfVM.endSession('${id}')">⏹️ Terminer la session</button>
+                                <button class="cp-btn end" onclick="ProfVM.endSession('${id}')">⏹️ Terminer</button>
                                 <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 10)">➕ 10 min</button>
                                 <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 30)">➕ 30 min</button>
                             </div>
-                            <div class="modal-section-title" style="margin-bottom:12px;">👥 Étudiants connectés</div>
                         `;
                     } else {
                         controls.style.display = 'none';
                     }
+
                     const students = data.classe && data.classe.students ? data.classe.students : [];
                     const participants = data.participants || [];
 
-                    console.log("DEBUG RAW PARTICIPANTS FROM SERVER:", participants);
-
+                    // ── Calculer actifs / non actifs ──
+                    let countActif = 0;
+                    let countInactif = 0;
 
                     if (students.length === 0) {
                         participantsList.innerHTML = `
-                            <div style="text-align:center; padding:40px; color:rgba(255,255,255,0.3);">
-                                <span style="font-size:32px; display:block; margin-bottom:12px;">📭</span>
-                                Aucun étudiant n'est inscrit dans cette classe.
+                            <div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);">
+                                <span style="font-size:32px;display:block;margin-bottom:12px;">📭</span>
+                                Aucun étudiant inscrit dans cette classe.
                             </div>
                         `;
                     } else {
                         let html = '';
                         students.forEach(st => {
+                            const sid = st._id || st.id || st;
                             const pObj = participants.find(p => {
-                                // Extract the ID from the participant object
                                 let pid = '';
                                 if (p.student) {
                                     pid = (typeof p.student === 'object') ? (p.student._id || p.student.id) : p.student;
                                 } else {
                                     pid = p._id || p.id || p;
                                 }
-                                
-                                const sid = st._id || st.id || st;
                                 return pid && sid && pid.toString() === sid.toString();
                             });
 
                             const isActif = pObj ? (pObj.status === 'actif') : false;
-                            const statusClass = isActif ? 'actif' : '';
-                            const statusLabel = isActif ? 'Actif' : 'Inscrit';
                             const hasNote = pObj && pObj.quizResult;
 
+                            if (isActif) countActif++; else countInactif++;
+
+                            // Déterminer le niveau de risque de cet étudiant
+                            const riskLevel = isActif 
+                                ? (this._studentRiskMap[sid.toString()] || 'low') 
+                                : 'inactive';
+                            const riskDotClass = riskLevel; // 'high'|'medium'|'low'|'inactive'
+
+                            const avatarBg = isActif 
+                                ? 'background:linear-gradient(135deg,#10b981,#059669);'
+                                : '';
+
+                            const screenBtn = isActif 
+                                ? `<button class="pm-action-btn" title="Voir l'écran" onclick="ProfVM.viewStudentScreenInPanel('${sid}','${st.prenom} ${st.nom}')">📺</button>` 
+                                : '';
+                            const monitorBtn = isActif
+                                ? `<button class="pm-action-btn" title="Surveiller" style="border-color:rgba(249,115,22,.4);color:#f97316;" onclick="ProfVM.openMonitorModal('${sid}','${st.prenom} ${st.nom}')">🔍</button>`
+                                : '';
+
                             html += `
-                                <div class="student-item" style="${hasNote ? 'border-left: 4px solid #23d160; background: rgba(35, 209, 96, 0.05);' : ''}">
-                                    <div class="student-avatar" style="${isActif ? 'background:linear-gradient(135deg, #10b981, #059669);' : ''}">${(st.prenom && st.nom) ? (st.prenom[0] + st.nom[0]).toUpperCase() : '??'}</div>
-                                    <div style="flex:1;">
-                                        <div style="color:rgba(255,255,255,.9); font-size:14px; font-weight:500;">
-                                            ${st.prenom} ${st.nom} ${isActif ? '⚡' : ''}
-                                            ${hasNote ? '<span style="background:#23d160; color:#fff; font-size:9px; padding:2px 6px; border-radius:10px; margin-left:8px; vertical-align:middle; font-weight:800;">Note Reçue 📝</span>' : ''}
-                                        </div>
-                                        <div style="color:rgba(255,255,255,.4); font-size:11px;">
-                                            NC: ${st.studentCardNumber || 'N/A'} 
-                                            ${hasNote ? `<span style="margin-left:8px; color:#23d160; font-weight:800; font-size:13px; border:1px solid rgba(35,209,96,0.3); padding:2px 6px; border-radius:4px; background:rgba(35,209,96,0.1);">🎯 Note: ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>` : ''}
-                                        </div>
+                                <div class="pm-student-item" id="pm-student-${sid}">
+                                    <div class="pm-student-avatar" style="${avatarBg}">
+                                        ${(st.prenom && st.nom) ? (st.prenom[0]+st.nom[0]).toUpperCase() : '??'}
+                                        <div class="pm-risk-dot ${riskDotClass}"></div>
                                     </div>
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        ${isActif ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:16px; border:1px solid rgba(88,101,242,0.4);" onclick="ProfVM.viewStudentScreen('${st._id}', '${st.prenom} ${st.nom}')" title="Regarder l'écran en direct">📺</button>` : ''}
-                                        ${isActif ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:13px; border:1px solid rgba(255,165,0,0.5); color:#f97316; background:rgba(249,115,22,0.08);" onclick="ProfVM.openMonitorModal('${st._id}', '${st.prenom} ${st.nom}')" title="Surveiller les processus">🔍 Monitor</button>` : ''}
-                                        <div class="student-badge ${statusClass}">${statusLabel}</div>
+                                    <div class="pm-student-info">
+                                        <div class="pm-student-name">${st.prenom} ${st.nom}${hasNote ? ' <span style="background:#23d160;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;vertical-align:middle;">✓Note</span>' : ''}</div>
+                                        <div class="pm-student-nc">NC: ${st.studentCardNumber || 'N/A'}</div>
+                                    </div>
+                                    <div class="pm-student-actions">
+                                        ${screenBtn}
+                                        ${monitorBtn}
+                                        <span class="pm-student-badge ${isActif ? 'actif' : ''}">${isActif ? 'Actif' : 'Inscrit'}</span>
                                     </div>
                                 </div>
                             `;
                         });
                         participantsList.innerHTML = html;
                     }
+
+                    // ── Mettre à jour les compteurs ──
+                    const cA = document.getElementById('pm-count-actif');
+                    const cI = document.getElementById('pm-count-inactif');
+                    if (cA) cA.textContent = countActif;
+                    if (cI) cI.textContent = countInactif;
+
                 } catch (e) {
                     if (!isSilent) {
                         participantsList.innerHTML = `
-                            <div style="text-align:center; padding:40px; color:#ed4245;">
+                            <div style="text-align:center;padding:40px;color:#ed4245;">
                                 ⚠️ ${e.message}
                             </div>
                         `;
@@ -2649,14 +3228,142 @@
                 }
             },
 
+            // ── Voir l'écran d'un étudiant DANS le panneau central ──
+            viewStudentScreenInPanel(studentId, studentName) {
+                const container = document.getElementById('pm-screen-container');
+                const nameLabel = document.getElementById('pm-screen-student-name');
+                const statusLabel = document.getElementById('pm-screen-status');
+                const btnFullscreen = document.getElementById('pm-btn-fullscreen');
+                
+                if (!container) return;
+
+                if (nameLabel) nameLabel.textContent = studentName;
+                if (statusLabel) statusLabel.style.display = 'inline-flex';
+                if (btnFullscreen) btnFullscreen.style.display = 'flex';
+
+                // Highlight selected student
+                document.querySelectorAll('.pm-student-item').forEach(el => el.classList.remove('selected'));
+                const studentEl = document.getElementById(`pm-student-${studentId}`);
+                if (studentEl) studentEl.classList.add('selected');
+
+                container.innerHTML = `
+                    <img id="pm-screen-img" class="pm-screen-img" style="display:none;" src="" alt="Écran en direct" onclick="ProfVM.toggleScreenFullscreen()" />
+                    <div id="pm-screen-loading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:rgba(255,255,255,.4);">
+                        <div class="spin-ring" style="width:36px;height:36px;border-width:3px;margin-bottom:12px;"></div>
+                        <p style="font-size:12px;">Connexion au flux de ${studentName}...</p>
+                    </div>
+                `;
+
+                ProfData.watchingStudentId = studentId;
+
+                if (this.socket) {
+                    this.socket.emit('request-screen-start', { studentId });
+
+                    this.socket.off('student-screen-frame');
+                    this.socket.on('student-screen-frame', (data) => {
+                        if (data.studentId === ProfData.watchingStudentId) {
+                            const loading = document.getElementById('pm-screen-loading');
+                            const img = document.getElementById('pm-screen-img');
+                            if (loading) loading.style.display = 'none';
+                            if (img) {
+                                img.src = data.frame || data.imageBase64;
+                                img.style.display = 'block';
+                            }
+                        }
+                    });
+                }
+            },
+
+            toggleScreenFullscreen() {
+                const container = document.getElementById('pm-screen-container');
+                const btn = document.getElementById('pm-btn-fullscreen');
+                if (!container) return;
+
+                const isFS = container.classList.toggle('pm-screen-fullscreen');
+                console.log("[ProfVM] Fullscreen toggled:", isFS);
+                
+                if (btn) {
+                    btn.innerHTML = isFS ? '✖' : '⛶';
+                    btn.style.zIndex = "100002"; // Toujours au dessus
+                }
+                
+                if (isFS) {
+                    // Alert pour quitter
+                    const tip = document.createElement('div');
+                    tip.id = 'fs-tip';
+                    tip.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:10px 20px; border-radius:30px; font-size:13px; z-index:100001; pointer-events:none; transition:opacity 0.5s; box-shadow:0 4px 15px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1);';
+                    tip.innerHTML = '✨ <strong>Mode Plein Écran</strong> — Appuyez sur <strong>ÉCHAP</strong> pour quitter';
+                    document.body.appendChild(tip);
+                    setTimeout(() => { if(tip) tip.style.opacity = '0'; }, 3000);
+                    setTimeout(() => { if(tip && tip.parentNode) tip.parentNode.removeChild(tip); }, 3600);
+                }
+            },
+
+            // ── Ajouter une alerte dans le panneau global ──
+            _pmAlerts: [],
+            _pmAlertCount: 0,
+
+            addGlobalAlert(studentName, studentId, message, level = 'high') {
+                this._pmAlertCount++;
+                const alertsBox = document.getElementById('pm-global-alerts');
+                const countBadge = document.getElementById('pm-alerts-count');
+                if (!alertsBox) return;
+
+                // Mise à jour du badge compteur
+                if (countBadge) {
+                    countBadge.style.display = 'inline';
+                    countBadge.textContent = this._pmAlertCount;
+                }
+
+                // Mettre à jour le risque dot de l'étudiant
+                const sid = studentId ? studentId.toString() : '';
+                const prevRisk = this._studentRiskMap[sid] || 'low';
+                if (level === 'high' || (level === 'medium' && prevRisk === 'low')) {
+                    this._studentRiskMap[sid] = level;
+                    // Mettre à jour visuellement le dot
+                    const studentEl = document.getElementById(`pm-student-${sid}`);
+                    if (studentEl) {
+                        const dot = studentEl.querySelector('.pm-risk-dot');
+                        if (dot) {
+                            dot.className = `pm-risk-dot ${level}`;
+                        }
+                    }
+                }
+
+                const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                const alertClass = level === 'high' ? '' : 'medium';
+                const icon = level === 'high' ? '🔴' : '🟡';
+
+                const alertEl = document.createElement('div');
+                alertEl.className = `pm-alert-item ${alertClass}`;
+                alertEl.innerHTML = `<span>${icon}</span><div><strong>${studentName}</strong> — ${message}<br><span style="font-size:9px;opacity:.6;">${now}</span></div>`;
+                
+                // Remove placeholder if present
+                const placeholder = alertsBox.querySelector('[style*="Aucune alerte"]');
+                if (placeholder) placeholder.remove();
+
+                alertsBox.insertBefore(alertEl, alertsBox.firstChild);
+
+                // Limit to 50 alerts
+                const items = alertsBox.querySelectorAll('.pm-alert-item');
+                if (items.length > 50) items[items.length - 1].remove();
+            },
+
             closeDetailsModal() {
                 if (this.socket) {
                     this.socket.disconnect();
                     this.socket = null;
                 }
                 if (ProfData.detailsInterval) clearInterval(ProfData.detailsInterval);
+                // Reset alerts and risk map
+                this._pmAlerts = [];
+                this._pmAlertCount = 0;
+                this._studentRiskMap = {};
+                const cntBadge = document.getElementById('pm-alerts-count');
+                if (cntBadge) { cntBadge.style.display = 'none'; cntBadge.textContent = '0'; }
                 document.getElementById('detailsModal').classList.remove('open');
             },
+
 
             setMode(mode) {
                 this.mode = mode;
@@ -3682,15 +4389,15 @@
             _getRisk(processName) {
                 const name = (processName || '').toLowerCase();
                 
-                // 1. Check if explicitly whitelisted in session
+                // 1. Check if explicitly blacklisted in session
                 if (ProfData.currentSessionDetails && ProfData.currentSessionDetails.allowedApps) {
-                    const whitelist = ProfData.currentSessionDetails.allowedApps;
-                    if (whitelist.some(app => name.includes(app.toLowerCase()))) {
-                        return 'OK'; // Whitelisted
+                    const blacklist = ProfData.currentSessionDetails.allowedApps;
+                    if (blacklist.some(app => app.trim() !== '' && name.includes(app.toLowerCase().trim()))) {
+                        return 'HIGH'; // Now Blacklisted
                     }
                 }
 
-                // 2. Check risk categories
+                // 2. Check general risk categories (defaults)
                 for (const proc of this._riskyProcesses.HIGH) {
                     if (name.includes(proc)) return 'HIGH';
                 }
@@ -3729,10 +4436,23 @@
 
                     // Add alert if high risk
                     if (risk === 'HIGH') {
-                        const alertMsg = `[${now}] Application suspecte détectée : ${p.Name}`;
-                        if (!this._monitorAlerts.includes(alertMsg)) {
-                            this._monitorAlerts.unshift(alertMsg);
-                            newAlerts.push(alertMsg);
+                        const alertMsg = `Application suspecte : ${p.Name}`;
+                        const fullMsg = `[${now}] ${alertMsg}`;
+                        if (!this._monitorAlerts.includes(fullMsg)) {
+                            this._monitorAlerts.unshift(fullMsg);
+                            newAlerts.push(fullMsg);
+                            // ── Propager vers le panneau global d'alertes ──
+                            const studentName = document.getElementById('monitorStudentName')?.textContent?.replace('🔍 Surveillance : ', '') || 'Étudiant';
+                            this.addGlobalAlert(studentName, this._monitoringStudentId, alertMsg, 'high');
+                        }
+                    } else if (risk === 'MEDIUM') {
+                        const alertMsg = `Application à risque moyen : ${p.Name}`;
+                        const fullMsg = `[${now}] ${alertMsg}`;
+                        if (!this._monitorAlerts.includes(fullMsg)) {
+                            this._monitorAlerts.unshift(fullMsg);
+                            // ── Propager vers le panneau global ──
+                            const studentName = document.getElementById('monitorStudentName')?.textContent?.replace('🔍 Surveillance : ', '') || 'Étudiant';
+                            this.addGlobalAlert(studentName, this._monitoringStudentId, alertMsg, 'medium');
                         }
                     }
 
@@ -3747,7 +4467,7 @@
 
                 document.getElementById('monitorProcessTable').innerHTML = tableHtml || '<div style="padding:20px; color:rgba(255,255,255,.2); text-align:center;">Aucun processus visible</div>';
 
-                // Update risk badge
+                // Update risk badge in monitor modal
                 const badge = document.getElementById('monitorRiskBadge');
                 if (globalRisk === 'HIGH') {
                     badge.style.cssText = 'font-size:11px; padding:3px 10px; border-radius:20px; background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid rgba(239,68,68,0.4); font-weight:700; animation: pulse 1s infinite;';
@@ -3760,7 +4480,19 @@
                     badge.textContent = '✅ FAIBLE';
                 }
 
-                // Update alerts
+                // ── Mettre à jour le risque dot dans la liste principale (si le modal participants est ouvert) ──
+                if (this._monitoringStudentId) {
+                    const newRisk = globalRisk === 'HIGH' ? 'high' : globalRisk === 'MEDIUM' ? 'medium' : 'low';
+                    const sid = this._monitoringStudentId.toString();
+                    this._studentRiskMap[sid] = newRisk;
+                    const studentEl = document.getElementById(`pm-student-${sid}`);
+                    if (studentEl) {
+                        const dot = studentEl.querySelector('.pm-risk-dot');
+                        if (dot) dot.className = `pm-risk-dot ${newRisk}`;
+                    }
+                }
+
+                // Update alerts in monitor modal
                 if (this._monitorAlerts.length > 0) {
                     document.getElementById('monitorAlertList').innerHTML = this._monitorAlerts.slice(0, 30).map(a => 
                         `<div style="padding:6px 8px; margin-bottom:4px; background:rgba(239,68,68,0.1); border-left:3px solid #ef4444; border-radius:4px; font-size:10px; color:#fca5a5;">${a}</div>`
