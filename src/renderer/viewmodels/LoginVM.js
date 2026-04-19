@@ -6,7 +6,7 @@
  *   - Si l'identifiant contient un "@"  → tentative login PROFESSEUR (email + password)
  *   - Sinon                              → tentative login ÉTUDIANT  (studentCardNumber + CIN)
  *
- * Backend : https://safe-exam-db.onrender.com
+ * Backend : https://safe-exam-db-ll3f.onrender.com
  *
  * Flux PROFESSEUR :
  *   POST /auth/login { email, password }
@@ -29,7 +29,7 @@ class LoginVM {
         this.updateView = updateViewCallback;
 
         // ── Configuration backend ──────────────────────────────────────────
-        this.API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
+        this.API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
         localStorage.setItem('apiBase', this.API_BASE);
 
         // Compte service (super-admin) pour les recherches d'étudiants

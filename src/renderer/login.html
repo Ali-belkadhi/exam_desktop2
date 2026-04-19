@@ -35,7 +35,7 @@
             align-items: center;
             justify-content: center;
             gap: 24px;
-            -webkit-app-region: drag;
+            -webkit-app-region: no-drag;
         }
 
         /* Glassmorphism Card */
@@ -111,6 +111,7 @@
         /* Input */
         .input-wrap {
             position: relative;
+            -webkit-app-region: no-drag;
         }
 
         input[type="text"],
@@ -126,6 +127,7 @@
             font-family: 'Inter', sans-serif;
             outline: none;
             transition: all .2s;
+            -webkit-app-region: no-drag;
         }
 
         input::placeholder {
@@ -207,6 +209,7 @@
             gap: 8px;
             transition: all .2s;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            -webkit-app-region: no-drag;
         }
 
         .btn-primary:hover {
@@ -325,6 +328,10 @@
     <script src="./viewmodels/LoginVM.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            if (window.electronAPI && typeof window.electronAPI.setLocked === 'function') {
+                window.electronAPI.setLocked(false).catch(() => { });
+            }
+
             const emailEl = document.getElementById('email');
             const passwordEl = document.getElementById('password');
             const submitBtn = document.getElementById('submitBtn');
@@ -339,6 +346,7 @@
             const eyeClosedIcon = '🙈'.replace('🙈', '◉');
 
             pwToggle.textContent = eyeOpenIcon;
+            setTimeout(() => emailEl.focus(), 30);
 
             // Affichage / masquage mot de passe
             pwToggle.addEventListener('click', () => {

@@ -4,7 +4,8 @@ window.SessionVM = class SessionVM {
         this.isLoading = false;
         this.error = '';
         this.updateView = updateViewCallback;
-        this.API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db.onrender.com';
+        this.API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
+        localStorage.setItem('apiBase', this.API_BASE);
         this.heartbeatInterval = null;
         
         // Auto-resume heartbeat if already in a session (for desktop.html)
