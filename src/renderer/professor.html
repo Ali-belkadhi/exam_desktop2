@@ -1904,8 +1904,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <script>
-        let API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
-        localStorage.setItem('apiBase', API_BASE);
+        let API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-ll3f.onrender.com';
 
         function setApiServer(url) {
             API_BASE = url;

@@ -962,8 +962,7 @@
                 const testId = sessionStorage.getItem('activeTestId');
                 const studentId = sessionStorage.getItem('studentId');
                 if (testId && studentId && window.io) {
-                    const API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
-                    localStorage.setItem('apiBase', API_BASE);
+                    const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-ll3f.onrender.com';
                     window.sessionVM.socket = window.io(API_BASE);
 
                     window.sessionVM.socket.on('connect', () => {
@@ -1075,8 +1074,7 @@
             const updateSubjectView = () => {
                 const pdfUrl = sessionStorage.getItem('sessionPdfUrl');
                 const sessionLink = sessionStorage.getItem('sessionLink');
-                const API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
-                localStorage.setItem('apiBase', API_BASE);
+                const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-ll3f.onrender.com';
 
                 // PDF Visibility
                 if (pdfUrl) {
@@ -1346,8 +1344,7 @@
                 return;
             }
 
-            const API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
-            localStorage.setItem('apiBase', API_BASE);
+            const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-ll3f.onrender.com';
             const testId = sessionStorage.getItem('activeTestId');
             const token = sessionStorage.getItem('accessToken');
             const studentId = sessionStorage.getItem('studentId') || '';
@@ -1447,8 +1444,7 @@
             if (testId && studentId) {
                 // sendBeacon est le SEUL moyen fiable d'envoyer des données quand la page se ferme
                 const blob = new Blob([JSON.stringify({ studentId })], { type: 'application/json' });
-                const API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
-                localStorage.setItem('apiBase', API_BASE);
+                const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-ll3f.onrender.com';
                 navigator.sendBeacon(`${API_BASE}/practical-tests/${testId}/leave`, blob);
             }
             if (window.sessionVM && window.sessionVM.socket) window.sessionVM.socket.disconnect();
