@@ -336,10 +336,12 @@
         }
 
         @keyframes pulse-dot {
+
             0%,
             100% {
                 box-shadow: 0 0 0 0 rgba(35, 209, 96, .4)
             }
+
             50% {
                 box-shadow: 0 0 0 5px rgba(35, 209, 96, 0)
             }
@@ -674,14 +676,16 @@
             -webkit-app-region: no-drag;
         }
 
-        .modal-box h2, .modal-box-large h2 {
+        .modal-box h2,
+        .modal-box-large h2 {
             font-size: 20px;
             font-weight: 700;
             color: #fff;
             margin-bottom: 6px;
         }
 
-        .modal-box > p, .modal-box-large > p {
+        .modal-box>p,
+        .modal-box-large>p {
             font-size: 14px;
             color: rgba(255, 255, 255, .4);
             margin-bottom: 20px;
@@ -883,28 +887,40 @@
             color: #f59e0b;
             border-color: rgba(245, 158, 11, 0.3);
         }
-        .cp-btn.pause:hover { background: rgba(245, 158, 11, 0.25); }
+
+        .cp-btn.pause:hover {
+            background: rgba(245, 158, 11, 0.25);
+        }
 
         .cp-btn.resume {
             background: rgba(16, 185, 129, 0.15);
             color: #10b981;
             border-color: rgba(16, 185, 129, 0.3);
         }
-        .cp-btn.resume:hover { background: rgba(16, 185, 129, 0.25); }
+
+        .cp-btn.resume:hover {
+            background: rgba(16, 185, 129, 0.25);
+        }
 
         .cp-btn.end {
             background: rgba(239, 68, 68, 0.15);
             color: #ef4444;
             border-color: rgba(239, 68, 68, 0.3);
         }
-        .cp-btn.end:hover { background: rgba(239, 68, 68, 0.25); }
+
+        .cp-btn.end:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
 
         .cp-btn.extend {
             background: rgba(139, 92, 246, 0.15);
             color: #8b5cf6;
             border-color: rgba(139, 92, 246, 0.3);
         }
-        .cp-btn.extend:hover { background: rgba(139, 92, 246, 0.25); }
+
+        .cp-btn.extend:hover {
+            background: rgba(139, 92, 246, 0.25);
+        }
 
         .student-item {
             display: flex;
@@ -958,7 +974,7 @@
            ══════════════════════════════════════════ */
         .participants-modal-box {
             background: linear-gradient(180deg, rgba(22, 24, 31, 0.99) 0%, rgba(17, 18, 24, 0.99) 100%);
-            border: 1px solid rgba(255,255,255,.09);
+            border: 1px solid rgba(255, 255, 255, .09);
             border-radius: 20px;
             width: 96vw;
             max-width: 1400px;
@@ -966,7 +982,7 @@
             max-height: 90vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 30px 80px rgba(0,0,0,.55);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, .55);
             overflow: hidden;
             -webkit-app-region: no-drag;
         }
@@ -977,33 +993,37 @@
             align-items: center;
             justify-content: space-between;
             padding: 18px 28px;
-            border-bottom: 1px solid rgba(255,255,255,.07);
-            background: rgba(255,255,255,.02);
+            border-bottom: 1px solid rgba(255, 255, 255, .07);
+            background: rgba(255, 255, 255, .02);
             flex-shrink: 0;
         }
+
         .pm-header-left {
             display: flex;
             align-items: center;
             gap: 14px;
         }
+
         .pm-title {
             font-size: 17px;
             font-weight: 700;
             color: #fff;
             margin: 0;
         }
+
         .pm-subtitle {
             font-size: 12px;
-            color: rgba(255,255,255,.42);
+            color: rgba(255, 255, 255, .42);
             margin-top: 3px;
         }
+
         .pm-close-btn {
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,.15);
-            background: rgba(255,255,255,.06);
-            color: rgba(255,255,255,.7);
+            border: 1px solid rgba(255, 255, 255, .15);
+            background: rgba(255, 255, 255, .06);
+            color: rgba(255, 255, 255, .7);
             font-size: 18px;
             cursor: pointer;
             display: flex;
@@ -1012,9 +1032,10 @@
             transition: all .2s;
             -webkit-app-region: no-drag;
         }
+
         .pm-close-btn:hover {
-            background: rgba(239,68,68,.2);
-            border-color: rgba(239,68,68,.4);
+            background: rgba(239, 68, 68, .2);
+            border-color: rgba(239, 68, 68, .4);
             color: #ef4444;
         }
 
@@ -1033,28 +1054,29 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .07em;
-            color: rgba(255,255,255,.38);
+            color: rgba(255, 255, 255, .38);
             display: flex;
             align-items: center;
             gap: 6px;
             margin-bottom: 10px;
             padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,.05);
+            border-bottom: 1px solid rgba(255, 255, 255, .05);
         }
 
         /* COLONNE GAUCHE */
         .pm-col-left {
-            border-right: 1px solid rgba(255,255,255,.07);
+            border-right: 1px solid rgba(255, 255, 255, .07);
             display: flex;
             flex-direction: column;
             padding: 16px 14px;
             overflow: hidden;
         }
+
         .pm-students-list {
             flex: 1;
             overflow-y: auto;
             scrollbar-width: thin;
-            scrollbar-color: rgba(255,255,255,.1) transparent;
+            scrollbar-color: rgba(255, 255, 255, .1) transparent;
         }
 
         /* Student items dans nouveau layout */
@@ -1069,14 +1091,17 @@
             border: 1px solid transparent;
             margin-bottom: 4px;
         }
+
         .pm-student-item:hover {
-            background: rgba(255,255,255,.04);
-            border-color: rgba(255,255,255,.06);
+            background: rgba(255, 255, 255, .04);
+            border-color: rgba(255, 255, 255, .06);
         }
+
         .pm-student-item.selected {
-            background: rgba(88,101,242,.12);
-            border-color: rgba(88,101,242,.3);
+            background: rgba(88, 101, 242, .12);
+            border-color: rgba(88, 101, 242, .3);
         }
+
         .pm-student-avatar {
             width: 34px;
             height: 34px;
@@ -1091,6 +1116,7 @@
             flex-shrink: 0;
             position: relative;
         }
+
         /* Risk dot sur l'avatar */
         .pm-risk-dot {
             position: absolute;
@@ -1099,58 +1125,74 @@
             width: 11px;
             height: 11px;
             border-radius: 50%;
-            border: 2px solid rgba(22,24,31,.99);
+            border: 2px solid rgba(22, 24, 31, .99);
         }
+
         .pm-risk-dot.high {
             background: #ef4444;
-            box-shadow: 0 0 6px rgba(239,68,68,.7);
+            box-shadow: 0 0 6px rgba(239, 68, 68, .7);
             animation: pulse-risk 1.2s ease-in-out infinite;
         }
+
         .pm-risk-dot.medium {
             background: #f59e0b;
-            box-shadow: 0 0 6px rgba(245,158,11,.5);
+            box-shadow: 0 0 6px rgba(245, 158, 11, .5);
         }
+
         .pm-risk-dot.low {
             background: #10b981;
-            box-shadow: 0 0 5px rgba(16,185,129,.4);
+            box-shadow: 0 0 5px rgba(16, 185, 129, .4);
         }
+
         .pm-risk-dot.inactive {
             background: #6b7280;
         }
+
         @keyframes pulse-risk {
-            0%, 100% { box-shadow: 0 0 6px rgba(239,68,68,.7); }
-            50% { box-shadow: 0 0 12px rgba(239,68,68,1); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 6px rgba(239, 68, 68, .7);
+            }
+
+            50% {
+                box-shadow: 0 0 12px rgba(239, 68, 68, 1);
+            }
         }
 
         .pm-student-info {
             flex: 1;
             min-width: 0;
         }
+
         .pm-student-name {
             font-size: 13px;
             font-weight: 600;
-            color: rgba(255,255,255,.9);
+            color: rgba(255, 255, 255, .9);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
         .pm-student-nc {
             font-size: 10px;
-            color: rgba(255,255,255,.38);
+            color: rgba(255, 255, 255, .38);
             margin-top: 1px;
         }
+
         .pm-student-actions {
             display: flex;
             gap: 4px;
             flex-shrink: 0;
         }
+
         .pm-action-btn {
             width: 26px;
             height: 26px;
             border-radius: 6px;
-            border: 1px solid rgba(255,255,255,.12);
-            background: rgba(255,255,255,.06);
-            color: rgba(255,255,255,.6);
+            border: 1px solid rgba(255, 255, 255, .12);
+            background: rgba(255, 255, 255, .06);
+            color: rgba(255, 255, 255, .6);
             font-size: 12px;
             cursor: pointer;
             display: flex;
@@ -1158,11 +1200,13 @@
             justify-content: center;
             transition: all .18s;
         }
+
         .pm-action-btn:hover {
-            background: rgba(88,101,242,.2);
-            border-color: rgba(88,101,242,.4);
+            background: rgba(88, 101, 242, .2);
+            border-color: rgba(88, 101, 242, .4);
             color: #fff;
         }
+
         .pm-student-badge {
             font-size: 9px;
             padding: 2px 7px;
@@ -1170,14 +1214,15 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .03em;
-            background: rgba(255,255,255,.08);
-            color: rgba(255,255,255,.5);
-            border: 1px solid rgba(255,255,255,.1);
+            background: rgba(255, 255, 255, .08);
+            color: rgba(255, 255, 255, .5);
+            border: 1px solid rgba(255, 255, 255, .1);
         }
+
         .pm-student-badge.actif {
-            background: rgba(16,185,129,.12);
+            background: rgba(16, 185, 129, .12);
             color: #10b981;
-            border-color: rgba(16,185,129,.25);
+            border-color: rgba(16, 185, 129, .25);
         }
 
         /* COLONNE CENTRE */
@@ -1187,7 +1232,7 @@
             padding: 16px 18px;
             gap: 14px;
             overflow: hidden;
-            border-right: 1px solid rgba(255,255,255,.07);
+            border-right: 1px solid rgba(255, 255, 255, .07);
         }
 
         /* Zone Screen */
@@ -1197,10 +1242,11 @@
             flex-direction: column;
             min-height: 0;
         }
+
         .pm-screen-box {
             flex: 1;
             background: #0a0a10;
-            border: 1px solid rgba(255,255,255,.08);
+            border: 1px solid rgba(255, 255, 255, .08);
             border-radius: 12px;
             overflow: hidden;
             position: relative;
@@ -1208,6 +1254,7 @@
             align-items: center;
             justify-content: center;
         }
+
         .pm-screen-placeholder {
             display: flex;
             flex-direction: column;
@@ -1216,6 +1263,7 @@
             height: 100%;
             width: 100%;
         }
+
         .pm-screen-img {
             width: 100%;
             height: 100%;
@@ -1235,10 +1283,10 @@
             border-radius: 0 !important;
             border: none !important;
         }
-        
+
         .pm-screen-fullscreen-btn {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: #fff;
             padding: 2px 8px;
             border-radius: 4px;
@@ -1249,8 +1297,9 @@
             align-items: center;
             gap: 4px;
         }
+
         .pm-screen-fullscreen-btn:hover {
-            background: rgba(255,255,255,0.15);
+            background: rgba(255, 255, 255, 0.15);
             transform: scale(1.05);
         }
 
@@ -1263,10 +1312,19 @@
             margin-right: 5px;
             animation: pm-pulse 1.5s infinite;
         }
+
         @keyframes pm-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
         }
 
         /* Zone Alertes */
@@ -1276,37 +1334,41 @@
             flex-direction: column;
             min-height: 0;
         }
+
         .pm-alerts-box {
             flex: 1;
-            background: rgba(0,0,0,.2);
-            border: 1px solid rgba(255,255,255,.07);
+            background: rgba(0, 0, 0, .2);
+            border: 1px solid rgba(255, 255, 255, .07);
             border-radius: 12px;
             overflow-y: auto;
             scrollbar-width: thin;
             padding: 8px;
         }
+
         .pm-alert-item {
             display: flex;
             align-items: flex-start;
             gap: 8px;
             padding: 8px 10px;
             margin-bottom: 5px;
-            background: rgba(239,68,68,.08);
+            background: rgba(239, 68, 68, .08);
             border-left: 3px solid #ef4444;
             border-radius: 6px;
             font-size: 11px;
             color: #fca5a5;
             line-height: 1.4;
         }
+
         .pm-alert-item.medium {
-            background: rgba(245,158,11,.08);
+            background: rgba(245, 158, 11, .08);
             border-left-color: #f59e0b;
             color: #fcd34d;
         }
+
         .pm-alerts-badge {
-            background: rgba(239,68,68,.2);
+            background: rgba(239, 68, 68, .2);
             color: #ef4444;
-            border: 1px solid rgba(239,68,68,.35);
+            border: 1px solid rgba(239, 68, 68, .35);
             border-radius: 10px;
             font-size: 10px;
             font-weight: 700;
@@ -1329,6 +1391,7 @@
             height: 38px;
             font-size: 12px;
         }
+
         .pm-controls-box .control-panel {
             display: flex;
             flex-direction: column;
@@ -1341,36 +1404,42 @@
 
         /* Stats box */
         .pm-stats-box {
-            background: rgba(255,255,255,.03);
-            border: 1px solid rgba(255,255,255,.07);
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .07);
             border-radius: 14px;
             padding: 16px;
             flex-shrink: 0;
         }
+
         .pm-stat-row {
             display: flex;
             align-items: center;
             gap: 12px;
             padding: 10px 0;
-            border-bottom: 1px solid rgba(255,255,255,.05);
+            border-bottom: 1px solid rgba(255, 255, 255, .05);
         }
+
         .pm-stat-row:last-child {
             border-bottom: none;
             padding-bottom: 0;
         }
+
         .pm-stat-dot {
             width: 14px;
             height: 14px;
             border-radius: 50%;
             flex-shrink: 0;
         }
+
         .pm-dot-green {
             background: #10b981;
-            box-shadow: 0 0 8px rgba(16,185,129,.5);
+            box-shadow: 0 0 8px rgba(16, 185, 129, .5);
         }
+
         .pm-dot-gray {
             background: #6b7280;
         }
+
         .pm-stat-num {
             font-size: 26px;
             font-weight: 800;
@@ -1378,9 +1447,10 @@
             line-height: 1;
             letter-spacing: -0.5px;
         }
+
         .pm-stat-lbl {
             font-size: 11px;
-            color: rgba(255,255,255,.4);
+            color: rgba(255, 255, 255, .4);
             margin-top: 2px;
             font-weight: 500;
         }
@@ -1390,9 +1460,9 @@
             width: 100%;
             height: 38px;
             border-radius: 9px;
-            border: 1px solid rgba(255,255,255,.12);
-            background: rgba(255,255,255,.06);
-            color: rgba(255,255,255,.65);
+            border: 1px solid rgba(255, 255, 255, .12);
+            background: rgba(255, 255, 255, .06);
+            color: rgba(255, 255, 255, .65);
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
@@ -1400,9 +1470,10 @@
             margin-top: auto;
             -webkit-app-region: no-drag;
         }
+
         .pm-fermer-btn:hover {
-            background: rgba(239,68,68,.15);
-            border-color: rgba(239,68,68,.35);
+            background: rgba(239, 68, 68, .15);
+            border-color: rgba(239, 68, 68, .35);
             color: #ef4444;
         }
 
@@ -1964,15 +2035,21 @@
             </div>
 
             <div class="modal-overlay" id="workModal">
-                <div class="modal" style="width:1100px; max-width:95vw; max-height:90vh; border:1px solid rgba(255,255,255,.12); background:#1a1b1e; display:flex; flex-direction:column; padding:0;">
-                    <div style="padding:18px 22px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
+                <div class="modal"
+                    style="width:1100px; max-width:95vw; max-height:90vh; border:1px solid rgba(255,255,255,.12); background:#1a1b1e; display:flex; flex-direction:column; padding:0;">
+                    <div
+                        style="padding:18px 22px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
                         <div>
                             <h2 class="work-modal-title">📁 Travail demandé</h2>
-                            <div id="workBreadcrumb" style="margin-top:6px; font-size:12px; color:rgba(255,255,255,.45);">Classes</div>
+                            <div id="workBreadcrumb"
+                                style="margin-top:6px; font-size:12px; color:rgba(255,255,255,.45);">Classes</div>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <button id="workBackBtn" class="btn btn-ghost" style="display:none; height:32px; padding:0 12px;" onclick="ProfVM.goBackWorkClasses()">← Retour</button>
-                            <button class="btn btn-ghost" style="width:32px; height:32px; padding:0; border-radius:50%;" onclick="ProfVM.closeWorkModal()">×</button>
+                            <button id="workBackBtn" class="btn btn-ghost"
+                                style="display:none; height:32px; padding:0 12px;"
+                                onclick="ProfVM.goBackWorkClasses()">← Retour</button>
+                            <button class="btn btn-ghost" style="width:32px; height:32px; padding:0; border-radius:50%;"
+                                onclick="ProfVM.closeWorkModal()">×</button>
                         </div>
                     </div>
                     <div style="padding:16px 22px; overflow-y:auto; flex:1;">
@@ -2030,8 +2107,10 @@
 
                 <div class="zone-existant-right session-panel">
                     <!-- Détails auto-remplis -->
-                    <div id="autoFilledFields" style="display:none; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); padding:24px; border-radius:18px;">
-                        <div class="modal-section-title">📝 Détails de l'examen sélectionné<span class="autofill-badge" style="float:right;">✦ AUTO</span></div>
+                    <div id="autoFilledFields"
+                        style="display:none; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.05); padding:24px; border-radius:18px;">
+                        <div class="modal-section-title">📝 Détails de l'examen sélectionné<span class="autofill-badge"
+                                style="float:right;">✦ AUTO</span></div>
                         <div style="display:grid;grid-template-columns:1fr;gap:12px;">
                             <div class="modal-field">
                                 <label>Matière / Devoir</label>
@@ -2042,7 +2121,8 @@
                                 <label>Classe</label>
                                 <input type="text" id="af_classe" placeholder="Corriger si besoin (ex: 4SIM1)"
                                     style="background:rgba(255,255,255,.06); border:1px solid rgba(255,185,0,.3);" />
-                                <div style="font-size:10px; color:rgba(255,185,0,.6); margin-top:4px;">⚠ Vérifier le nom de
+                                <div style="font-size:10px; color:rgba(255,185,0,.6); margin-top:4px;">⚠ Vérifier le nom
+                                    de
                                     la classe</div>
                             </div>
                         </div>
@@ -2058,19 +2138,22 @@
                                     style="background:rgba(255,255,255,.03);cursor:default;opacity:.8;" />
                             </div>
                         </div>
-                            <div class="modal-field">
-                                <label>Heure de début</label>
-                                <input type="time" id="af_start" />
-                            </div>
-                        
+                        <div class="modal-field">
+                            <label>Heure de début</label>
+                            <input type="time" id="af_start" />
+                        </div>
+
                         <div class="modal-field" style="margin-top:12px;">
-                            <label>Applications Interdites (Blacklist) <span style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des virgules</span></label>
-                            <input type="text" id="af_whitelist" placeholder="ex: facebook, youtube, steam, spotify" 
+                            <label>Applications Interdites (Blacklist) <span
+                                    style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des
+                                    virgules</span></label>
+                            <input type="text" id="af_whitelist" placeholder="ex: facebook, youtube, steam, spotify"
                                 style="background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#fff; padding:10px 14px; font-size:13px; width:100%; transition:all .2s;" />
                         </div>
                     </div> <!-- fin autoFilledFields -->
-                    
-                    <div id="noExamSelectedMsg" style="text-align:center; padding:60px 20px; color:rgba(255,255,255,0.2);">
+
+                    <div id="noExamSelectedMsg"
+                        style="text-align:center; padding:60px 20px; color:rgba(255,255,255,0.2);">
                         <div style="font-size:40px; margin-bottom:10px;">👈</div>
                         Sélectionnez un examen dans la liste pour voir les détails
                     </div>
@@ -2109,8 +2192,10 @@
                         </div>
                     </div>
                     <div class="modal-field" style="margin-top:12px;">
-                        <label>Applications Interdites (Blacklist) <span style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des virgules</span></label>
-                        <input type="text" id="n_whitelist" placeholder="ex: facebook, youtube, steam, spotify" 
+                        <label>Applications Interdites (Blacklist) <span
+                                style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des
+                                virgules</span></label>
+                        <input type="text" id="n_whitelist" placeholder="ex: facebook, youtube, steam, spotify"
                             style="background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#fff; padding:10px 14px; font-size:13px; width:100%; transition:all .2s;" />
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -2144,22 +2229,31 @@
                     <div class="quiz-config-section" style="margin-top: 0;">
                         <div class="modal-section-title">🧠 Configuration du Quiz</div>
                         <div class="quiz-type-selector">
-                            <div class="quiz-type-chip selected" data-type="QCM" onclick="ProfVM.toggleQuizType(this)">QCM</div>
-                            <div class="quiz-type-chip" data-type="QCMImage" onclick="ProfVM.toggleQuizType(this)">QCM Image</div>
-                            <div class="quiz-type-chip" data-type="VraiFaux" onclick="ProfVM.toggleQuizType(this)">Vrai / Faux</div>
-                            <div class="quiz-type-chip" data-type="Libre" onclick="ProfVM.toggleQuizType(this)">Réponse libre</div>
-                            <div class="quiz-type-chip" data-type="Classement" onclick="ProfVM.toggleQuizType(this)">Classement</div>
+                            <div class="quiz-type-chip selected" data-type="QCM" onclick="ProfVM.toggleQuizType(this)">
+                                QCM</div>
+                            <div class="quiz-type-chip" data-type="QCMImage" onclick="ProfVM.toggleQuizType(this)">QCM
+                                Image</div>
+                            <div class="quiz-type-chip" data-type="VraiFaux" onclick="ProfVM.toggleQuizType(this)">Vrai
+                                / Faux</div>
+                            <div class="quiz-type-chip" data-type="Libre" onclick="ProfVM.toggleQuizType(this)">Réponse
+                                libre</div>
+                            <div class="quiz-type-chip" data-type="Classement" onclick="ProfVM.toggleQuizType(this)">
+                                Classement</div>
                         </div>
-                        
-                        <div id="quizQuestionsContainer" style="max-height: 55vh; overflow-y: auto; padding-right: 10px; scrollbar-width: thin; margin-bottom: 10px;">
+
+                        <div id="quizQuestionsContainer"
+                            style="max-height: 55vh; overflow-y: auto; padding-right: 10px; scrollbar-width: thin; margin-bottom: 10px;">
                             <!-- Questions will be dynamically added here -->
                         </div>
-                        
-                        <button class="btn btn-ghost" style="width:100%; border-style:dashed; margin-bottom:10px; background: rgba(88, 101, 242, 0.1); color: #5865f2; border-color: rgba(88, 101, 242, 0.4);" onclick="ProfVM.openAIModal()">
+
+                        <button class="btn btn-ghost"
+                            style="width:100%; border-style:dashed; margin-bottom:10px; background: rgba(88, 101, 242, 0.1); color: #5865f2; border-color: rgba(88, 101, 242, 0.4);"
+                            onclick="ProfVM.openAIModal()">
                             🤖 Importer un cours et générer le quiz avec l'IA
                         </button>
 
-                        <button class="btn btn-ghost" style="width:100%; border-style:dashed;" onclick="ProfVM.addQuestion()">
+                        <button class="btn btn-ghost" style="width:100%; border-style:dashed;"
+                            onclick="ProfVM.addQuestion()">
                             ➕ Ajouter une question manuellement
                         </button>
                     </div>
@@ -2247,22 +2341,28 @@
 
                     <!-- Zone Screen -->
                     <div class="pm-screen-section">
-                        <div class="pm-section-label" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                        <div class="pm-section-label"
+                            style="display:flex; justify-content:space-between; align-items:center; width:100%;">
                             <div style="display:flex; align-items:center;">
                                 <span>📺</span> Screen :
-                                <span id="pm-screen-status" style="margin-left:8px; font-size:10px; font-weight:700; color:#ef4444; display:none; align-items:center;">
-                                    <span class="pm-live-indicator"></span> EN DIRECT — 
+                                <span id="pm-screen-status"
+                                    style="margin-left:8px; font-size:10px; font-weight:700; color:#ef4444; display:none; align-items:center;">
+                                    <span class="pm-live-indicator"></span> EN DIRECT —
                                 </span>
-                                <span id="pm-screen-student-name" style="color:rgba(255,255,255,.5);font-weight:400;font-size:11px;margin-left:4px;">— Sélectionnez un étudiant actif</span>
+                                <span id="pm-screen-student-name"
+                                    style="color:rgba(255,255,255,.5);font-weight:400;font-size:11px;margin-left:4px;">—
+                                    Sélectionnez un étudiant actif</span>
                             </div>
-                            <button class="pm-screen-fullscreen-btn" id="pm-btn-fullscreen" style="display:none;" onclick="ProfVM.toggleScreenFullscreen()" title="Plein écran">
-                                ⛶ 
+                            <button class="pm-screen-fullscreen-btn" id="pm-btn-fullscreen" style="display:none;"
+                                onclick="ProfVM.toggleScreenFullscreen()" title="Plein écran">
+                                ⛶
                             </button>
                         </div>
                         <div class="pm-screen-box" id="pm-screen-container">
                             <div class="pm-screen-placeholder" id="pm-screen-placeholder">
                                 <span style="font-size:38px;">🖥️</span>
-                                <p style="margin-top:10px;color:rgba(255,255,255,.3);font-size:12px;text-align:center;">Cliquez sur 📺 d'un étudiant actif<br>pour voir son écran en direct</p>
+                                <p style="margin-top:10px;color:rgba(255,255,255,.3);font-size:12px;text-align:center;">
+                                    Cliquez sur 📺 d'un étudiant actif<br>pour voir son écran en direct</p>
                             </div>
                         </div>
                     </div>
@@ -2320,84 +2420,132 @@
 
     <!-- ── STUDENT MONITOR MODAL (Task Manager Style) ── -->
     <div class="modal-overlay" id="monitorModal">
-        <div class="modal" style="width:920px; max-width:95vw; height:85vh; border:1px solid rgba(249,115,22,0.3); background:#0f1012; display:flex; flex-direction:column; padding:0; font-family:'Consolas','Courier New',monospace;">
-            <div style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center; background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(15,16,18,0));">
+        <div class="modal"
+            style="width:920px; max-width:95vw; height:85vh; border:1px solid rgba(249,115,22,0.3); background:#0f1012; display:flex; flex-direction:column; padding:0; font-family:'Consolas','Courier New',monospace;">
+            <div
+                style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center; background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(15,16,18,0));">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <span style="font-size:20px;">🔍</span>
                     <div>
-                        <h2 id="monitorStudentName" style="font-size:16px; font-weight:700; margin:0; color:#f97316;">Surveillance : Étudiant</h2>
-                        <div id="monitorStatusBar" style="font-size:11px; color:rgba(255,255,255,.4); margin-top:2px;">En attente des données...</div>
+                        <h2 id="monitorStudentName" style="font-size:16px; font-weight:700; margin:0; color:#f97316;">
+                            Surveillance : Étudiant</h2>
+                        <div id="monitorStatusBar" style="font-size:11px; color:rgba(255,255,255,.4); margin-top:2px;">
+                            En attente des données...</div>
                     </div>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <span id="monitorRiskBadge" style="font-size:11px; padding:3px 10px; border-radius:20px; background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); font-weight:700;">✅ FAIBLE</span>
-                    <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;" onclick="ProfVM.closeMonitorModal()">×</button>
+                    <span id="monitorRiskBadge"
+                        style="font-size:11px; padding:3px 10px; border-radius:20px; background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); font-weight:700;">✅
+                        FAIBLE</span>
+                    <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;"
+                        onclick="ProfVM.closeMonitorModal()">×</button>
                 </div>
             </div>
-            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,.05); border-bottom:1px solid rgba(255,255,255,.08);">
-                <div style="padding:10px 16px; background:#0f1012;"><div style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">Fenêtre Active</div><div id="monitorActiveWindow" style="font-size:12px; color:#f97316; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">—</div></div>
-                <div style="padding:10px 16px; background:#0f1012;"><div style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">Changements Focus</div><div id="monitorFocusCount" style="font-size:18px; font-weight:700; color:#fff;">0</div></div>
-                <div style="padding:10px 16px; background:#0f1012;"><div style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">Processus Total</div><div id="monitorProcessCount" style="font-size:18px; font-weight:700; color:#fff;">0</div></div>
-                <div style="padding:10px 16px; background:#0f1012;"><div style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">Dernière MAJ</div><div id="monitorLastUpdate" style="font-size:12px; color:rgba(255,255,255,.6);">—</div></div>
+            <div
+                style="display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:rgba(255,255,255,.05); border-bottom:1px solid rgba(255,255,255,.08);">
+                <div style="padding:10px 16px; background:#0f1012;">
+                    <div
+                        style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">
+                        Fenêtre Active</div>
+                    <div id="monitorActiveWindow"
+                        style="font-size:12px; color:#f97316; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        —</div>
+                </div>
+                <div style="padding:10px 16px; background:#0f1012;">
+                    <div
+                        style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">
+                        Changements Focus</div>
+                    <div id="monitorFocusCount" style="font-size:18px; font-weight:700; color:#fff;">0</div>
+                </div>
+                <div style="padding:10px 16px; background:#0f1012;">
+                    <div
+                        style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">
+                        Processus Total</div>
+                    <div id="monitorProcessCount" style="font-size:18px; font-weight:700; color:#fff;">0</div>
+                </div>
+                <div style="padding:10px 16px; background:#0f1012;">
+                    <div
+                        style="font-size:10px; color:rgba(255,255,255,.3); margin-bottom:4px; text-transform:uppercase; letter-spacing:1px;">
+                        Dernière MAJ</div>
+                    <div id="monitorLastUpdate" style="font-size:12px; color:rgba(255,255,255,.6);">—</div>
+                </div>
             </div>
             <div style="display:flex; flex:1; overflow:hidden;">
-                <div style="flex:2; display:flex; flex-direction:column; overflow:hidden; border-right:1px solid rgba(255,255,255,.05);">
-                    <div style="display:grid; grid-template-columns:2fr 60px 70px 2fr 90px; padding:8px 12px; font-size:10px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,.06); background:#0a0b0d;">
-                        <span>Process Name</span><span>PID</span><span>Memory</span><span>Window Title</span><span>Risk</span>
+                <div
+                    style="flex:2; display:flex; flex-direction:column; overflow:hidden; border-right:1px solid rgba(255,255,255,.05);">
+                    <div
+                        style="display:grid; grid-template-columns:2fr 60px 70px 2fr 90px; padding:8px 12px; font-size:10px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,.06); background:#0a0b0d;">
+                        <span>Process Name</span><span>PID</span><span>Memory</span><span>Window
+                            Title</span><span>Risk</span>
                     </div>
                     <div id="monitorProcessTable" style="flex:1; overflow-y:auto; font-size:11px;">
-                        <div style="text-align:center; padding:40px; color:rgba(255,255,255,.2);">En attente des données de surveillance...</div>
+                        <div style="text-align:center; padding:40px; color:rgba(255,255,255,.2);">En attente des données
+                            de surveillance...</div>
                     </div>
                 </div>
                 <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
-                    <div style="padding:10px 14px; font-size:10px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,.06); background:#0a0b0d;">⚠️ Historique des Alertes</div>
+                    <div
+                        style="padding:10px 14px; font-size:10px; color:rgba(255,255,255,.3); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(255,255,255,.06); background:#0a0b0d;">
+                        ⚠️ Historique des Alertes</div>
                     <div id="monitorAlertList" style="flex:1; overflow-y:auto; padding:8px;">
-                        <div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte</div>
+                        <div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune
+                            alerte</div>
                     </div>
                 </div>
             </div>
-            <div style="padding:10px 16px; border-top:1px solid rgba(255,255,255,.08); background:#0a0b0d; display:flex; justify-content:space-between; align-items:center;">
-                <div style="font-size:11px; color:rgba(255,255,255,.3);">🟢 Surveillance active — Mise à jour toutes les 4 secondes</div>
-                <button class="btn btn-ghost" style="font-size:12px;" onclick="ProfVM.closeMonitorModal()">Fermer</button>
+            <div
+                style="padding:10px 16px; border-top:1px solid rgba(255,255,255,.08); background:#0a0b0d; display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:11px; color:rgba(255,255,255,.3);">🟢 Surveillance active — Mise à jour toutes les
+                    4 secondes</div>
+                <button class="btn btn-ghost" style="font-size:12px;"
+                    onclick="ProfVM.closeMonitorModal()">Fermer</button>
             </div>
         </div>
     </div>
 
     <!-- ── AI GENERATOR MODAL ── -->
     <div class="modal-overlay" id="aiModal">
-        <div class="modal" style="width:600px; max-width:90vw; border:1px solid rgba(88,101,242,.4); background:#1a1b1e; display:flex; flex-direction:column; padding:0;">
-            <div style="padding:20px 24px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
+        <div class="modal"
+            style="width:600px; max-width:90vw; border:1px solid rgba(88,101,242,.4); background:#1a1b1e; display:flex; flex-direction:column; padding:0;">
+            <div
+                style="padding:20px 24px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
                 <h2 style="font-size:18px; font-weight:700; margin:0; color:#5865f2;">Générateur de Quiz</h2>
-                <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;" onclick="ProfVM.closeAIModal()">×</button>
+                <button class="btn btn-ghost" style="width:30px; height:30px; padding:0; border-radius:50%;"
+                    onclick="ProfVM.closeAIModal()">×</button>
             </div>
             <div style="padding:24px; flex:1; overflow-y:auto;">
                 <div style="margin-bottom:15px; font-size:13px; color:rgba(255,255,255,.6);">
-                    Téléchargez un cours (PDF, Word, TXT, PowerPoint) ou collez directement le texte brut pour générer automatiquement des questions de QCM avec l'IA.
+                    Téléchargez un cours (PDF, Word, TXT, PowerPoint) ou collez directement le texte brut pour générer
+                    automatiquement des questions de QCM avec l'IA.
                 </div>
-                
+
                 <div class="modal-field">
                     <label>Fichier de cours (PDF, Word, TXT, PowerPoint)</label>
-                    <input type="file" id="aiFileInput" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx" style="display:block; padding: 6px; font-size: 13px;" onchange="ProfVM.handleAIFiles(this)">
+                    <input type="file" id="aiFileInput" accept=".pdf,.doc,.docx,.txt,.ppt,.pptx"
+                        style="display:block; padding: 6px; font-size: 13px;" onchange="ProfVM.handleAIFiles(this)">
                 </div>
 
                 <div style="text-align:center; color:rgba(255,255,255,.3); margin: 10px 0;">— OU —</div>
 
                 <div class="modal-field">
                     <label>Texte Brut</label>
-                    <textarea id="aiTextInput" rows="5" placeholder="Collez le texte ou le résumé ici..." style="width:100%;padding:10px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:vertical;"></textarea>
+                    <textarea id="aiTextInput" rows="5" placeholder="Collez le texte ou le résumé ici..."
+                        style="width:100%;padding:10px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;resize:vertical;"></textarea>
                 </div>
-                
+
                 <div class="modal-field">
                     <label>Nombre de questions souhaité</label>
                     <input type="number" id="aiQuestionCount" value="5" min="1" max="20" style="width:100px;">
                 </div>
-                
+
                 <div id="aiLoading" style="display:none; text-align:center; padding:15px; color:#5865f2;">
-                    <div class="spin-ring" style="width:24px; height:24px; border-width:3px; margin: 0 auto 10px;"></div>
+                    <div class="spin-ring" style="width:24px; height:24px; border-width:3px; margin: 0 auto 10px;">
+                    </div>
                     <span>Analyse et génération par Together AI en cours... Veuillez patienter.</span>
                 </div>
             </div>
-            <div style="padding:16px 24px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); display:flex; justify-content:flex-end; gap:10px;">
+            <div
+                style="padding:16px 24px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); display:flex; justify-content:flex-end; gap:10px;">
                 <button class="btn btn-ghost" onclick="ProfVM.closeAIModal()">Annuler</button>
                 <button class="btn btn-indigo" onclick="ProfVM.generateAIQuiz()">🚀 Lancer l'IA</button>
             </div>
@@ -2846,7 +2994,7 @@
                     el.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.2); font-size:13px;">Aucune session récente trouvée.</div>`;
                     return;
                 }
-                
+
                 const filtered = ProfData.sessions.filter(s => this.viewingArchive ? s.isArchived : !s.isArchived);
 
                 if (filtered.length === 0) {
@@ -2872,19 +3020,19 @@
             },
 
             async archiveSession(id) {
-                if(!confirm('Voulez-vous archiver cette session ?')) return;
+                if (!confirm('Voulez-vous archiver cette session ?')) return;
                 try {
                     const token = sessionStorage.getItem('accessToken');
                     const resp = await fetch(`${API_BASE}/practical-tests/${id}/archive`, {
                         method: 'PATCH',
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
-                    if(resp.ok) {
+                    if (resp.ok) {
                         this.fetchRecentSessions();
                     } else {
                         alert("Erreur lors de l'archivage.");
                     }
-                } catch(e) {
+                } catch (e) {
                     console.error(e);
                     alert("Erreur réseau");
                 }
@@ -2922,7 +3070,7 @@
                     this.sessionsOpen = true;
                     this.viewingArchive = wantsArchive;
                 }
-                
+
                 const card = document.getElementById('sessionsCard');
                 card.classList.toggle('visible', this.sessionsOpen);
                 card.style.display = this.sessionsOpen ? 'block' : 'none';
@@ -3047,15 +3195,16 @@
                     // ── Écouter les alertes monitoring de tous les étudiants ──
                     this.socket.on('student-monitoring-update', (data) => {
                         // Only process if we're not already in the monitor modal for this student
-                        if (data.studentId === this._monitoringStudentId) return; // handled by monitor modal
-                        
                         const procs = data.processes || [];
-                        const systemProcs = ['svchost','system','registry','smss','csrss','wininit','winlogon','lsass','services','dwm','fontdrvhost','spoolsv','wuauclt','audiodg','searchindexer','runtimebroker','sihost','taskhostw','ctfmon','conhost'];
-                        const visible = procs.filter(p => !systemProcs.some(s => (p.Name||'').toLowerCase().startsWith(s)));
+                        // Filtrer pour ne garder que les "Applications" (avec titre de fenêtre) ou les risques connus
+                        const visible = procs.filter(p => {
+                            const risk = this._getRisk(p);
+                            return risk !== 'OK'; // Ne garder que ce qui est potentiellement suspect
+                        });
 
                         let globalRisk = 'low';
                         visible.forEach(p => {
-                            const risk = this._getRisk(p.Name);
+                            const risk = this._getRisk(p);
                             if (risk === 'HIGH') {
                                 globalRisk = 'high';
                                 const msg = `Application suspecte : ${p.Name}`;
@@ -3126,7 +3275,7 @@
                         controls.style.display = 'block';
                         const pauseLabel = data.isPaused ? '▶️ Reprendre' : '⏸️ Mettre en pause';
                         const pauseClass = data.isPaused ? 'resume' : 'pause';
-                        
+
                         controls.innerHTML = `
                             <div class="control-panel">
                                 <button class="cp-btn ${pauseClass}" onclick="ProfVM.togglePause('${id}', ${data.isPaused})">${pauseLabel}</button>
@@ -3173,35 +3322,40 @@
                             if (isActif) countActif++; else countInactif++;
 
                             // Déterminer le niveau de risque de cet étudiant
-                            const riskLevel = isActif 
-                                ? (this._studentRiskMap[sid.toString()] || 'low') 
+                            const riskLevel = isActif
+                                ? (this._studentRiskMap[sid.toString()] || 'low')
                                 : 'inactive';
                             const riskDotClass = riskLevel; // 'high'|'medium'|'low'|'inactive'
 
-                            const avatarBg = isActif 
+                            const avatarBg = isActif
                                 ? 'background:linear-gradient(135deg,#10b981,#059669);'
                                 : '';
 
-                            const screenBtn = isActif 
-                                ? `<button class="pm-action-btn" title="Voir l'écran" onclick="ProfVM.viewStudentScreenInPanel('${sid}','${st.prenom} ${st.nom}')">📺</button>` 
+                            const screenBtn = isActif
+                                ? `<button class="pm-action-btn" title="Voir l'écran" onclick="ProfVM.viewStudentScreenInPanel('${sid}','${st.prenom} ${st.nom}')">📺</button>`
                                 : '';
                             const monitorBtn = isActif
                                 ? `<button class="pm-action-btn" title="Surveiller" style="border-color:rgba(249,115,22,.4);color:#f97316;" onclick="ProfVM.openMonitorModal('${sid}','${st.prenom} ${st.nom}')">🔍</button>`
                                 : '';
 
+                            const noteHtml = hasNote
+                                ? `<span style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; font-size:10px; padding:2px 8px; border-radius:8px; font-weight:800; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space:nowrap; flex-shrink:0;">✓ ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>`
+                                : '';
+
                             html += `
                                 <div class="pm-student-item" id="pm-student-${sid}">
                                     <div class="pm-student-avatar" style="${avatarBg}">
-                                        ${(st.prenom && st.nom) ? (st.prenom[0]+st.nom[0]).toUpperCase() : '??'}
+                                        ${(st.prenom && st.nom) ? (st.prenom[0] + st.nom[0]).toUpperCase() : '??'}
                                         <div class="pm-risk-dot ${riskDotClass}"></div>
                                     </div>
                                     <div class="pm-student-info">
-                                        <div class="pm-student-name">${st.prenom} ${st.nom}${hasNote ? ' <span style="background:#23d160;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;vertical-align:middle;">✓Note</span>' : ''}</div>
+                                        <div class="pm-student-name" style="white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.1;">${st.prenom} ${st.nom}</div>
                                         <div class="pm-student-nc">NC: ${st.studentCardNumber || 'N/A'}</div>
                                     </div>
                                     <div class="pm-student-actions">
                                         ${screenBtn}
                                         ${monitorBtn}
+                                        ${noteHtml}
                                         <span class="pm-student-badge ${isActif ? 'actif' : ''}">${isActif ? 'Actif' : 'Inscrit'}</span>
                                     </div>
                                 </div>
@@ -3234,7 +3388,7 @@
                 const nameLabel = document.getElementById('pm-screen-student-name');
                 const statusLabel = document.getElementById('pm-screen-status');
                 const btnFullscreen = document.getElementById('pm-btn-fullscreen');
-                
+
                 if (!container) return;
 
                 if (nameLabel) nameLabel.textContent = studentName;
@@ -3281,12 +3435,12 @@
 
                 const isFS = container.classList.toggle('pm-screen-fullscreen');
                 console.log("[ProfVM] Fullscreen toggled:", isFS);
-                
+
                 if (btn) {
                     btn.innerHTML = isFS ? '✖' : '⛶';
                     btn.style.zIndex = "100002"; // Toujours au dessus
                 }
-                
+
                 if (isFS) {
                     // Alert pour quitter
                     const tip = document.createElement('div');
@@ -3294,8 +3448,8 @@
                     tip.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#fff; padding:10px 20px; border-radius:30px; font-size:13px; z-index:100001; pointer-events:none; transition:opacity 0.5s; box-shadow:0 4px 15px rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.1);';
                     tip.innerHTML = '✨ <strong>Mode Plein Écran</strong> — Appuyez sur <strong>ÉCHAP</strong> pour quitter';
                     document.body.appendChild(tip);
-                    setTimeout(() => { if(tip) tip.style.opacity = '0'; }, 3000);
-                    setTimeout(() => { if(tip && tip.parentNode) tip.parentNode.removeChild(tip); }, 3600);
+                    setTimeout(() => { if (tip) tip.style.opacity = '0'; }, 3000);
+                    setTimeout(() => { if (tip && tip.parentNode) tip.parentNode.removeChild(tip); }, 3600);
                 }
             },
 
@@ -3330,14 +3484,14 @@
                     }
                 }
 
-                const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+                const now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 const alertClass = level === 'high' ? '' : 'medium';
                 const icon = level === 'high' ? '🔴' : '🟡';
 
                 const alertEl = document.createElement('div');
                 alertEl.className = `pm-alert-item ${alertClass}`;
                 alertEl.innerHTML = `<span>${icon}</span><div><strong>${studentName}</strong> — ${message}<br><span style="font-size:9px;opacity:.6;">${now}</span></div>`;
-                
+
                 // Remove placeholder if present
                 const placeholder = alertsBox.querySelector('[style*="Aucune alerte"]');
                 if (placeholder) placeholder.remove();
@@ -3399,7 +3553,7 @@
             async handleAIFiles(input) {
                 const file = input.files[0];
                 if (!file) return;
-                
+
                 const ext = file.name.split('.').pop().toLowerCase();
                 const reader = new FileReader();
 
@@ -3409,13 +3563,13 @@
                     };
                     reader.readAsText(file);
                 } else if (ext === 'pdf') {
-                    reader.onload = async function() {
+                    reader.onload = async function () {
                         try {
                             const typedarray = new Uint8Array(this.result);
                             const pdfjsLib = window['pdfjs-dist/build/pdf'];
-                            if(!pdfjsLib) { alert("Le module PDF n'est pas prêt."); return; }
+                            if (!pdfjsLib) { alert("Le module PDF n'est pas prêt."); return; }
                             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-                            
+
                             const pdf = await pdfjsLib.getDocument(typedarray).promise;
                             let fullText = '';
                             for (let i = 1; i <= pdf.numPages; i++) {
@@ -3424,7 +3578,7 @@
                                 fullText += textContent.items.map(s => s.str).join(' ') + '\n';
                             }
                             document.getElementById('aiTextInput').value = fullText;
-                        } catch(e) {
+                        } catch (e) {
                             alert("Impossible de lire ce PDF: " + e.message);
                         }
                     };
@@ -3432,11 +3586,11 @@
                 } else if (ext === 'doc' || ext === 'docx') {
                     reader.onload = async (e) => {
                         try {
-                            if(!window.mammoth) { alert("Le module Word n'est pas prêt."); return; }
+                            if (!window.mammoth) { alert("Le module Word n'est pas prêt."); return; }
                             const arrayBuffer = e.target.result;
-                            const result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
+                            const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
                             document.getElementById('aiTextInput').value = result.value;
-                        } catch(err) {
+                        } catch (err) {
                             alert("Impossible de lire ce Word: " + err.message);
                         }
                     };
@@ -3444,7 +3598,7 @@
                 } else if (ext === 'ppt' || ext === 'pptx') {
                     reader.onload = async (e) => {
                         try {
-                            if(!window.JSZip) { alert("Le module JSZip n'est pas prêt."); return; }
+                            if (!window.JSZip) { alert("Le module JSZip n'est pas prêt."); return; }
                             const zip = await JSZip.loadAsync(e.target.result);
                             let fullText = '';
                             // Les slides PowerPoint sont dans ppt/slides/slide*.xml
@@ -3463,7 +3617,7 @@
                                 fullText += slideText + '\n';
                             }
                             document.getElementById('aiTextInput').value = fullText.trim() || '(Aucun texte extrait du PowerPoint)';
-                        } catch(err) {
+                        } catch (err) {
                             alert("Impossible de lire ce PowerPoint: " + err.message);
                         }
                     };
@@ -3481,7 +3635,7 @@
                     alert("Veuillez fournir un texte ou importer un document de cours !");
                     return;
                 }
-                
+
                 document.getElementById('aiLoading').style.display = 'block';
 
                 try {
@@ -3497,12 +3651,12 @@
 
                     const questions = await response.json();
                     if (!response.ok) throw new Error(questions.message || "Erreur Backend");
-                    
-                    if(Array.isArray(questions)) {
+
+                    if (Array.isArray(questions)) {
                         questions.forEach(q => {
                             q.id = Date.now().toString() + Math.random().toString().slice(2, 6);
                             // ensure correct answers is always an array of strings
-                            if(q.correctAnswers) {
+                            if (q.correctAnswers) {
                                 q.correctAnswers = q.correctAnswers.map(ans => ans.toString());
                             } else {
                                 q.correctAnswers = ["0"];
@@ -3562,8 +3716,8 @@
                             </div>
                         `).join('') + `<button class="btn btn-ghost" style="height:25px; font-size:10px;" onclick="ProfVM.addOption('${q.id}')">+ Ajouter une option</button>`;
                     } else if (q.type === 'QCMImage') {
-                        optionsHtml = `<div style="font-size:11px; color:rgba(255,255,255,0.4); margin-bottom: 5px;">Sélectionnez les images et cochez la (les) bonne(s) réponse(s)</div>` + 
-                        q.options.map((opt, oIdx) => `
+                        optionsHtml = `<div style="font-size:11px; color:rgba(255,255,255,0.4); margin-bottom: 5px;">Sélectionnez les images et cochez la (les) bonne(s) réponse(s)</div>` +
+                            q.options.map((opt, oIdx) => `
                             <div class="option-row" style="align-items: flex-start; background: rgba(255,255,255,0.02); padding: 5px; border-radius: 8px;">
                                 <input type="checkbox" class="correct-checkbox" ${q.correctAnswers.includes(oIdx.toString()) ? 'checked' : ''} onchange="ProfVM.updateCorrectAnswer('${q.id}', '${oIdx}', this.checked)" style="margin-top: 5px;">
                                 <div style="flex:1; display:flex; flex-direction:column; gap:5px;">
@@ -3893,9 +4047,9 @@
                 let courseLabel, classeLabel, dateLabel, dureeLabel, startLabel;
 
                 // On capture le bouton pour pouvoir le réinitialiser en cas d'erreur
-                const btnGen = document.querySelector('#modalActions .btn-indigo') || 
-                               document.querySelector('#modalActions .btn-green') ||
-                               document.querySelector('#modalActions .btn-primary'); // Fallback sur plusieurs classes possibles
+                const btnGen = document.querySelector('#modalActions .btn-indigo') ||
+                    document.querySelector('#modalActions .btn-green') ||
+                    document.querySelector('#modalActions .btn-primary'); // Fallback sur plusieurs classes possibles
                 const oriHtml = btnGen ? btnGen.innerHTML : 'Générer le code session';
 
                 // ── 1. Création via le BACKEND (uniquement si examen existant sélectionné) ──
@@ -4049,7 +4203,7 @@
                         const nStart = document.getElementById('n_start').value;
                         const scheduledStartIso = _toIsoFromDateAndTime(nDate, nStart);
                         const scheduledEndIso = _addMinutesToIso(scheduledStartIso, duration);
-                        
+
                         const formData = new FormData();
                         formData.append('classe', classId);
                         formData.append('duration', duration.toString());
@@ -4058,32 +4212,32 @@
                         const sel = document.getElementById('n_classe');
                         classeLabel = sel.options[sel.selectedIndex].text;
                         formData.append('classLabel', classeLabel);
-                        
+
                         // Decide if it's a QUIZ or DESKTOP_APP
                         const isQuiz = this.quizQuestions.length > 0;
                         formData.append('testType', isQuiz ? 'QUIZ' : 'DESKTOP_APP');
-                        
+
                         if (isQuiz) {
                             formData.append('quizData', JSON.stringify({ questions: this.quizQuestions }));
                         }
-                        
+
                         formData.append('subject', subjectValue);
-                        
+
                         // Ajouter les apps de la whitelist (n_whitelist)
                         const customWhitelist = document.getElementById('n_whitelist').value.split(',')
                             .map(s => s.trim().toLowerCase())
                             .filter(s => s.length > 0);
-                        
+
                         const finalAllowedApps = [...new Set(customWhitelist)];
                         if (finalAllowedApps.length) {
                             formData.append('allowedApps', JSON.stringify(finalAllowedApps));
                         }
-                        
+
                         // S'assurer qu'un lien tapé mais non ajouté via "+" est quand même envoyé
                         let urlToLink = this.sharedUrls && this.sharedUrls.length ? this.sharedUrls[0] : null;
                         const manualUrlBody = document.getElementById('urlInput')?.value.trim();
                         if (!urlToLink && manualUrlBody) {
-                             urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
+                            urlToLink = manualUrlBody.startsWith('http') ? manualUrlBody : 'https://' + manualUrlBody;
                         }
                         if (urlToLink) formData.append('link', urlToLink);
 
@@ -4107,9 +4261,9 @@
                         });
 
                         data = await resp.json();
-                        
+
                         if (btnGen) {
-                            btnGen.innerHTML = oriHtml; 
+                            btnGen.innerHTML = oriHtml;
                             btnGen.disabled = false;
                         }
 
@@ -4158,7 +4312,7 @@
 
                 const gc = document.getElementById('generatedCode');
                 if (gc) {
-                    gc.style.display = 'block'; 
+                    gc.style.display = 'block';
                     gc.textContent = code;
                 }
 
@@ -4179,7 +4333,7 @@
                 });
                 const statCount = document.getElementById('stat-count');
                 if (statCount) statCount.textContent = ProfData.sessions.length;
-                
+
                 this.renderSessions();
 
                 const modalActions = document.getElementById('modalActions');
@@ -4252,7 +4406,7 @@
                     const token = sessionStorage.getItem('accessToken');
                     const resp = await fetch(`${API_BASE}/practical-tests/${id}/extend`, {
                         method: 'POST',
-                        headers: { 
+                        headers: {
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
                         },
@@ -4293,11 +4447,11 @@
             viewStudentScreen(studentId, studentName) {
                 const modal = document.getElementById('screenModal');
                 const title = document.getElementById('screenModalTitle');
-                
+
                 if (modal && title) {
                     title.innerHTML = `📺 Écran en direct de <strong>${studentName}</strong>`;
                     modal.classList.add('open');
-                    
+
                     const screenContainer = document.getElementById('screenVideoContainer');
                     screenContainer.innerHTML = `
                         <img id="studentScreenImage" style="max-width:100%; max-height:100%; object-fit:contain; z-index:10; display:none;" src="" alt="En attente de l'écran..." />
@@ -4331,13 +4485,13 @@
                     }
                 }
             },
-            
+
             closeScreenModal() {
                 const modal = document.getElementById('screenModal');
                 if (modal) {
                     modal.classList.remove('open');
                     document.getElementById('screenVideoContainer').innerHTML = ''; // Arrêter l'affichage
-                    
+
                     if (this.socket && ProfData.watchingStudentId) {
                         // On indique qu'on arrête de regarder cet écran
                         this.socket.emit('request-screen-stop', { studentId: ProfData.watchingStudentId });
@@ -4386,24 +4540,24 @@
                 if (this.socket) this.socket.off('student-monitoring-update');
             },
 
-            _getRisk(processName) {
-                const name = (processName || '').toLowerCase();
+            _getRisk(p) {
+                if (!p) return 'OK';
+                const name = (p.Name || '').toLowerCase();
                 
-                // 1. Check if explicitly blacklisted in session
-                if (ProfData.currentSessionDetails && ProfData.currentSessionDetails.allowedApps) {
-                    const blacklist = ProfData.currentSessionDetails.allowedApps;
-                    if (blacklist.some(app => app.trim() !== '' && name.includes(app.toLowerCase().trim()))) {
-                        return 'HIGH'; // Now Blacklisted
+                // 1. Récupérer la liste des applications interdites (Blacklist)
+                // Note: Bien que le champ s'appelle 'allowedApps' dans la DB, il est utilisé ici comme Blacklist
+                const blacklist = (ProfData.currentSessionDetails && ProfData.currentSessionDetails.allowedApps) || [];
+                const activeBlacklist = blacklist.filter(a => a.trim() !== '');
+                
+                // 2. Logique de Blacklist Pure
+                // Par défaut, TOUT est normal (OK / Vert).
+                // On ne met en rouge (HIGH) QUE si l'application est dans votre liste interdite.
+                if (activeBlacklist.length > 0) {
+                    if (activeBlacklist.some(app => name.includes(app.toLowerCase().trim()))) {
+                        return 'HIGH';
                     }
                 }
 
-                // 2. Check general risk categories (defaults)
-                for (const proc of this._riskyProcesses.HIGH) {
-                    if (name.includes(proc)) return 'HIGH';
-                }
-                for (const proc of this._riskyProcesses.MEDIUM) {
-                    if (name.includes(proc)) return 'MEDIUM';
-                }
                 return 'OK';
             },
 
@@ -4421,12 +4575,15 @@
                 let globalRisk = 'OK';
                 const newAlerts = data.alerts || [];
 
-                // Render process table - only show interesting processes (non-system)
-                const systemProcs = ['svchost', 'system', 'registry', 'smss', 'csrss', 'wininit', 'winlogon', 'lsass', 'services', 'dwm', 'fontdrvhost', 'spoolsv', 'wuauclt', 'audiodg', 'searchindexer', 'runtimebroker', 'sihost', 'taskhostw', 'ctfmon', 'conhost'];
-                const visibleProcs = procs.filter(p => !systemProcs.some(s => (p.Name||'').toLowerCase().startsWith(s))).slice(0, 80);
+                // Filtrer pour ne garder que ce qui est intéressant à surveiller
+                const visibleProcs = procs.filter(p => {
+                    const risk = this._getRisk(p);
+                    // On affiche les risques, mais aussi les applications classiques (avec titre) pour le debug
+                    return risk !== 'OK' || (p.WindowTitle && p.WindowTitle.trim() !== '');
+                }).slice(0, 100);
 
                 let tableHtml = visibleProcs.map(p => {
-                    const risk = this._getRisk(p.Name);
+                    const risk = this._getRisk(p);
                     if (risk === 'HIGH') globalRisk = 'HIGH';
                     else if (risk === 'MEDIUM' && globalRisk !== 'HIGH') globalRisk = 'MEDIUM';
 
@@ -4494,7 +4651,7 @@
 
                 // Update alerts in monitor modal
                 if (this._monitorAlerts.length > 0) {
-                    document.getElementById('monitorAlertList').innerHTML = this._monitorAlerts.slice(0, 30).map(a => 
+                    document.getElementById('monitorAlertList').innerHTML = this._monitorAlerts.slice(0, 30).map(a =>
                         `<div style="padding:6px 8px; margin-bottom:4px; background:rgba(239,68,68,0.1); border-left:3px solid #ef4444; border-radius:4px; font-size:10px; color:#fca5a5;">${a}</div>`
                     ).join('');
                 }
