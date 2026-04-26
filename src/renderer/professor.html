@@ -2515,6 +2515,41 @@
         </div>
     </div>
 
+    <!-- ── PRIVATE MESSAGE MODAL ── -->
+    <div class="modal-overlay" id="privateMsgModal">
+        <div class="modal" style="width:440px; max-width:92vw; border:1px solid rgba(99,102,241,.4); background:#1a1b1e; display:flex; flex-direction:column; padding:0;">
+            <div style="padding:16px 20px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center; background:rgba(99,102,241,0.08);">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:20px;">💬</span>
+                    <div>
+                        <div style="font-size:14px; font-weight:700; color:#818cf8;">Message Privé</div>
+                        <div id="privateMsgTarget" style="font-size:11px; color:rgba(255,255,255,.5);">—</div>
+                    </div>
+                </div>
+                <button class="btn btn-ghost" style="width:28px;height:28px;padding:0;border-radius:50%;font-size:16px;" onclick="ProfVM.closeMessageModal()">×</button>
+            </div>
+            <div style="padding:20px;">
+                <div style="font-size:12px; color:rgba(255,255,255,.4); margin-bottom:12px; line-height:1.5;">
+                    ⚠️ Ce message apparaîtra discrètement sur l'écran de l'étudiant. Il ne peut pas le fermer pendant 8 secondes.
+                </div>
+                <div style="position:relative;">
+                    <textarea id="privateMsgInput" rows="3"
+                        style="width:100%; padding:12px 14px; background:rgba(255,255,255,.06); border:1px solid rgba(99,102,241,.3); border-radius:10px; color:#fff; font-size:13px; font-family:'Inter',sans-serif; outline:none; resize:none; line-height:1.5;"
+                        placeholder="Ex: Veuillez appeler le professeur sans faire de bruit..."
+                        onkeydown="if(event.ctrlKey&&event.key==='Enter') ProfVM.sendPrivateMessage();"></textarea>
+                    <span style="position:absolute;bottom:8px;right:10px;font-size:10px;color:rgba(255,255,255,.2);">Ctrl+Entrée pour envoyer</span>
+                </div>
+            </div>
+            <div style="padding:12px 20px; border-top:1px solid rgba(255,255,255,.08); display:flex; justify-content:space-between; align-items:center;">
+                <div id="privateMsgStatus" style="font-size:11px; color:rgba(255,255,255,.3);"></div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost" style="font-size:12px;" onclick="ProfVM.closeMessageModal()">Annuler</button>
+                    <button id="privateMsgSendBtn" class="btn" style="font-size:12px; background:linear-gradient(135deg,#6366f1,#818cf8); border:none; padding:8px 20px; border-radius:8px; color:#fff; font-weight:600; cursor:pointer;" onclick="ProfVM.sendPrivateMessage()">📤 Envoyer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ── AI GENERATOR MODAL ── -->
     <div class="modal-overlay" id="aiModal">
         <div class="modal"
@@ -3408,6 +3443,9 @@
                             const monitorBtn = isActif
                                 ? `<button class="pm-action-btn" title="Surveiller" style="border-color:rgba(249,115,22,.4);color:#f97316;" onclick="ProfVM.openMonitorModal('${sid}','${st.prenom} ${st.nom}')">🔍</button>`
                                 : '';
+                            const msgBtn = isActif
+                                ? `<button class="pm-action-btn" title="Message privé" style="border-color:rgba(99,102,241,.4);color:#818cf8;" onclick="ProfVM.openMessageModal('${sid}','${st.prenom} ${st.nom}')">💬</button>`
+                                : '';
 
                             const noteHtml = hasNote
                                 ? `<span style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; font-size:10px; padding:2px 8px; border-radius:8px; font-weight:800; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space:nowrap; flex-shrink:0;">✓ ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>`
@@ -3426,6 +3464,7 @@
                                     <div class="pm-student-actions">
                                         ${screenBtn}
                                         ${monitorBtn}
+                                        ${msgBtn}
                                         ${noteHtml}
                                         <span class="pm-student-badge ${isActif ? 'actif' : ''}">${isActif ? 'Actif' : 'Inscrit'}</span>
                                     </div>
@@ -4795,6 +4834,52 @@
                     if (lockBtn) lockBtn.style.display = 'none';
                     if (unlockBtn) unlockBtn.style.display = 'block';
                 }
+            },
+
+            // ── Message Privé ──
+            _privateMsgTargetId: null,
+
+            openMessageModal(studentId, studentName) {
+                this._privateMsgTargetId = studentId;
+                document.getElementById('privateMsgTarget').textContent = `→ ${studentName}`;
+                document.getElementById('privateMsgInput').value = '';
+                document.getElementById('privateMsgStatus').textContent = '';
+                document.getElementById('privateMsgSendBtn').disabled = false;
+                document.getElementById('privateMsgSendBtn').textContent = '📤 Envoyer';
+                document.getElementById('privateMsgModal').classList.add('open');
+                setTimeout(() => document.getElementById('privateMsgInput').focus(), 100);
+            },
+
+            closeMessageModal() {
+                document.getElementById('privateMsgModal').classList.remove('open');
+                this._privateMsgTargetId = null;
+            },
+
+            sendPrivateMessage() {
+                const msg = (document.getElementById('privateMsgInput').value || '').trim();
+                if (!msg) {
+                    document.getElementById('privateMsgInput').focus();
+                    return;
+                }
+                if (!this._privateMsgTargetId) return;
+                if (!this.socket) {
+                    document.getElementById('privateMsgStatus').textContent = '⚠️ Non connecté au serveur';
+                    return;
+                }
+
+                this.socket.emit('send-private-message', {
+                    studentId: this._privateMsgTargetId,
+                    message: msg
+                });
+
+                const btn = document.getElementById('privateMsgSendBtn');
+                const status = document.getElementById('privateMsgStatus');
+                btn.disabled = true;
+                btn.textContent = '✅ Envoyé !';
+                status.textContent = 'Message transmis à l\'étudiant.';
+                status.style.color = '#10b981';
+
+                setTimeout(() => this.closeMessageModal(), 1500);
             },
 
             unlockStudent() {

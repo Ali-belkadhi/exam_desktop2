@@ -1022,11 +1022,49 @@
                         if (overlayBadge) overlayBadge.style.background = '';
                     });
 
+                    window.sessionVM.socket.on('receive-private-message', (data) => {
+                        console.log('[WebSocket] Message privé reçu du professeur:', data.message);
+                        const existing = document.getElementById('_profPrivateMsgToast');
+                        if (existing) existing.remove();
+
+                        const toast = document.createElement('div');
+                        toast.id = '_profPrivateMsgToast';
+                        toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999999;background:linear-gradient(135deg,#1e1b4b,#312e81);border:1.5px solid rgba(99,102,241,0.7);border-radius:14px;padding:16px 24px;min-width:320px;max-width:480px;box-shadow:0 8px 32px rgba(0,0,0,0.5);display:flex;gap:14px;align-items:flex-start;pointer-events:none;user-select:none;';
+
+                        const safeMsg = (data.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        toast.innerHTML = `
+                            <style>@keyframes _msgIn{from{opacity:0;transform:translateX(-50%) translateY(-20px) scale(.95)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}@keyframes _msgOut{from{opacity:1}to{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.95)}}</style>
+                            <div style="font-size:22px;line-height:1;flex-shrink:0;margin-top:2px;">💬</div>
+                            <div style="flex:1;">
+                                <div style="font-size:11px;font-weight:700;color:#a5b4fc;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;">Message du Professeur &middot; ${data.sentAt || ''}</div>
+                                <div style="font-size:14px;font-weight:500;color:#e0e7ff;line-height:1.5;">${safeMsg}</div>
+                                <div id="_profMsgDots" style="display:flex;gap:4px;margin-top:8px;"></div>
+                            </div>
+                        `;
+                        toast.style.animation = '_msgIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards';
+                        document.body.appendChild(toast);
+
+                        const dotsEl = document.getElementById('_profMsgDots');
+                        const dots = [];
+                        for (let i = 0; i < 8; i++) {
+                            const d = document.createElement('span');
+                            d.style.cssText = 'width:5px;height:5px;border-radius:50%;background:rgba(165,180,252,0.7);display:inline-block;transition:opacity 0.3s;';
+                            dotsEl.appendChild(d);
+                            dots.push(d);
+                        }
+                        let dotIdx = 0;
+                        const di = setInterval(() => { if (dots[dotIdx]) dots[dotIdx].style.opacity = '0.1'; dotIdx++; }, 1000);
+                        setTimeout(() => {
+                            clearInterval(di);
+                            toast.style.animation = '_msgOut 0.35s ease forwards';
+                            setTimeout(() => toast.remove(), 400);
+                        }, 8000);
+                    });
+
                     // ── Monitoring des processus (Active Surveillance) ─────────────
                     let _focusChanges = 0;
                     let _lastWindowTitle = '';
-                    
-                    // Detect focus changes
+
                     window.addEventListener('blur', () => {
                         _focusChanges++;
                         console.log('[Monitor] Focus lost — total changes:', _focusChanges);
