@@ -991,6 +991,37 @@
                         if (window._screenInterval) clearInterval(window._screenInterval);
                     });
 
+                    window.sessionVM.socket.on('student-lockdown', () => {
+                        console.log('[WebSocket] Verrouillage de l\'écran demandé par le professeur');
+                        window._isLockdown = true;
+                        const pauseOverlay = document.getElementById('pauseOverlay');
+                        const overlayIcon = document.getElementById('pauseOverlayIcon');
+                        const overlayTitle = document.getElementById('pauseOverlayTitle');
+                        const overlayText = document.getElementById('pauseOverlayText');
+                        const overlayBadge = document.getElementById('pauseOverlayBadge');
+                        
+                        if (pauseOverlay) pauseOverlay.style.display = 'flex';
+                        if (overlayIcon) overlayIcon.textContent = '🔒';
+                        if (overlayTitle) {
+                            overlayTitle.textContent = 'ACTIVITÉ SUSPECTE DÉTECTÉE';
+                            overlayTitle.style.color = '#ef4444';
+                        }
+                        if (overlayText) overlayText.textContent = "Votre écran a été verrouillé par le professeur. Veuillez appeler le professeur immédiatement.";
+                        if (overlayBadge) {
+                            overlayBadge.textContent = 'Intervention requise';
+                            overlayBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+                        }
+                    });
+
+                    window.sessionVM.socket.on('student-unlock', () => {
+                        console.log('[WebSocket] Déverrouillage de l\'écran');
+                        window._isLockdown = false;
+                        const overlayTitle = document.getElementById('pauseOverlayTitle');
+                        const overlayBadge = document.getElementById('pauseOverlayBadge');
+                        if (overlayTitle) overlayTitle.style.color = '';
+                        if (overlayBadge) overlayBadge.style.background = '';
+                    });
+
                     // ── Monitoring des processus (Active Surveillance) ─────────────
                     let _focusChanges = 0;
                     let _lastWindowTitle = '';
@@ -1168,7 +1199,9 @@
                 const overlayText = document.getElementById('pauseOverlayText');
                 const overlayBadge = document.getElementById('pauseOverlayBadge');
 
-                if (isWaitingForStart) {
+                if (window._isLockdown) {
+                    if (pauseOverlay) pauseOverlay.style.display = 'flex';
+                } else if (isWaitingForStart) {
                     if (timerEl) timerEl.classList.remove('timer-paused');
                     if (statusDot) { statusDot.style.backgroundColor = 'var(--primary)'; statusDot.style.opacity = '1'; }
                     if (widgetStatus) widgetStatus.textContent = 'Session en attente';

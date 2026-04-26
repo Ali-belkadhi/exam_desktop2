@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         *,
         *::before,
@@ -1955,7 +1956,12 @@
 
     <!-- Top Bar -->
     <div class="topbar">
-        <div class="topbar-brand"></div>
+        <div class="topbar-brand">
+            <div style="display: flex; gap: 8px; align-items: center; margin-left: 20px;">
+                <input type="text" id="topbarSessionCode" placeholder="Code session..." style="height: 32px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; padding: 0 10px; font-size: 13px; width: 140px; outline: none; font-family: monospace;" onkeypress="if(event.key === 'Enter') ProfVM.joinSessionByCode()">
+                <button class="btn btn-indigo" style="height: 32px; padding: 0 12px; font-size: 12px; display: flex; align-items: center;" onclick="ProfVM.joinSessionByCode()">Rejoindre</button>
+            </div>
+        </div>
         <div class="topbar-right">
             <span class="role-badge">Professeur</span>
             <div class="user-avatar" id="avatarEl">P</div>
@@ -2497,8 +2503,14 @@
                 style="padding:10px 16px; border-top:1px solid rgba(255,255,255,.08); background:#0a0b0d; display:flex; justify-content:space-between; align-items:center;">
                 <div style="font-size:11px; color:rgba(255,255,255,.3);">🟢 Surveillance active — Mise à jour toutes les
                     4 secondes</div>
-                <button class="btn btn-ghost" style="font-size:12px;"
-                    onclick="ProfVM.closeMonitorModal()">Fermer</button>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="monitorLockBtn" class="btn btn-ghost" style="font-size:12px; color:#ef4444; border:1px solid rgba(239,68,68,0.3); background:rgba(239,68,68,0.1);"
+                        onclick="ProfVM.lockdownStudent()">🔒 Verrouiller</button>
+                    <button id="monitorUnlockBtn" class="btn btn-ghost" style="font-size:12px; color:#10b981; border:1px solid rgba(16,185,129,0.3); background:rgba(16,185,129,0.1); display:none;"
+                        onclick="ProfVM.unlockStudent()">🔓 Déverrouiller</button>
+                    <button class="btn btn-ghost" style="font-size:12px;"
+                        onclick="ProfVM.closeMonitorModal()">Fermer</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2765,6 +2777,45 @@
                 });
             },
 
+            async joinSessionByCode() {
+                const codeInput = document.getElementById('topbarSessionCode');
+                const code = codeInput ? codeInput.value.trim() : '';
+                if (!code) return;
+                
+                try {
+                    const token = sessionStorage.getItem('accessToken');
+                    const resp = await fetch(`${API_BASE}/practical-tests/code/${code}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (resp.ok) {
+                        const session = await resp.json();
+                        if (session && session._id) {
+                            if (codeInput) codeInput.value = '';
+                            
+                            // Sauvegarder dans le localStorage
+                            let joined = JSON.parse(localStorage.getItem('joinedSessions') || '[]');
+                            const existsIndex = joined.findIndex(s => s._id === session._id);
+                            session.isJoined = true;
+                            if (existsIndex >= 0) {
+                                joined[existsIndex] = session;
+                            } else {
+                                joined.push(session);
+                            }
+                            localStorage.setItem('joinedSessions', JSON.stringify(joined));
+                            
+                            this.fetchRecentSessions();
+                            this.showSessionDetails(session._id);
+                        } else {
+                            alert("Code session invalide ou introuvable.");
+                        }
+                    } else {
+                        alert("Erreur: Session introuvable.");
+                    }
+                } catch(e) {
+                    alert("Erreur réseau");
+                }
+            },
+
             async checkConnection() {
                 const statVal = document.querySelector('.stat-card.online .stat-value');
                 const statCard = document.querySelector('.stat-card.online');
@@ -2940,8 +2991,17 @@
                     }
 
                     const data = await resp.json();
+
+                    let joined = [];
+                    try {
+                        joined = JSON.parse(localStorage.getItem('joinedSessions') || '[]');
+                    } catch(e) {}
+                    const dataIds = new Set(data.map(d => d._id));
+                    const joinedToDisplay = joined.filter(j => !dataIds.has(j._id));
+                    const allData = [...data, ...joinedToDisplay];
+
                     // On mappe les données backend vers le format d'affichage
-                    ProfData.sessions = data.map(s => {
+                    ProfData.sessions = allData.map(s => {
                         // 1. Déterminer le titre (Matière/Examen)
                         let title = _getReadableSessionTitle(s);
                         if (!title) title = s.testType === 'WEB_LINK' ? "Lien de redirection" : "Environnement de test";
@@ -2951,7 +3011,7 @@
                         const displayTitle = _buildSessionTitle(title, classe);
 
                         // 3. Métadonnées (Mode, Durée)
-                        const mode = s.testType === 'WEB_LINK' ? '🔗 URL' : '🖥️ App';
+                        const mode = s.isJoined ? '🤝 Rejointe' : (s.testType === 'WEB_LINK' ? '🔗 URL' : '🖥️ App');
                         const dur = s.duration ? ` · ${_formatDuree(s.duration)}` : '';
 
                         const date = s.startedAt
@@ -2966,7 +3026,8 @@
                             meta: `${mode}${dur}`,
                             date,
                             status,
-                            isArchived: s.isArchived === true
+                            isArchived: s.isArchived === true,
+                            isJoined: s.isJoined === true
                         };
                     });
 
@@ -3012,8 +3073,8 @@
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap: 15px;">
-                        ${!this.viewingArchive ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height: 26px; border-color: rgba(255,255,255,.2);" onclick="event.stopPropagation(); ProfVM.archiveSession('${s.id}')">🗃️ Archiver</button>` : ''}
-                        <button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height:26px; color:#ff7b7b; border-color:rgba(255,123,123,.35);" onclick="event.stopPropagation(); ProfVM.deleteSession('${s.id}')">🗑️ Supprimer</button>
+                        ${!this.viewingArchive && !s.isJoined ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height: 26px; border-color: rgba(255,255,255,.2);" onclick="event.stopPropagation(); ProfVM.archiveSession('${s.id}')">🗃️ Archiver</button>` : ''}
+                        ${!s.isJoined ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height:26px; color:#ff7b7b; border-color:rgba(255,123,123,.35);" onclick="event.stopPropagation(); ProfVM.deleteSession('${s.id}')">🗑️ Supprimer</button>` : ''}
                         <span class="session-badge ${s.status}" style="font-weight:600;">${s.status === 'active' ? '🟢 Active' : '⚫ Terminée'}</span>
                     </div>
                 </div>`).join('');
@@ -3239,26 +3300,35 @@
             // ── Carte des risques par étudiant (mis à jour via monitoring) ──
             _studentRiskMap: {}, // { studentId: 'high'|'medium'|'low'|'inactive' }
 
-            async refreshSessionDetails(id, isSilent = false) {
+            async refreshSessionDetails(id, isSilent = false, _retryCount = 0) {
                 const participantsList = document.getElementById('participantsList');
                 const controls = document.getElementById('sessionControls');
                 const subheader = document.getElementById('detailsSubheader');
 
                 if (!isSilent) {
                     participantsList.innerHTML = `
-                        <div style="display:flex;justify-content:center;align-items:center;height:120px;">
+                        <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:120px;gap:10px;">
                             <div class="spin-ring" style="width:24px;height:24px;"></div>
+                            ${_retryCount > 0 ? `<span style="font-size:11px;color:rgba(255,255,255,.4);">Tentative ${_retryCount + 1}/3...</span>` : ''}
                         </div>
                     `;
                     controls.style.display = 'none';
-                    subheader.textContent = 'Récupération des données...';
+                    subheader.textContent = _retryCount > 0 ? `Reconnexion en cours...` : 'Récupération des données...';
                 }
 
                 try {
                     const token = sessionStorage.getItem('accessToken');
-                    const resp = await fetch(`${API_BASE}/practical-tests/${id}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+                    let resp;
+                    try {
+                        resp = await fetch(`${API_BASE}/practical-tests/${id}`, {
+                            headers: { 'Authorization': `Bearer ${token}` },
+                            signal: controller.signal
+                        });
+                    } finally {
+                        clearTimeout(timeout);
+                    }
 
                     if (!resp.ok) throw new Error("Erreur serveur lors de la récupération des détails.");
                     const data = await resp.json();
@@ -3280,6 +3350,7 @@
                             <div class="control-panel">
                                 <button class="cp-btn ${pauseClass}" onclick="ProfVM.togglePause('${id}', ${data.isPaused})">${pauseLabel}</button>
                                 <button class="cp-btn end" onclick="ProfVM.endSession('${id}')">⏹️ Terminer</button>
+                                <button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); color: #818cf8;" title="Générer le rapport PDF des anomalies">📄 Rapport</button>
                                 <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 10)">➕ 10 min</button>
                                 <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 30)">➕ 30 min</button>
                             </div>
@@ -3371,10 +3442,24 @@
                     if (cI) cI.textContent = countInactif;
 
                 } catch (e) {
+                    // ── Retry logic: retry up to 3 times with increasing delay ──
+                    const maxRetries = 3;
+                    if (_retryCount < maxRetries - 1) {
+                        const delay = ((_retryCount + 1) * 2000); // 2s, 4s, 6s
+                        console.warn(`[Session] Fetch failed (attempt ${_retryCount + 1}/${maxRetries}), retrying in ${delay}ms...`, e.message);
+                        setTimeout(() => {
+                            this.refreshSessionDetails(id, isSilent, _retryCount + 1);
+                        }, delay);
+                        return; // Don't show error yet
+                    }
+                    // All retries exhausted — show final error
                     if (!isSilent) {
                         participantsList.innerHTML = `
                             <div style="text-align:center;padding:40px;color:#ed4245;">
                                 ⚠️ ${e.message}
+                                <div style="margin-top:12px;">
+                                    <button onclick="ProfVM.refreshSessionDetails('${id}')" style="background:rgba(237,66,69,0.15);border:1px solid rgba(237,66,69,0.4);color:#ed4245;padding:6px 16px;border-radius:8px;cursor:pointer;font-size:12px;">🔄 Réessayer</button>
+                                </div>
                             </div>
                         `;
                         subheader.textContent = 'Erreur de chargement';
@@ -3456,9 +3541,18 @@
             // ── Ajouter une alerte dans le panneau global ──
             _pmAlerts: [],
             _pmAlertCount: 0,
+            _reportLog: [], // Structured log for PDF report: [{time, studentName, studentId, message, level}]
 
             addGlobalAlert(studentName, studentId, message, level = 'high') {
                 this._pmAlertCount++;
+                // ── Store in structured report log ──
+                this._reportLog.push({
+                    time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                    studentName: studentName || 'Étudiant',
+                    studentId: studentId || '',
+                    message,
+                    level
+                });
                 const alertsBox = document.getElementById('pm-global-alerts');
                 const countBadge = document.getElementById('pm-alerts-count');
                 if (!alertsBox) return;
@@ -3509,7 +3603,7 @@
                     this.socket = null;
                 }
                 if (ProfData.detailsInterval) clearInterval(ProfData.detailsInterval);
-                // Reset alerts and risk map
+                // Reset alerts and risk map but KEEP _reportLog until a new session is opened
                 this._pmAlerts = [];
                 this._pmAlertCount = 0;
                 this._studentRiskMap = {};
@@ -4432,6 +4526,11 @@
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (resp.ok) {
+                        // Proposer de générer le rapport avant de fermer
+                        const hasAlerts = this._reportLog.length > 0;
+                        if (hasAlerts && confirm(`✅ Session terminée.\n\n📄 ${this._reportLog.length} anomalie(s) détectée(s) pendant la session.\nVoulez-vous générer le rapport PDF maintenant ?`)) {
+                            this.generatePDFReport();
+                        }
                         this.closeDetailsModal();
                         this.fetchRecentSessions();
                     } else {
@@ -4441,6 +4540,147 @@
                 } catch (e) {
                     console.error("End session failed:", e);
                 }
+            },
+
+            generatePDFReport() {
+                const log = this._reportLog;
+                const session = ProfData.currentSessionDetails;
+                const sessionCode = session ? (session.sessionCode || '——') : '——';
+                const sessionTitle = session ? (session.subject || session.classLabel || 'Session') : 'Session';
+                const sessionDate = new Date().toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
+                const sessionTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+                if (!window.jspdf) {
+                    alert('Librairie PDF non chargée. Vérifiez votre connexion internet.');
+                    return;
+                }
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+                const W = 210;
+                const margin = 18;
+                const colW = W - margin * 2;
+                let y = 0;
+
+                // ── Header Background ──
+                doc.setFillColor(10, 11, 13);
+                doc.rect(0, 0, W, 45, 'F');
+
+                // ── Red accent bar ──
+                doc.setFillColor(239, 68, 68);
+                doc.rect(0, 0, 5, 45, 'F');
+
+                // ── Title ──
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(18);
+                doc.setTextColor(255, 255, 255);
+                doc.text('RAPPORT ANALYTIQUE DE SESSION', margin + 4, 18);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(200, 200, 200);
+                doc.text(`Session : ${sessionTitle}  |  Code : ${sessionCode}  |  ${sessionDate} à ${sessionTime}`, margin + 4, 27);
+
+                doc.setFontSize(9);
+                doc.setTextColor(160, 160, 160);
+                doc.text(`Généré par l'Espace Professeur — SafeExam`, margin + 4, 35);
+
+                y = 55;
+
+                // ── Summary Box ──
+                const highCount = log.filter(a => a.level === 'high').length;
+                const medCount = log.filter(a => a.level === 'medium').length;
+                const uniqueStudents = [...new Set(log.map(a => a.studentName))].length;
+
+                doc.setFillColor(239, 68, 68, 0.1);
+                doc.setDrawColor(239, 68, 68);
+                doc.setLineWidth(0.3);
+                doc.roundedRect(margin, y, colW, 28, 3, 3, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(239, 68, 68);
+                doc.text('RÉSUMÉ DES ANOMALIES', margin + 6, y + 9);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(50, 50, 50);
+                doc.text(`Total : ${log.length} anomalie(s)    |    Élevé : ${highCount}    |    Moyen : ${medCount}    |    Étudiants concernés : ${uniqueStudents}`, margin + 6, y + 20);
+
+                y += 36;
+
+                if (log.length === 0) {
+                    doc.setFont('helvetica', 'italic');
+                    doc.setFontSize(12);
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('✓ Aucune anomalie détectée durant cette session.', margin, y + 10);
+                } else {
+                    // Group alerts by student
+                    const byStudent = {};
+                    log.forEach(entry => {
+                        const key = entry.studentName;
+                        if (!byStudent[key]) byStudent[key] = [];
+                        byStudent[key].push(entry);
+                    });
+
+                    const pageH = 297;
+                    const checkPage = (needed) => {
+                        if (y + needed > pageH - 20) {
+                            doc.addPage();
+                            y = 20;
+                        }
+                    };
+
+                    Object.entries(byStudent).forEach(([studentName, entries]) => {
+                        checkPage(20);
+
+                        // Student header
+                        doc.setFillColor(30, 32, 38);
+                        doc.roundedRect(margin, y, colW, 11, 2, 2, 'F');
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(10);
+                        doc.setTextColor(255, 255, 255);
+                        doc.text(`👤  ${studentName}  (${entries.length} anomalie(s))`, margin + 4, y + 7.5);
+                        y += 14;
+
+                        entries.forEach(entry => {
+                            checkPage(9);
+                            const isHigh = entry.level === 'high';
+                            doc.setFillColor(isHigh ? 254 : 255, isHigh ? 242 : 251, isHigh ? 242 : 235);
+                            doc.setDrawColor(isHigh ? 239 : 245, isHigh ? 68 : 158, isHigh ? 68 : 11);
+                            doc.setLineWidth(0.2);
+                            doc.rect(margin + 3, y, colW - 3, 8, 'FD');
+
+                            // Risk indicator dot
+                            doc.setFillColor(isHigh ? 239 : 245, isHigh ? 68 : 158, isHigh ? 68 : 11);
+                            doc.circle(margin + 8, y + 4, 1.5, 'F');
+
+                            doc.setFont('helvetica', 'normal');
+                            doc.setFontSize(8.5);
+                            doc.setTextColor(40, 40, 40);
+                            const label = isHigh ? '[ÉLEVÉ]' : '[MOYEN]';
+                            doc.text(`${entry.time}  ${label}  ${entry.message}`, margin + 12, y + 5.5);
+                            y += 9;
+                        });
+                        y += 4;
+                    });
+                }
+
+                // ── Footer ──
+                const totalPages = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    doc.setPage(i);
+                    doc.setFont('helvetica', 'italic');
+                    doc.setFontSize(8);
+                    doc.setTextColor(180, 180, 180);
+                    doc.text(`SafeExam — Rapport confidentiel — Page ${i}/${totalPages}`, margin, 291);
+                    doc.setDrawColor(220, 220, 220);
+                    doc.setLineWidth(0.2);
+                    doc.line(margin, 287, W - margin, 287);
+                }
+
+                const filename = `rapport_session_${sessionCode}_${new Date().toISOString().slice(0,10)}.pdf`;
+                doc.save(filename);
             },
 
             // ── Fonctionnalité Visionnage d'écran ──
@@ -4522,6 +4762,10 @@
                 document.getElementById('monitorLastUpdate').textContent = '—';
                 document.getElementById('monitorProcessTable').innerHTML = '<div style="text-align:center; padding:40px; color:rgba(255,255,255,.2);">En attente des données de surveillance...</div>';
                 document.getElementById('monitorAlertList').innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte</div>';
+                const lockBtn = document.getElementById('monitorLockBtn');
+                const unlockBtn = document.getElementById('monitorUnlockBtn');
+                if (lockBtn) lockBtn.style.display = 'block';
+                if (unlockBtn) unlockBtn.style.display = 'none';
                 document.getElementById('monitorModal').classList.add('open');
 
                 // Listen for monitoring updates from this student
@@ -4538,6 +4782,32 @@
                 document.getElementById('monitorModal').classList.remove('open');
                 this._monitoringStudentId = null;
                 if (this.socket) this.socket.off('student-monitoring-update');
+            },
+
+            lockdownStudent() {
+                if (!this._monitoringStudentId) return;
+                if (!confirm("Voulez-vous vraiment verrouiller l'écran de cet étudiant ?")) return;
+                
+                if (this.socket) {
+                    this.socket.emit('lockdown-student', { studentId: this._monitoringStudentId });
+                    const lockBtn = document.getElementById('monitorLockBtn');
+                    const unlockBtn = document.getElementById('monitorUnlockBtn');
+                    if (lockBtn) lockBtn.style.display = 'none';
+                    if (unlockBtn) unlockBtn.style.display = 'block';
+                }
+            },
+
+            unlockStudent() {
+                if (!this._monitoringStudentId) return;
+                if (!confirm("Voulez-vous déverrouiller l'écran de cet étudiant ?")) return;
+                
+                if (this.socket) {
+                    this.socket.emit('unlock-student', { studentId: this._monitoringStudentId });
+                    const lockBtn = document.getElementById('monitorLockBtn');
+                    const unlockBtn = document.getElementById('monitorUnlockBtn');
+                    if (lockBtn) lockBtn.style.display = 'block';
+                    if (unlockBtn) unlockBtn.style.display = 'none';
+                }
             },
 
             _getRisk(p) {
