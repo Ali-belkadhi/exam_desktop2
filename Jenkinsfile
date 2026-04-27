@@ -72,8 +72,8 @@ pipeline {
 
                 script {
                     // Afficher les informations de build
-                    def gitCommit = bat(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-                    def gitBranch = env.BRANCH_NAME ?: bat(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    def gitCommit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    def gitBranch = env.BRANCH_NAME ?: sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
                     echo "Branche : ${gitBranch}"
                     echo "Commit  : ${gitCommit}"
                     currentBuild.displayName = "#${env.BUILD_NUMBER} — ${gitBranch}@${gitCommit}"
@@ -86,7 +86,7 @@ pipeline {
         stage('📦 Install Dependencies') {
             steps {
                 echo "=== Installation des dépendances npm ==="
-                bat 'npm ci --prefer-offline'
+                sh 'npm ci --prefer-offline'
             }
             post {
                 failure {
@@ -100,7 +100,7 @@ pipeline {
             steps {
                 echo "=== Vérification de l'architecture MVVM ==="
                 script {
-                    def result = bat(
+                    def result = sh(
                         script: 'node scripts/check-structure.js',
                         returnStatus: true
                     )
@@ -115,7 +115,7 @@ pipeline {
         stage('🔍 Lint JavaScript') {
             steps {
                 echo "=== ESLint sur ViewModels, Models, Views ==="
-                bat '''
+                sh '''
                     if not exist reports mkdir reports
                     npx eslint src/renderer/viewmodels/ src/renderer/models/ src/renderer/views/ src/main/ src/preload/ --ext .js --format stylish --output-file reports/eslint-report.txt --max-warnings=10
                 '''
@@ -139,7 +139,7 @@ pipeline {
         stage('🎨 Lint CSS') {
             steps {
                 echo "=== Stylelint sur assets/css/ ==="
-                bat '''
+                sh '''
                     if not exist reports mkdir reports
                     npx stylelint "src/renderer/assets/css/**/*.css" --formatter compact > reports/stylelint-report.txt 2>&1 || exit 0
                 '''
@@ -165,7 +165,7 @@ pipeline {
             steps {
                 echo "=== Exécution des tests unitaires ==="
                 script {
-                    def result = bat(
+                    def result = sh(
                         script: 'node scripts/run-tests.js',
                         returnStatus: true
                     )
@@ -192,7 +192,7 @@ pipeline {
             steps {
                 echo "=== Audit de sécurité npm ==="
                 script {
-                    def result = bat(
+                    def result = sh(
                         script: 'npm audit --audit-level=high --json > reports/audit-report.json 2>&1',
                         returnStatus: true
                     )
@@ -224,7 +224,7 @@ pipeline {
             }
             steps {
                 echo "=== Build de l'application Electron pour Windows ==="
-                bat 'npx electron-builder --win --publish never'
+                sh 'npx electron-builder --win --publish never'
 
                 script {
                     def distFiles = findFiles(glob: 'dist/*.exe')
