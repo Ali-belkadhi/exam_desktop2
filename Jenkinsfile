@@ -18,11 +18,8 @@
  */
 
 pipeline {
-
-    // ── Agent ──────────────────────────────────────────────────────
-    agent {
-        label 'windows'   // Exige un agent Windows (Electron nécessite Windows pour le build .exe)
-    }
+            
+    agent any
 
     // ── Options globales ───────────────────────────────────────────
     options {
