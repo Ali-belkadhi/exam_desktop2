@@ -1,22 +1,3 @@
-/**
- * ════════════════════════════════════════════════════════════════
- *  Jenkinsfile — Pipeline CI/CD pour Pim_App_Safe (SafeExam)
- *  Application Electron avec architecture MVVM
- * ════════════════════════════════════════════════════════════════
- *
- *  STAGES :
- *  1. Checkout       — Récupérer le code source
- *  2. Install        — Installer les dépendances npm
- *  3. Structure      — Vérifier l'architecture MVVM
- *  4. Lint JS        — ESLint sur les ViewModels / Models / Views
- *  5. Lint CSS       — Stylelint sur les fichiers CSS
- *  6. Tests          — Tests unitaires (Models + Config)
- *  7. Security Audit — npm audit (vulnérabilités)
- *  8. Build          — Compiler l'app Electron (branche main uniquement)
- *  9. Archive        — Archiver l'installeur généré
- * 10. Notify         — Notification de résultat
- */
-
 pipeline {
     agent any
 
@@ -24,6 +5,10 @@ pipeline {
         timeout(time: 30, unit: 'MINUTES')
         disableConcurrentBuilds()
         timestamps()
+    }
+
+    parameters {
+        booleanParam(name: 'SKIP_BUILD', defaultValue: true, description: 'Ignorer le build Electron')
     }
 
     environment {
@@ -97,6 +82,9 @@ pipeline {
         }
 
         stage('Build Electron') {
+            when {
+                expression { return !params.SKIP_BUILD }
+            }
             steps {
                 sh 'npm run build'
             }
