@@ -72,10 +72,20 @@ pipeline {
             }
         }
 
-        stage('SonarQube') {
+       stage('SonarQube') {
     steps {
         withSonarQubeEnv('SonarQube') {
-            sh 'sonar-scanner'
+            withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                sh '''
+                    sonar-scanner \
+                    -Dsonar.projectKey=smart_exam \
+                    -Dsonar.projectName=smart_exam \
+                    -Dsonar.sources=src \
+                    -Dsonar.host.url=$SONAR_HOST_URL \
+                    -Dsonar.login=$SONAR_TOKEN \
+                    -Dsonar.exclusions=node_modules/**,dist/**,reports/**
+                '''
+            }
         }
     }
 }
