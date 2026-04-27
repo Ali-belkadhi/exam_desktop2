@@ -1,0 +1,41 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-console": "off",
+    "no-undef": "warn",
+    "semi": ["warn", "always"],
+    "eqeqeq": ["error", "always"],
+    "no-var": "error",
+    "prefer-const": "warn"
+  },
+  "globals": {
+    "window": "readonly",
+    "document": "readonly",
+    "sessionStorage": "readonly",
+    "localStorage": "readonly",
+    "fetch": "readonly",
+    "APP_CONFIG": "readonly",
+    "LoginVM": "readonly",
+    "SessionVM": "readonly",
+    "DesktopVM": "readonly",
+    "QuizVM": "readonly",
+    "ProfVM": "readonly",
+    "ProfData": "readonly",
+    "BrowserVM": "readonly",
+    "UI": "readonly",
+    "io": "readonly",
+    "jspdf": "readonly",
+    "User": "readonly",
+    "Session": "readonly",
+    "Student": "readonly"
+  }
+}

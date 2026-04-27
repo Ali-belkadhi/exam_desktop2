@@ -4,13 +4,31 @@
   "description": "Educational App with MVVM and Electron",
   "main": "src/main/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "lint:js": "eslint src/renderer/viewmodels/ src/renderer/models/ src/renderer/views/ src/main/ src/preload/ --ext .js --max-warnings=0",
+    "lint:css": "stylelint \"src/renderer/assets/css/**/*.css\"",
+    "lint": "npm run lint:js && npm run lint:css",
+    "test": "node scripts/run-tests.js",
+    "test:structure": "node scripts/check-structure.js",
+    "audit": "npm audit --audit-level=high",
+    "build": "electron-builder --win --publish never"
   },
   "devDependencies": {
-    "electron": "^29.1.0"
+    "electron": "^29.1.0",
+    "electron-builder": "^24.13.3",
+    "eslint": "^8.57.0",
+    "stylelint": "^16.0.0",
+    "stylelint-config-standard": "^36.0.0"
   },
   "dependencies": {
     "monaco-editor": "^0.55.1",
     "socket.io-client": "^4.8.3"
+  },
+  "build": {
+    "appId": "com.esprit.safexam",
+    "productName": "SafeExam",
+    "directories": { "output": "dist" },
+    "win": { "target": "nsis" },
+    "files": ["src/**/*", "!src/renderer/assets/css/eprit3.jpg"]
   }
 }
