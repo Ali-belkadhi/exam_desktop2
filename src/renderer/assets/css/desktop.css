@@ -1,0 +1,598 @@
+/**
+ * ════════════════════════════════════════════════════════════════
+ *  desktop.css  —  Styles de l'environnement desktop étudiant
+ *  Dépend de : design-system.css (thème OS clair/sombre)
+ * ════════════════════════════════════════════════════════════════
+ */
+
+/* ── OS Layout ─────────────────────────────────────────────── */
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.os-desktop {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ── Widget info du cours (flottant haut-droite) ───────────── */
+.course-widget {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background-color: var(--surface-color);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 16px;
+    border-radius: var(--radius-window);
+    box-shadow: var(--shadow-inactive);
+    border: 1px solid var(--border);
+    width: 280px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--success);
+    display: inline-block;
+    margin-right: 6px;
+    transition: background-color 0.3s;
+}
+
+.status-dot.paused {
+    background-color: var(--warning);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+@keyframes blinker {
+    50% { opacity: 0.3; }
+}
+
+.timer-paused {
+    animation: blinker 1.5s linear infinite;
+    color: var(--warning) !important;
+}
+
+/* ── OS Windows ────────────────────────────────────────────── */
+.os-window {
+    position: absolute;
+    top: 50px;
+    left: 100px;
+    width: 800px;
+    height: 500px;
+    background-color: var(--window-bg);
+    border-radius: var(--radius-window);
+    box-shadow: var(--shadow-active);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    transform: scale(0.98);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+}
+
+.os-window.active {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: all;
+    z-index: 100;
+}
+
+.os-window.minimized { display: none; }
+
+.os-window.maximized {
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: calc(100% - 1px) !important;
+    border-radius: 0;
+    z-index: 200 !important;
+}
+
+/* ── Window Header / Chrome ────────────────────────────────── */
+.window-header {
+    height: 40px;
+    background-color: var(--window-header);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    cursor: grab;
+    user-select: none;
+}
+
+.window-header:active { cursor: grabbing; }
+
+.window-controls {
+    display: flex;
+    gap: 8px;
+    -webkit-app-region: no-drag;
+}
+
+.win-btn {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: 900;
+}
+
+.win-btn.close    { background-color: #EF4444; }
+.win-btn.close:hover    { background-color: #DC2626; }
+.win-btn.minimize { background-color: #F59E0B; }
+.win-btn.minimize:hover { background-color: #D97706; }
+.win-btn.maximize { background-color: #10B981; }
+.win-btn.maximize:hover { background-color: #059669; }
+
+.window-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* ── Browser Window ────────────────────────────────────────── */
+.browser-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--window-header);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.browser-nav-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+    transition: background 0.15s;
+}
+
+.browser-nav-btn:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.08);
+    color: var(--text-primary);
+}
+
+.browser-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.browser-address-bar {
+    flex: 1;
+    height: 30px;
+    background: var(--window-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0 12px 0 32px;
+    font-size: 13px;
+    color: var(--text-primary);
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.browser-address-bar:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.addr-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.security-icon {
+    position: absolute;
+    left: 10px;
+    font-size: 13px;
+}
+
+.browser-webview { flex: 1; width: 100%; border: none; }
+
+.browser-statusbar {
+    height: 20px;
+    background: var(--window-header);
+    border-top: 1px solid var(--border);
+    padding: 0 12px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+}
+
+.browser-error {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 32px;
+    background: var(--window-bg);
+    z-index: 5;
+}
+
+.browser-error.visible { display: flex; }
+.browser-error h3 { color: var(--text-primary); font-size: 16px; }
+.browser-error p  { font-size: 13px; max-width: 320px; line-height: 1.5; }
+
+#browser-body { position: relative; }
+
+/* ── Taskbar Windows 11 ────────────────────────────────────── */
+.os-taskbar {
+    height: 48px;
+    background-color: var(--surface-color);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    box-shadow: var(--shadow-taskbar);
+    z-index: 999;
+}
+
+.taskbar-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.taskbar-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    font-size: 18px;
+    position: relative;
+}
+
+.taskbar-icon:hover { background-color: rgba(0, 0, 0, 0.05); }
+
+.taskbar-icon.open::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    width: 16px;
+    height: 3px;
+    background-color: var(--primary);
+    border-radius: 3px;
+}
+
+#tb-pdf { display: none; }
+
+.start-btn {
+    background-color: var(--primary);
+    color: white;
+    border-radius: 8px !important;
+}
+
+.start-btn:hover { background-color: var(--primary-hover); }
+
+.taskbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ── Launcher (Start Menu) ─────────────────────────────────── */
+.os-launcher {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    width: 400px;
+    background-color: var(--surface-color);
+    backdrop-filter: blur(30px);
+    border-radius: var(--radius-window);
+    box-shadow: var(--shadow-active);
+    border: 1px solid var(--border);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1000;
+}
+
+.os-launcher.open {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(-50%) translateY(0);
+}
+
+.search-bar {
+    width: 100%;
+    height: 40px;
+    border-radius: var(--radius-ui);
+    border: 1px solid var(--border);
+    background-color: var(--window-bg);
+    padding: 0 16px;
+    margin-bottom: 24px;
+    outline: none;
+}
+
+.launcher-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    text-align: center;
+}
+
+.launcher-app {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: var(--radius-ui);
+}
+
+.launcher-app:hover { background-color: rgba(0, 0, 0, 0.05); }
+
+/* ── Explorer Sidebar/Pane ─────────────────────────────────── */
+.resources-layout {
+    display: flex;
+    width: 100%;
+}
+
+.sidebar {
+    width: 220px;
+    border-right: 1px solid var(--border);
+    padding: 16px;
+    background-color: var(--window-header);
+}
+
+.sidebar-item {
+    padding: 8px 12px;
+    border-radius: var(--radius-ui);
+    margin-bottom: 4px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.sidebar-item:hover,
+.sidebar-item.active {
+    background-color: var(--primary);
+    color: white;
+}
+
+.main-pane {
+    flex: 1;
+    padding: 24px;
+    background-color: var(--window-bg);
+    overflow-y: auto;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.resource-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-ui);
+    padding: 16px;
+    transition: transform 0.1s;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background-color: var(--window-bg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.resource-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary);
+}
+
+.card-icon { font-size: 24px; }
+
+/* ── Modal (Desktop) ───────────────────────────────────────── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal {
+    background: var(--window-bg);
+    padding: 24px;
+    border-radius: var(--radius-window);
+    width: 400px;
+    box-shadow: var(--shadow-active);
+    border: 1px solid var(--border);
+}
+
+/* ── Upload Alert Toast ────────────────────────────────────── */
+.upload-alert {
+    position: fixed;
+    right: 16px;
+    bottom: 74px;
+    z-index: 2600;
+    min-width: 320px;
+    max-width: 420px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(17, 24, 39, 0.96);
+    color: #e5e7eb;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(8px);
+}
+
+.upload-alert.show { display: flex; }
+
+.upload-alert-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+@keyframes upload-pulse {
+    0%   { transform: scale(1);    opacity: 0.9; }
+    50%  { transform: scale(1.08); opacity: 1;   }
+    100% { transform: scale(1);    opacity: 0.9; }
+}
+
+.upload-alert.loading .upload-alert-icon {
+    background: rgba(88, 101, 242, 0.25);
+    color: #a5b4fc;
+    animation: upload-pulse 1s ease-in-out infinite;
+}
+
+.upload-alert.success .upload-alert-icon { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.upload-alert.error   .upload-alert-icon { background: rgba(239, 68, 68, 0.2);  color: #ef4444; }
+
+.upload-alert-title   { font-size: 12px; font-weight: 700; color: #f8fafc; margin-bottom: 2px; }
+.upload-alert-message { font-size: 12px; color: rgba(229, 231, 235, 0.85); word-break: break-word; }
+
+/* ── Calculator ────────────────────────────────────────────── */
+.calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 20px;
+    background: var(--window-bg);
+    flex: 1;
+}
+
+.btn-calc {
+    height: 50px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-color);
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-calc:hover     { background: rgba(255, 255, 255, 0.05); border-color: var(--primary); }
+.btn-calc.operator  { background: rgba(88, 101, 242, 0.1); color: var(--primary); }
+.btn-calc.equals    { background: var(--primary); color: white; grid-column: span 2; }
+
+#calc-display {
+    width: 100%;
+    height: 60px;
+    background: var(--window-header);
+    border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    text-align: right;
+    font-size: 24px;
+    color: var(--text-primary);
+    outline: none;
+}
+
+/* ── Notepad ───────────────────────────────────────────────── */
+.notepad-area {
+    flex: 1;
+    background: var(--window-bg);
+    border: none;
+    padding: 20px;
+    color: var(--text-primary);
+    font-family: var(--font-family, 'Inter', sans-serif);
+    font-size: 14px;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+}
+
+/* ── Pause Overlay ─────────────────────────────────────────── */
+.pause-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    user-select: none;
+}
+
+.pause-content {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 40px;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.pause-icon { font-size: 64px; animation: pulse-pause 2s infinite; }
+
+@keyframes pulse-pause {
+    0%   { transform: scale(1);   opacity: 1; }
+    50%  { transform: scale(1.1); opacity: 0.7; }
+    100% { transform: scale(1);   opacity: 1; }
+}

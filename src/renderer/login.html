@@ -1,258 +1,27 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Connexion</title>
+    <title>Connexion — SafeExam</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="./assets/css/theme.css" />
+    <link rel="stylesheet" href="./assets/css/components.css" />
     <link rel="stylesheet" href="./assets/css/animation_man_boxes.css" />
-    <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        html,
-        body {
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        body {
-            background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
-                url('./assets/css/eprit3.jpg') no-repeat center center fixed;
-            background-size: cover;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 24px;
-            -webkit-app-region: no-drag;
-        }
-
-        /* Glassmorphism Card */
-        .card {
-            position: relative;
-            z-index: 10;
-            -webkit-app-region: no-drag;
-            width: 440px;
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(32px) saturate(180%);
-            -webkit-backdrop-filter: blur(32px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 28px;
-            padding: 48px 40px;
-            box-shadow:
-                0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-                0 40px 80px rgba(0, 0, 0, 0.5);
-            animation: fadeUp .6s cubic-bezier(.16, 1, .3, 1) both;
-        }
-
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(.98);
-            }
-
-            to {
-                opacity: 1;
-                transform: none;
-            }
-        }
-
-        /* Header */
-        .card-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .card-header h1 {
-            font-size: 28px;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: -.5px;
-            margin-bottom: 8px;
-        }
-
-        .card-header p {
-            font-size: 14px;
-            color: #72767d;
-            display: none;
-        }
-
-        /* Form */
-        .form-group {
-            margin-bottom: 18px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: .07em;
-            text-transform: uppercase;
-            color: #b5bac1;
-            margin-bottom: 7px;
-        }
-
-        .form-group label .req {
-            color: #ed4245;
-            margin-left: 2px;
-        }
-
-        /* Input */
-        .input-wrap {
-            position: relative;
-            -webkit-app-region: no-drag;
-        }
-
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            height: 48px;
-            padding: 0 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 15px;
-            font-family: 'Inter', sans-serif;
-            outline: none;
-            transition: all .2s;
-            -webkit-app-region: no-drag;
-        }
-
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        input:focus {
-            border-color: rgba(88, 101, 242, 0.5);
-            background: rgba(88, 101, 242, 0.05);
-            box-shadow: 0 0 0 4px rgba(88, 101, 242, 0.1);
-        }
-
-        /* Eye toggle */
-        .pw-toggle {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #4e5058;
-            cursor: pointer;
-            font-size: 15px;
-            padding: 0;
-            line-height: 1;
-            transition: color .15s;
-        }
-
-        .pw-toggle:hover {
-            color: #b5bac1;
-        }
-
-        /* Forgot link */
-        .forgot-link {
-            display: block;
-            margin-top: 8px;
-            text-align: right;
-            font-size: 13px;
-            color: #5865f2;
-            cursor: pointer;
-            font-weight: 500;
-            transition: color .15s;
-        }
-
-        .forgot-link:hover {
-            color: #7289da;
-            text-decoration: underline;
-        }
-
-        /* Error */
-        .error-msg {
-            font-size: 13px;
-            color: #ed4245;
-            background: rgba(237, 66, 69, .08);
-            border: 1px solid rgba(237, 66, 69, .2);
-            border-radius: 8px;
-            padding: 10px 14px;
-            margin-bottom: 16px;
-            display: none;
-            line-height: 1.4;
-        }
-
-        /* Submit button */
-        .btn-primary {
-            width: 100%;
-            height: 50px;
-            margin-top: 12px;
-            background: linear-gradient(135deg, #1e1f23, #2f3136);
-            color: #fff;
-            font-size: 15px;
-            font-weight: 600;
-            font-family: 'Inter', sans-serif;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all .2s;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            -webkit-app-region: no-drag;
-        }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #2f3136, #36393f);
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-primary:active {
-            transform: scale(.98);
-        }
-
-        .btn-primary:disabled {
-            opacity: .45;
-            cursor: not-allowed;
-            filter: none;
-            box-shadow: none;
-        }
-
-        /* Spinner */
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255, 255, 255, .3);
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin .7s linear infinite;
-        }
-    </style>
+    <link rel="stylesheet" href="./assets/css/login.css" />
+    <!-- Config globale -->
+    <script src="./config.js"></script>
 </head>
 
 <body>
     <!-- Background is now handled via CSS with eprit3.jpg -->
 
     <!-- Navigation/Logo Bar with Custom Logo -->
-    <div style="position: fixed; top: 15px; left: 10px; z-index: 100;">
-        <img src="./assets/css/esprit2.png" alt="Logo"
+    <div class="logo-wrap">
+        <img src="./assets/images/esprit2.png" alt="Logo"
             style="height: 120px; filter: drop-shadow(0 6px 15px rgba(0,0,0,0.4));">
     </div>
 

@@ -28,13 +28,10 @@ class LoginVM {
         this.errorMessage = '';
         this.updateView = updateViewCallback;
 
-        // ── Configuration backend ──────────────────────────────────────────
-        this.API_BASE = 'https://safe-exam-db-ll3f.onrender.com';
-        localStorage.setItem('apiBase', this.API_BASE);
-
-        // Compte service (super-admin) pour les recherches d'étudiants
-        this.SERVICE_EMAIL = 'jean.dupont@university.edu';
-        this.SERVICE_PASSWORD = 'SecureP@ss123';
+        // ── Configuration backend (source : config.js) ────────────────────
+        this.API_BASE        = window.APP_CONFIG.API_BASE;
+        this.SERVICE_EMAIL   = window.APP_CONFIG.SERVICE_EMAIL;
+        this.SERVICE_PASSWORD= window.APP_CONFIG.SERVICE_PASSWORD;
     }
 
     setEmail(val) { this.email = val.trim(); }
