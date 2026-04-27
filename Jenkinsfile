@@ -72,20 +72,13 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh '''
-                        npx sonar-scanner \
-                        -Dsonar.projectKey=smart_exam \
-                        -Dsonar.projectName=smart_exam \
-                        -Dsonar.sources=src \
-                        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                        -Dsonar.exclusions=node_modules/**,dist/**,reports/**
-                    '''
-                }
-            }
+        stage('SonarQube') {
+    steps {
+        withSonarQubeEnv('SonarQube') {
+            sh 'sonar-scanner'
         }
+    }
+}
 
         stage('Security Audit') {
             steps {
