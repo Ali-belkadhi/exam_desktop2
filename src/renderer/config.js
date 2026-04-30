@@ -21,10 +21,34 @@ window.APP_CONFIG = Object.freeze({
     /** Intervalle du heartbeat étudiant en millisecondes */
     HEARTBEAT_INTERVAL_MS: 1000,
     /** Timeout réseau pour les requêtes fetch (ms) */
-    FETCH_TIMEOUT_MS: 5000,
+    FETCH_TIMEOUT_MS: 8000,
 
     // ── Application ──────────────────────────────────────────────
     APP_NAME:    'SafeExam',
     APP_VERSION: '1.0.0',
 
 });
+
+/**
+ * ── FIX PERFORMANCE #1 : Anti-Cold-Start Render Free ────────────
+ * Envoie un ping au backend toutes les 9 minutes pour que le serveur
+ * Render ne se mette jamais en veille (évite le cold start de 15-30s).
+ */
+(function startKeepAlive() {
+    const pingUrl = window.APP_CONFIG.API_BASE + '/auth/config-test';
+    const pingInterval = 9 * 60 * 1000; // 9 minutes
+    let pingTimer = null;
+
+    function doPing() {
+        fetch(pingUrl, { method: 'GET' }).catch(() => { /* silencieux */ });
+    }
+
+    function startPing() {
+        if (pingTimer) clearInterval(pingTimer);
+        pingTimer = setInterval(doPing, pingInterval);
+        console.log('[KeepAlive] Ping Render activé — intervalle 9 min');
+    }
+
+    // Démarrer après un court délai (laisser l'app s'initialiser d'abord)
+    setTimeout(startPing, 5000);
+})();

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ViewModel : ProfessorVM (ProfVM + ProfData)
  * Extrait de professor.html — architecture MVVM
  * Config : window.APP_CONFIG
@@ -339,8 +339,13 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                         const encodedClass = encodeURIComponent(folder.className || 'Classe');
                         return `
                             <div class="work-card folder" onclick="ProfVM.openWorkClass('${encodedClass}')">
-                                <div class="work-card-title">📁 ${_escapeHtml(folder.className || 'Classe inconnue')}</div>
-                                <div class="work-card-meta">${folder.totalFiles || 0} fichier(s) · ${(folder.students || []).length} étudiant(s)</div>
+                                <div class="work-card-title">
+                                    <span style="font-size: 20px;">📁</span> 
+                                    ${_escapeHtml(folder.className || 'Classe inconnue')}
+                                </div>
+                                <div class="work-card-meta" style="margin-top: 4px;">
+                                    ${folder.totalFiles || 0} fichier(s) · ${(folder.students || []).length} étudiant(s)
+                                </div>
                             </div>
                         `;
                     }).join('');
@@ -348,7 +353,7 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                 }
 
                 const selected = ProfData.workFolders.find(c => c.className === ProfData.workCurrentClass);
-                breadcrumb.textContent = `Classes / ${ProfData.workCurrentClass}`;
+                breadcrumb.innerHTML = `Classes <span style="margin: 0 4px; opacity: 0.5;">/</span> <span style="color: #fff;">${ProfData.workCurrentClass}</span>`;
                 backBtn.style.display = 'inline-flex';
 
                 if (!selected) {
@@ -363,19 +368,29 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                         return `
                             <div class="work-file-item">
                                 <div>
-                                    <div class="work-file-name" title="${_escapeHtml(file.fileName || 'travail.zip')}">📦 ${_escapeHtml(file.fileName || 'travail.zip')}</div>
-                                    <div class="work-card-meta">${_escapeHtml(file.sessionCode || '------')} · ${_escapeHtml(uploadedAt)}</div>
+                                    <div class="work-file-name" title="${_escapeHtml(file.fileName || 'travail.zip')}">
+                                        <span style="font-size: 14px;">📦</span> ${_escapeHtml(file.fileName || 'travail.zip')}
+                                    </div>
+                                    <div class="work-card-meta" style="margin-top: 2px;">
+                                        ${_escapeHtml(file.sessionCode || '------')} · ${_escapeHtml(uploadedAt)}
+                                    </div>
                                 </div>
-                                <button class="work-file-btn" onclick="event.stopPropagation(); ProfVM.downloadSubmission('${file.submissionId}', '${encodedFileName}')">Télécharger</button>
+                                <button class="work-file-btn" onclick="event.stopPropagation(); ProfVM.downloadSubmission('${file.submissionId}', '${encodedFileName}')">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                    Télécharger
+                                </button>
                             </div>
                         `;
                     }).join('');
 
                     return `
                         <div class="work-card">
-                            <div class="work-card-title">🧑‍🎓 ${_escapeHtml(student.studentName || 'Etudiant')}</div>
-                            <div class="work-card-meta">${student.totalFiles || 0} fichier(s)</div>
-                            <div class="work-file-list">${fileRows || '<div class="work-card-meta">Aucun fichier</div>'}</div>
+                            <div class="work-card-title">
+                                <span style="background: rgba(255,255,255,0.1); border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🧑‍🎓</span> 
+                                ${_escapeHtml(student.studentName || 'Etudiant')}
+                            </div>
+                            <div class="work-card-meta">${student.totalFiles || 0} fichier(s) envoyés</div>
+                            <div class="work-file-list">${fileRows || '<div class="work-card-meta" style="text-align:center; padding: 10px;">Aucun fichier</div>'}</div>
                         </div>
                     `;
                 }).join('');
@@ -682,9 +697,62 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                         this.socket.emit('watchSession', id);
                     });
 
+                    // ── Polling localStorage toutes les 3s pour détecter les étudiants en attente ──
+                    // FIX PERF #3 : Le polling NE DÉCLENCHE PLUS d'appel API.
+                    // Il met à jour le Set local puis re-rendu l'UI depuis le cache.
+                    if (this._waitingPollInterval) clearInterval(this._waitingPollInterval);
+                    this._waitingPollInterval = setInterval(() => {
+                        try {
+                            const waitingKey = `_waiting_${id}`;
+                            const list = JSON.parse(localStorage.getItem(waitingKey) || '[]');
+                            let changed = false;
+                            list.forEach(entry => {
+                                if (entry.studentId && !this._waitingStudentsSet.has(entry.studentId.toString())) {
+                                    this._waitingStudentsSet.add(entry.studentId.toString());
+                                    changed = true;
+                                }
+                            });
+                            if (changed) {
+                                console.log('[Prof] Polling: nouveau(x) étudiant(s) en attente détecté(s) — re-rendu UI uniquement');
+                                // Re-rendu léger depuis le cache (PAS d'appel API)
+                                this._rerenderParticipantsFromCache(id);
+                            }
+                        } catch(e) { /* silencieux */ }
+                    }, 3000);
+
                     this.socket.on('studentPresenceChanged', () => {
                         this.refreshSessionDetails(id, true);
                     });
+
+                    // ── Étudiant en salle d'attente ── (nouveau)
+                    this.socket.on('student-waiting', (data) => {
+                        console.log('[Prof] Étudiant en attente (WebSocket):', data.studentId, data.studentName);
+                        if (data.studentId) {
+                            this._waitingStudentsSet.add(data.studentId.toString());
+                        }
+                        this.refreshSessionDetails(id, true);
+                    });
+
+                    // ── Écoute localStorage pour détecter nouveaux étudiants en attente (même app Electron) ──
+                    if (!this._storageListenerActive) {
+                        this._storageListenerActive = true;
+                        window.addEventListener('storage', (event) => {
+                            if (event.key && event.key.startsWith('_waiting_')) {
+                                const testIdFromKey = event.key.replace('_waiting_', '');
+                                console.log('[Prof] localStorage changé - étudiant en attente pour test:', testIdFromKey);
+                                try {
+                                    const list = JSON.parse(event.newValue || '[]');
+                                    list.forEach(entry => {
+                                        if (entry.studentId) this._waitingStudentsSet.add(entry.studentId.toString());
+                                    });
+                                } catch(e) { /* silent */ }
+                                // Rafraîchir si c'est la session actuelle
+                                if (testIdFromKey === id) {
+                                    this.refreshSessionDetails(id, true);
+                                }
+                            }
+                        });
+                    }
 
                     // ── Écouter les alertes monitoring de tous les étudiants ──
                     this.socket.on('student-monitoring-update', (data) => {
@@ -723,15 +791,110 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                     });
                 }
 
-                // Fallback lent en arrière plan au cas où
+                // FIX PERF #4 : Fallback à 30s (au lieu de 15s) pour réduire la charge serveur
                 if (ProfData.detailsInterval) clearInterval(ProfData.detailsInterval);
                 ProfData.detailsInterval = setInterval(() => {
                     this.refreshSessionDetails(id, true);
-                }, 15000);
+                }, 30000);
             },
 
             // ── Carte des risques par étudiant (mis à jour via monitoring) ──
             _studentRiskMap: {}, // { studentId: 'high'|'medium'|'low'|'inactive' }
+
+            // ── Set des étudiants EN ATTENTE d'accès (géré localement, indépendant de l'API) ──
+            _waitingStudentsSet: new Set(), // Set<studentId string>
+
+            /**
+             * FIX PERF #3 — Re-rendu léger de la liste des étudiants depuis le CACHE mémoire.
+             * Ne fait AUCUN appel API. Met à jour uniquement les badges "En attente"
+             * pour les nouveaux étudiants détectés via localStorage polling.
+             * @param {string} id - session ID (pour contexte)
+             */
+            _rerenderParticipantsFromCache(id) {
+                const data = ProfData.currentSessionDetails;
+                if (!data) return; // Pas encore de données chargées → attendre le prochain refresh API
+
+                const students = data.classe && data.classe.students ? data.classe.students : [];
+                const participants = data.participants || [];
+                if (students.length === 0) return;
+
+                let countActif = 0;
+                let countInactif = 0;
+                let html = '';
+
+                students.forEach(st => {
+                    const sid = st._id || st.id || st;
+                    const pObj = participants.find(p => {
+                        let pid = '';
+                        if (p.student) {
+                            pid = (typeof p.student === 'object') ? (p.student._id || p.student.id) : p.student;
+                        } else {
+                            pid = p._id || p.id || p;
+                        }
+                        return pid && sid && pid.toString() === sid.toString();
+                    });
+
+                    const sidStr = sid ? sid.toString() : '';
+                    const isWaiting = sidStr && this._waitingStudentsSet.has(sidStr);
+                    const isActif = !isWaiting && (pObj ? (pObj.status === 'actif') : false);
+                    const hasNote = pObj && pObj.quizResult;
+
+                    if (isActif) countActif++; else countInactif++;
+
+                    const riskLevel = isActif ? (this._studentRiskMap[sidStr] || 'low') : 'inactive';
+                    const avatarBg = isActif
+                        ? 'background:linear-gradient(135deg,#10b981,#059669);'
+                        : (isWaiting ? 'background:linear-gradient(135deg,#f59e0b,#d97706);' : '');
+
+                    const screenBtn = isActif
+                        ? `<button class="pm-action-btn" title="Voir l'écran" onclick="ProfVM.viewStudentScreenInPanel('${sid}','${st.prenom} ${st.nom}')">📺</button>`
+                        : '';
+                    const monitorBtn = isActif
+                        ? `<button class="pm-action-btn" title="Surveiller" style="border-color:rgba(249,115,22,.4);color:#f97316;" onclick="ProfVM.openMonitorModal('${sid}','${st.prenom} ${st.nom}')">🔍</button>`
+                        : '';
+                    const msgBtn = isActif
+                        ? `<button class="pm-action-btn" title="Message privé" style="border-color:rgba(99,102,241,.4);color:#818cf8;" onclick="ProfVM.openMessageModal('${sid}','${st.prenom} ${st.nom}')">💬</button>`
+                        : '';
+                    const acceptBtn = isWaiting
+                        ? `<button class="pm-action-btn" title="Accorder l'accès" style="border-color:rgba(16,185,129,.5); background:rgba(16,185,129,.1); color:#10b981;" onclick="ProfVM.grantAccess('${id}', '${sid}')">✔️</button>
+                           <button class="pm-action-btn" title="Refuser l'accès" style="border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.1); color:#ef4444;" onclick="ProfVM.denyAccess('${id}', '${sid}')">❌</button>`
+                        : '';
+                    const noteHtml = hasNote
+                        ? `<span style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; font-size:10px; padding:2px 8px; border-radius:8px; font-weight:800; white-space:nowrap; flex-shrink:0;">✓ ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>`
+                        : '';
+
+                    let badgeHtml = `<span class="pm-student-badge">Inscrit</span>`;
+                    if (isActif) {
+                        badgeHtml = `<span class="pm-student-badge actif">Actif</span>`;
+                    } else if (isWaiting) {
+                        badgeHtml = `<span class="pm-student-badge" style="color:#f59e0b; border-color:rgba(245,158,11,.3); background:rgba(245,158,11,.1);">En attente</span>`;
+                    }
+
+                    html += `
+                        <div class="pm-student-item" id="pm-student-${sid}">
+                            <div class="pm-student-avatar" style="${avatarBg}">
+                                ${(st.prenom && st.nom) ? (st.prenom[0] + st.nom[0]).toUpperCase() : '??'}
+                                <div class="pm-risk-dot ${riskLevel}"></div>
+                            </div>
+                            <div class="pm-student-info">
+                                <div class="pm-student-name" style="white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.1;">${st.prenom} ${st.nom}</div>
+                                <div class="pm-student-nc">NC: ${st.studentCardNumber || 'N/A'}</div>
+                            </div>
+                            <div class="pm-student-actions" style="display:flex; gap:6px; align-items:center;">
+                                ${acceptBtn}${screenBtn}${monitorBtn}${msgBtn}${noteHtml}${badgeHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                const participantsList = document.getElementById('participantsList');
+                if (participantsList) participantsList.innerHTML = html;
+
+                const cA = document.getElementById('pm-count-actif');
+                const cI = document.getElementById('pm-count-inactif');
+                if (cA) cA.textContent = countActif;
+                if (cI) cI.textContent = countInactif;
+            },
 
             async refreshSessionDetails(id, isSilent = false, _retryCount = 0) {
                 const participantsList = document.getElementById('participantsList');
@@ -752,7 +915,8 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                 try {
                     const token = sessionStorage.getItem('accessToken');
                     const controller = new AbortController();
-                    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+                    // FIX PERF #5 : Timeout réduit à 8s (au lieu de 15s) pour éviter de bloquer l'UI 27s
+                    const timeout = setTimeout(() => controller.abort(), 8000);
                     let resp;
                     try {
                         resp = await fetch(`${API_BASE}/practical-tests/${id}`, {
@@ -795,6 +959,17 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                     const students = data.classe && data.classe.students ? data.classe.students : [];
                     const participants = data.participants || [];
 
+                    // ── Lire les étudiants en attente depuis localStorage (source de vérité) ──
+                    try {
+                        const waitingKey = `_waiting_${id}`;
+                        const waitingList = JSON.parse(localStorage.getItem(waitingKey) || '[]');
+                        waitingList.forEach(entry => {
+                            if (entry.studentId) {
+                                this._waitingStudentsSet.add(entry.studentId.toString());
+                            }
+                        });
+                    } catch(e) { /* silent */ }
+
                     // ── Calculer actifs / non actifs ──
                     let countActif = 0;
                     let countInactif = 0;
@@ -819,8 +994,11 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                                 }
                                 return pid && sid && pid.toString() === sid.toString();
                             });
-
-                            const isActif = pObj ? (pObj.status === 'actif') : false;
+                            // ⚠️ _waitingStudentsSet est la SOURCE DE VÉRITÉ (indépendant de l'API)
+                            const sidStr = sid ? sid.toString() : '';
+                            const isWaiting = sidStr && this._waitingStudentsSet.has(sidStr);
+                            // Un étudiant en attente ne peut pas être "actif" visuellement
+                            const isActif = !isWaiting && (pObj ? (pObj.status === 'actif') : false);
                             const hasNote = pObj && pObj.quizResult;
 
                             if (isActif) countActif++; else countInactif++;
@@ -833,7 +1011,7 @@ let API_BASE = window.APP_CONFIG.API_BASE;
 
                             const avatarBg = isActif
                                 ? 'background:linear-gradient(135deg,#10b981,#059669);'
-                                : '';
+                                : (isWaiting ? 'background:linear-gradient(135deg,#f59e0b,#d97706);' : '');
 
                             const screenBtn = isActif
                                 ? `<button class="pm-action-btn" title="Voir l'écran" onclick="ProfVM.viewStudentScreenInPanel('${sid}','${st.prenom} ${st.nom}')">📺</button>`
@@ -845,9 +1023,21 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                                 ? `<button class="pm-action-btn" title="Message privé" style="border-color:rgba(99,102,241,.4);color:#818cf8;" onclick="ProfVM.openMessageModal('${sid}','${st.prenom} ${st.nom}')">💬</button>`
                                 : '';
 
+                            const acceptBtn = isWaiting
+                                ? `<button class="pm-action-btn" title="Accorder l'accès" style="border-color:rgba(16,185,129,.5); background:rgba(16,185,129,.1); color:#10b981;" onclick="ProfVM.grantAccess('${id}', '${sid}')">✔️</button>
+                                   <button class="pm-action-btn" title="Refuser l'accès" style="border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.1); color:#ef4444;" onclick="ProfVM.denyAccess('${id}', '${sid}')">❌</button>`
+                                : '';
+
                             const noteHtml = hasNote
                                 ? `<span style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; font-size:10px; padding:2px 8px; border-radius:8px; font-weight:800; box-shadow: 0 2px 4px rgba(0,0,0,0.1); white-space:nowrap; flex-shrink:0;">✓ ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>`
                                 : '';
+
+                            let badgeHtml = `<span class="pm-student-badge">Inscrit</span>`;
+                            if (isActif) {
+                                badgeHtml = `<span class="pm-student-badge actif">Actif</span>`;
+                            } else if (isWaiting) {
+                                badgeHtml = `<span class="pm-student-badge" style="color:#f59e0b; border-color:rgba(245,158,11,.3); background:rgba(245,158,11,.1);">En attente</span>`;
+                            }
 
                             html += `
                                 <div class="pm-student-item" id="pm-student-${sid}">
@@ -859,12 +1049,13 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                                         <div class="pm-student-name" style="white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.1;">${st.prenom} ${st.nom}</div>
                                         <div class="pm-student-nc">NC: ${st.studentCardNumber || 'N/A'}</div>
                                     </div>
-                                    <div class="pm-student-actions">
+                                    <div class="pm-student-actions" style="display:flex; gap:6px; align-items:center;">
+                                        ${acceptBtn}
                                         ${screenBtn}
                                         ${monitorBtn}
                                         ${msgBtn}
                                         ${noteHtml}
-                                        <span class="pm-student-badge ${isActif ? 'actif' : ''}">${isActif ? 'Actif' : 'Inscrit'}</span>
+                                        ${badgeHtml}
                                     </div>
                                 </div>
                             `;
@@ -901,6 +1092,78 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                         `;
                         subheader.textContent = 'Erreur de chargement';
                     }
+                }
+            },
+
+            async grantAccess(testId, studentId) {
+                try {
+                    // 1. Retirer du set d'attente ET du localStorage (SOURCE DE VÉRITÉ)
+                    this._waitingStudentsSet.delete(studentId.toString());
+                    try {
+                        const waitingKey = `_waiting_${testId}`;
+                        const list = JSON.parse(localStorage.getItem(waitingKey) || '[]');
+                        const updated = list.filter(e => e.studentId !== studentId.toString());
+                        if (updated.length > 0) { localStorage.setItem(waitingKey, JSON.stringify(updated)); }
+                        else { localStorage.removeItem(waitingKey); }
+                    } catch(e) { /* silent */ }
+
+                    // 2. Mise à jour optimiste de l'UI (côté prof)
+                    if (ProfData.currentSessionDetails && ProfData.currentSessionDetails.participants) {
+                        const pObj = ProfData.currentSessionDetails.participants.find(p => {
+                            const pid = (typeof p.student === 'object') ? (p.student._id || p.student.id) : p.student;
+                            return pid && pid.toString() === studentId.toString();
+                        });
+                        if (pObj) pObj.status = 'actif';
+                    }
+                    this.refreshSessionDetails(testId, true);
+
+                    // 3. Envoyer via WebSocket → le backend émet 'student-access-granted' à l'étudiant
+                    if (this.socket) {
+                        this.socket.emit('grant-student-access', { testId, studentId });
+                        console.log('[Prof] grant-student-access émis pour:', studentId);
+                    } else {
+                        console.warn('[Prof] Socket non disponible pour grantAccess');
+                    }
+                    // 4. Fallback localStorage (même app Electron = même localStorage)
+                    localStorage.setItem('_accessGranted_' + studentId, '1');
+                } catch(e) {
+                    console.error('Error granting access', e);
+                }
+            },
+
+            async denyAccess(testId, studentId) {
+                try {
+                    // 1. Retirer du set d'attente ET du localStorage (SOURCE DE VÉRITÉ)
+                    this._waitingStudentsSet.delete(studentId.toString());
+                    try {
+                        const waitingKey = `_waiting_${testId}`;
+                        const list = JSON.parse(localStorage.getItem(waitingKey) || '[]');
+                        const updated = list.filter(e => e.studentId !== studentId.toString());
+                        if (updated.length > 0) { localStorage.setItem(waitingKey, JSON.stringify(updated)); }
+                        else { localStorage.removeItem(waitingKey); }
+                    } catch(e) { /* silent */ }
+
+                    // 2. Mise à jour optimiste de l'UI (côté prof)
+                    if (ProfData.currentSessionDetails && ProfData.currentSessionDetails.participants) {
+                        const pObj = ProfData.currentSessionDetails.participants.find(p => {
+                            const pid = (typeof p.student === 'object') ? (p.student._id || p.student.id) : p.student;
+                            return pid && pid.toString() === studentId.toString();
+                        });
+                        if (pObj) pObj.status = 'refused';
+                    }
+                    this.refreshSessionDetails(testId, true);
+
+                    // 3. Envoyer via WebSocket → le backend émet 'student-access-denied' à l'étudiant
+                    if (this.socket) {
+                        this.socket.emit('deny-student-access', { testId, studentId });
+                        console.log('[Prof] deny-student-access émis pour:', studentId);
+                    } else {
+                        console.warn('[Prof] Socket non disponible pour denyAccess');
+                    }
+                    // 4. Fallback localStorage (même app Electron = même localStorage)
+                    localStorage.setItem('_accessDenied_' + studentId, '1');
+                } catch(e) {
+                    console.error('Error denying access', e);
                 }
             },
 

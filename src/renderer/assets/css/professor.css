@@ -1,4 +1,4 @@
-﻿/* professor.css - Styles de l'espace professeur */
+/* professor.css - Styles de l'espace professeur */
 *,
         *::before,
         *::after {
@@ -582,36 +582,52 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
-            background: rgba(255, 255, 255, .03);
-            border: 1px solid rgba(255, 255, 255, .07);
-            border-radius: 10px;
-            padding: 8px 10px;
+            gap: 12px;
+            background: rgba(0, 0, 0, .2);
+            border: 1px solid rgba(255, 255, 255, .05);
+            border-radius: 12px;
+            padding: 12px 14px;
+            transition: all 0.2s;
+        }
+        
+        .work-file-item:hover {
+            background: rgba(88, 101, 242, .08);
+            border-color: rgba(88, 101, 242, .3);
         }
 
         .work-file-name {
-            color: rgba(255, 255, 255, .86);
-            font-size: 12px;
+            color: rgba(255, 255, 255, .9);
+            font-size: 13px;
             font-weight: 600;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 150px;
+            max-width: 170px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .work-file-btn {
-            border: 1px solid rgba(88, 101, 242, .45);
-            background: rgba(88, 101, 242, .14);
+            border: 1px solid rgba(88, 101, 242, .5);
+            background: linear-gradient(135deg, rgba(88, 101, 242, .15), rgba(88, 101, 242, .05));
             color: #cfd6ff;
             border-radius: 8px;
-            padding: 5px 8px;
+            padding: 6px 12px;
             font-size: 11px;
             font-weight: 700;
             cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .work-file-btn:hover {
-            background: rgba(88, 101, 242, .24);
+            background: linear-gradient(135deg, rgba(88, 101, 242, .8), rgba(88, 101, 242, .6));
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(88, 101, 242, .3);
+            transform: translateY(-1px);
         }
 
         /* ══ MODAL ══ */
@@ -1032,7 +1048,7 @@
         /* Body 3 colonnes */
         .pm-body {
             display: grid;
-            grid-template-columns: 260px 1fr 220px;
+            grid-template-columns: 380px 1fr 220px;
             gap: 0;
             flex: 1;
             overflow: hidden;
@@ -1177,13 +1193,13 @@
         }
 
         .pm-action-btn {
-            width: 26px;
-            height: 26px;
+            width: 30px;
+            height: 30px;
             border-radius: 6px;
             border: 1px solid rgba(255, 255, 255, .12);
             background: rgba(255, 255, 255, .06);
             color: rgba(255, 255, 255, .6);
-            font-size: 12px;
+            font-size: 14px;
             cursor: pointer;
             display: flex;
             align-items: center;

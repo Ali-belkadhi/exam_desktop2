@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 
 <head>
@@ -246,6 +246,127 @@
         </div>
     </div>
 
+    <!-- ══ WAITING ROOM OVERLAY ══ -->
+    <div id="waitingRoomOverlay" style="
+        display: none;
+        position: fixed; inset: 0; z-index: 99999;
+        background: linear-gradient(135deg, #0a0a0f 0%, #0f111a 50%, #0a0a0f 100%);
+        flex-direction: column; align-items: center; justify-content: center;
+        font-family: 'Inter', sans-serif;
+        -webkit-app-region: no-drag;
+    ">
+        <!-- Orbs décoratifs -->
+        <div style="position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(88,101,242,0.12),transparent 70%);top:-100px;left:-100px;pointer-events:none;"></div>
+        <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,0.08),transparent 70%);bottom:-80px;right:-80px;pointer-events:none;"></div>
+
+        <div style="
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 28px;
+            padding: 52px 60px;
+            text-align: center;
+            max-width: 520px;
+            width: 90%;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        ">
+            <!-- Ligne supérieure lumineuse -->
+            <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(245,158,11,0.6),transparent);"></div>
+
+            <!-- Icône animée -->
+            <div style="
+                width: 80px; height: 80px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+                border: 2px solid rgba(245,158,11,0.3);
+                display: flex; align-items: center; justify-content: center;
+                font-size: 36px;
+                margin: 0 auto 28px;
+                animation: _waitPulse 2s ease-in-out infinite;
+                box-shadow: 0 0 30px rgba(245,158,11,0.15);
+            ">⏳</div>
+
+            <!-- Titre -->
+            <h1 style="
+                font-size: 26px; font-weight: 800;
+                color: #fff; margin: 0 0 10px;
+                letter-spacing: -0.03em;
+            ">En attente de votre professeur</h1>
+
+            <!-- Sous-titre -->
+            <p style="
+                font-size: 15px; color: rgba(255,255,255,0.5);
+                margin: 0 0 32px; line-height: 1.6;
+            ">
+                Votre demande d'accès a bien été enregistrée.<br>
+                Le professeur vérifie votre identité avant d'ouvrir la session.
+            </p>
+
+            <!-- Infos session -->
+            <div style="
+                background: rgba(255,255,255,0.03);
+                border: 1px solid rgba(255,255,255,0.06);
+                border-radius: 14px;
+                padding: 16px 20px;
+                display: flex; flex-direction: column; gap: 8px;
+                margin-bottom: 32px;
+                text-align: left;
+            ">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Session</span>
+                    <span style="font-size:13px; color:#fff; font-weight:700; font-family:monospace;" id="wr-session-code">—</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Matière</span>
+                    <span style="font-size:13px; color:#fff; font-weight:600;" id="wr-course-name">—</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600; text-transform:uppercase; letter-spacing:0.06em;">Étudiant</span>
+                    <span style="font-size:13px; color:#fff; font-weight:600;" id="wr-student-name">—</span>
+                </div>
+            </div>
+
+            <!-- Spinner + statut -->
+            <div style="display:flex; align-items:center; justify-content:center; gap:12px;">
+                <div style="
+                    width: 20px; height: 20px; border-radius: 50%;
+                    border: 2.5px solid rgba(245,158,11,0.2);
+                    border-top-color: #f59e0b;
+                    animation: _waitSpin 0.8s linear infinite;
+                "></div>
+                <span style="font-size:13px; color:rgba(255,255,255,0.45);" id="wr-status-text">Attente de l'autorisation du professeur...</span>
+            </div>
+        </div>
+
+        <!-- Badge statut -->
+        <div id="wr-status-badge" style="
+            margin-top: 24px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            background: rgba(245,158,11,0.12);
+            border: 1px solid rgba(245,158,11,0.25);
+            color: #f59e0b;
+            font-size: 12px; font-weight: 700;
+            letter-spacing: 0.06em; text-transform: uppercase;
+        ">🕐 Salle d'attente</div>
+    </div>
+
+    <style>
+        @keyframes _waitPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(245,158,11,0.15); }
+            50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(245,158,11,0.3); }
+        }
+        @keyframes _waitSpin {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes _wrGrantIn {
+            0% { transform: scale(0.8) translateY(20px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+    </style>
+
     <!-- Modale VS Code Erreur/Lancement -->
     <div class="modal-overlay" id="vscodeModal">
         <div class="modal">
@@ -267,12 +388,229 @@
     <script src="./views/BrowserView.js"></script>
 
     <script>
+        // ══ WAITING ROOM FUNCTIONS ══
+        function _showWaitingRoom() {
+            const overlay = document.getElementById('waitingRoomOverlay');
+            if (!overlay) return;
+            // Fill info
+            const code = sessionStorage.getItem('activeSessionCode') || '—';
+            const course = sessionStorage.getItem('sessionCourse') || '—';
+            const prenom = sessionStorage.getItem('studentPrenom') || '';
+            const nom = sessionStorage.getItem('studentNom') || '';
+            const el1 = document.getElementById('wr-session-code');
+            const el2 = document.getElementById('wr-course-name');
+            const el3 = document.getElementById('wr-student-name');
+            if (el1) el1.textContent = code;
+            if (el2) el2.textContent = course;
+            if (el3) el3.textContent = [prenom, nom].filter(Boolean).join(' ') || '—';
+            overlay.style.display = 'flex';
+        }
+
+        function _hideWaitingRoom(granted) {
+            const overlay = document.getElementById('waitingRoomOverlay');
+            if (!overlay) return;
+
+            if (!granted) {
+                // ── REFUSÉ : Afficher un écran de refus premium puis rediriger ──
+
+                // Nettoyer la session immédiatement
+                const _deniedTestId = sessionStorage.getItem('activeTestId');
+                const _deniedStudentId = sessionStorage.getItem('studentId');
+                sessionStorage.removeItem('studentWaiting');
+                sessionStorage.removeItem('activeTestId');
+                sessionStorage.removeItem('activeSessionCode');
+                sessionStorage.removeItem('sessionCourse');
+                sessionStorage.removeItem('sessionProf');
+                // Nettoyer la liste d'attente localStorage
+                try {
+                    if (_deniedTestId && _deniedStudentId) {
+                        const wk = `_waiting_${_deniedTestId}`;
+                        const list = JSON.parse(localStorage.getItem(wk) || '[]');
+                        const updated = list.filter(e => e.studentId !== _deniedStudentId.toString());
+                        if (updated.length > 0) { localStorage.setItem(wk, JSON.stringify(updated)); }
+                        else { localStorage.removeItem(wk); }
+                    }
+                } catch(e) { /* silent */ }
+
+                // Arrêter le heartbeat si actif
+                if (window.sessionVM && window.sessionVM.heartbeatInterval) {
+                    clearInterval(window.sessionVM.heartbeatInterval);
+                }
+
+                // Transformer l'overlay en écran de refus
+                overlay.innerHTML = `
+                    <div style="position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,0.1),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;animation:_denyPulseOuter 2s ease-in-out infinite;"></div>
+
+                    <div style="
+                        background: rgba(20,10,10,0.85);
+                        border: 1.5px solid rgba(239,68,68,0.3);
+                        border-radius: 28px;
+                        padding: 52px 60px;
+                        text-align: center;
+                        max-width: 480px;
+                        width: 90%;
+                        box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 60px rgba(239,68,68,0.08);
+                        backdrop-filter: blur(20px);
+                        position: relative;
+                        overflow: hidden;
+                        animation: _denyCardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+                    ">
+                        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(239,68,68,0.8),transparent);"></div>
+
+                        <div style="
+                            width: 88px; height: 88px; border-radius: 50%;
+                            background: radial-gradient(circle, rgba(239,68,68,0.2), rgba(239,68,68,0.05));
+                            border: 2px solid rgba(239,68,68,0.4);
+                            display: flex; align-items: center; justify-content: center;
+                            font-size: 40px;
+                            margin: 0 auto 28px;
+                            animation: _denyIconShake 0.5s ease 0.3s;
+                            box-shadow: 0 0 40px rgba(239,68,68,0.2);
+                        ">🚫</div>
+
+                        <h1 style="font-size:28px; font-weight:900; color:#ef4444; margin:0 0 12px; letter-spacing:-0.03em;">
+                            Accès Refusé
+                        </h1>
+
+                        <p style="font-size:15px; color:rgba(255,255,255,0.55); margin:0 0 36px; line-height:1.7;">
+                            Le professeur a refusé votre accès à cette session.<br>
+                            <span style="font-size:13px; color:rgba(255,255,255,0.35);">Veuillez contacter votre professeur pour plus d'informations.</span>
+                        </p>
+
+                        <div style="
+                            background: rgba(239,68,68,0.06);
+                            border: 1px solid rgba(239,68,68,0.15);
+                            border-radius: 14px;
+                            padding: 16px 24px;
+                            margin-bottom: 32px;
+                            display: flex; align-items: center; gap: 14px;
+                        ">
+                            <span style="font-size:22px; flex-shrink:0;">ℹ️</span>
+                            <span style="font-size:13px; color:rgba(255,255,255,0.5); text-align:left; line-height:1.5;">
+                                Si vous pensez que c'est une erreur, revenez à l'accueil et réessayez avec le bon code de session.
+                            </span>
+                        </div>
+
+                        <div style="display:flex; align-items:center; justify-content:center; gap:12px;">
+                            <div style="
+                                width: 20px; height: 20px; border-radius: 50%;
+                                border: 2.5px solid rgba(239,68,68,0.2);
+                                border-top-color: #ef4444;
+                                animation: _waitSpin 0.8s linear infinite;
+                            "></div>
+                            <span style="font-size:13px; color:rgba(255,255,255,0.4);">
+                                Redirection dans <span id="wr-deny-countdown" style="color:#ef4444; font-weight:700;">4</span>s...
+                            </span>
+                        </div>
+                    </div>
+
+                    <div style="
+                        margin-top: 24px;
+                        padding: 8px 20px;
+                        border-radius: 999px;
+                        background: rgba(239,68,68,0.1);
+                        border: 1px solid rgba(239,68,68,0.25);
+                        color: #ef4444;
+                        font-size: 12px; font-weight: 700;
+                        letter-spacing: 0.06em; text-transform: uppercase;
+                    ">🔒 Accès non autorisé</div>
+
+                    <style>
+                        @keyframes _denyCardIn {
+                            0% { transform: scale(0.85) translateY(30px); opacity: 0; }
+                            100% { transform: scale(1) translateY(0); opacity: 1; }
+                        }
+                        @keyframes _denyIconShake {
+                            0%,100% { transform: rotate(0deg); }
+                            20% { transform: rotate(-15deg); }
+                            40% { transform: rotate(15deg); }
+                            60% { transform: rotate(-10deg); }
+                            80% { transform: rotate(10deg); }
+                        }
+                        @keyframes _denyPulseOuter {
+                            0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.6; }
+                            50% { transform: translate(-50%,-50%) scale(1.15); opacity: 1; }
+                        }
+                    </style>
+                `;
+                overlay.style.background = 'linear-gradient(135deg, #0a0005 0%, #120008 50%, #0a0005 100%)';
+                overlay.style.display = 'flex';
+
+                // Compte à rebours
+                let seconds = 4;
+                const countdownEl = () => document.getElementById('wr-deny-countdown');
+                const countdownInterval = setInterval(() => {
+                    seconds--;
+                    if (countdownEl()) countdownEl().textContent = seconds;
+                    if (seconds <= 0) {
+                        clearInterval(countdownInterval);
+                        window.location.replace('./login.html');
+                    }
+                }, 1000);
+                return;
+            }
+
+            // Accordé → animation de succès puis masquer et démarrer la session
+            const badge = document.getElementById('wr-status-badge');
+            const statusText = document.getElementById('wr-status-text');
+            const icon = overlay.querySelector('[style*="_waitPulse"]');
+            if (badge) { badge.textContent = '✅ Accès accordé!'; badge.style.background = 'rgba(16,185,129,0.12)'; badge.style.borderColor = 'rgba(16,185,129,0.3)'; badge.style.color = '#10b981'; }
+            if (statusText) statusText.textContent = 'Ouverture de votre espace de travail...';
+            if (icon) { icon.textContent = '✅'; icon.style.borderColor = 'rgba(16,185,129,0.4)'; icon.style.background = 'rgba(16,185,129,0.1)'; icon.style.animationName = 'none'; }
+
+            // Supprimer le flag d'attente et émettre joinSession normal
+            sessionStorage.removeItem('studentWaiting');
+            const testId = sessionStorage.getItem('activeTestId');
+            const studentId = sessionStorage.getItem('studentId');
+            // Nettoyer le localStorage partagé (supprime l'entrée dans la liste d'attente)
+            try {
+                if (testId && studentId) {
+                    const waitingKey = `_waiting_${testId}`;
+                    const list = JSON.parse(localStorage.getItem(waitingKey) || '[]');
+                    const updated = list.filter(e => e.studentId !== studentId.toString());
+                    if (updated.length > 0) { localStorage.setItem(waitingKey, JSON.stringify(updated)); }
+                    else { localStorage.removeItem(waitingKey); }
+                }
+            } catch(e) { /* silent */ }
+            if (window.sessionVM && window.sessionVM.socket && testId && studentId) {
+                window.sessionVM.socket.emit('joinSession', { testId, studentId });
+                console.log('[WaitingRoom] Accès accordé, passage en session normale');
+            }
+
+            setTimeout(() => {
+                overlay.style.transition = 'opacity 0.5s ease';
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.style.display = 'none'; overlay.style.opacity = ''; }, 500);
+            }, 1200);
+        }
+
         /**
          * ROBUST INITIALIZATION
          * Ensures the app starts correctly whether the script runs before or after DOMContentLoaded.
          */
         function robustInit() {
             console.log("[App] Running robust initialization...");
+
+            // ── Vérifier si l'étudiant est en salle d'attente ──
+            const waitingStatus = sessionStorage.getItem('studentWaiting');
+            if (waitingStatus === 'true') {
+                _showWaitingRoom();
+                // Polling de secours : vérifie toutes les 2s si l'accès a été accordé/refusé
+                // via un flag posé dans localStorage par le prof (ou via WebSocket)
+                window._waitingCheckInterval = setInterval(() => {
+                    const granted = localStorage.getItem('_accessGranted_' + sessionStorage.getItem('studentId'));
+                    const denied  = localStorage.getItem('_accessDenied_' + sessionStorage.getItem('studentId'));
+                    if (granted) {
+                        localStorage.removeItem('_accessGranted_' + sessionStorage.getItem('studentId'));
+                        clearInterval(window._waitingCheckInterval);
+                        _hideWaitingRoom(true);
+                    } else if (denied) {
+                        localStorage.removeItem('_accessDenied_' + sessionStorage.getItem('studentId'));
+                        clearInterval(window._waitingCheckInterval);
+                        _hideWaitingRoom(false);
+                    }
+                }, 1000);
+            }
 
             // 0. Initialize QuizVM
             if (window.QuizVM) {
@@ -293,8 +631,44 @@
                     window.sessionVM.socket = window.io(API_BASE);
 
                     window.sessionVM.socket.on('connect', () => {
-                        window.sessionVM.socket.emit('joinSession', { testId, studentId });
-                        console.log('[WebSocket] Connecté au serveur en tant qu\'étudiant');
+                        const isWaiting = sessionStorage.getItem('studentWaiting') === 'true';
+                        const prenom = sessionStorage.getItem('studentPrenom') || '';
+                        const nom = sessionStorage.getItem('studentNom') || '';
+                        const studentName = [prenom, nom].filter(Boolean).join(' ');
+
+                        if (isWaiting) {
+                            // Émettre joinSession-waiting → le prof reçoit 'student-waiting'
+                            window.sessionVM.socket.emit('joinSession-waiting', { testId, studentId, studentName });
+                            console.log('[WaitingRoom] Connecté en mode attente, notification au professeur...');
+                            
+                            // FIX: Re-broadcast périodique au cas où le professeur se connecte après l'étudiant
+                            // ou s'ils sont sur des PCs différents.
+                            if (window._waitingBroadcastInterval) clearInterval(window._waitingBroadcastInterval);
+                            window._waitingBroadcastInterval = setInterval(() => {
+                                if (sessionStorage.getItem('studentWaiting') === 'true') {
+                                    window.sessionVM.socket.emit('joinSession-waiting', { testId, studentId, studentName });
+                                } else {
+                                    clearInterval(window._waitingBroadcastInterval);
+                                }
+                            }, 4000);
+                        } else {
+                            // Connexion normale (accès déjà accordé)
+                            window.sessionVM.socket.emit('joinSession', { testId, studentId });
+                            console.log('[WebSocket] Connecté au serveur en tant qu\'étudiant');
+                        }
+                    });
+
+                    // ── Salle d'attente: écouter l'autorisation du professeur ──
+                    window.sessionVM.socket.on('student-access-granted', (data) => {
+                        if (data && data.studentId && data.studentId.toString() !== studentId.toString()) return;
+                        console.log('[WaitingRoom] Accès accordé par le professeur!');
+                        _hideWaitingRoom(true); // true = granted
+                    });
+
+                    window.sessionVM.socket.on('student-access-denied', (data) => {
+                        if (data && data.studentId && data.studentId.toString() !== studentId.toString()) return;
+                        console.log('[WaitingRoom] Accès refusé par le professeur');
+                        _hideWaitingRoom(false); // false = denied
                     });
 
                     window.sessionVM.socket.on('start-sharing-screen', () => {

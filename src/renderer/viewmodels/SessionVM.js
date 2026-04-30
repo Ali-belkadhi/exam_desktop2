@@ -58,13 +58,32 @@ window.SessionVM = class SessionVM {
             sessionStorage.setItem('activeTestId', testId);
 
             if (studentId && testId) {
-                // Register server-side via HTTP (reliable before page navigation)
-                await fetch(`${API_BASE}/practical-tests/${testId}/join`, {
+                // Enregistrer avec statut 'waiting' (en attente de l'approbation du professeur)
+                const joinResp = await fetch(`${API_BASE}/practical-tests/${testId}/join`, {
                     method: 'POST',
                     headers: headers,
-                    body: JSON.stringify({ studentId }),
+                    body: JSON.stringify({ studentId, status: 'waiting' }),
                     keepalive: true
                 });
+
+                // Marquer l'étudiant comme "en attente" dans sessionStorage
+                // desktop.html lira ce flag pour afficher l'overlay de salle d'attente
+                sessionStorage.setItem('studentWaiting', 'true');
+
+                // —— Partager l'état d'attente via localStorage (même app Electron) ——
+                // Le professeur lira cette clé pour détecter les étudiants en attente
+                try {
+                    const prenom = sessionStorage.getItem('studentPrenom') || '';
+                    const nom    = sessionStorage.getItem('studentNom') || '';
+                    const waitingKey = `_waiting_${testId}`;
+                    const existing = JSON.parse(localStorage.getItem(waitingKey) || '[]');
+                    const alreadyIn = existing.some(e => e.studentId === studentId);
+                    if (!alreadyIn) {
+                        existing.push({ studentId, studentName: [prenom, nom].filter(Boolean).join(' ') });
+                        localStorage.setItem(waitingKey, JSON.stringify(existing));
+                    }
+                } catch(e) { /* silent */ }
+
                 // NOTE: Ne pas démarrer le socket WebSocket ICI.
                 // La page va changer (window.location.href) dans 50ms,
                 // ce qui détruirait le socket immédiatement.
