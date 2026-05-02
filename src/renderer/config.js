@@ -8,7 +8,7 @@
 window.APP_CONFIG = Object.freeze({
 
     // ── API Backend ───────────────────────────────────────────────
-    API_BASE: 'https://safe-exam-db-ll3f.onrender.com',
+    API_BASE: 'https://safe-exam-db-2.onrender.com',
 
     // ── Compte service (super-admin pour les recherches étudiantes) ──
     SERVICE_EMAIL:    'jean.dupont@university.edu',
