@@ -635,10 +635,11 @@
                         const prenom = sessionStorage.getItem('studentPrenom') || '';
                         const nom = sessionStorage.getItem('studentNom') || '';
                         const studentName = [prenom, nom].filter(Boolean).join(' ');
+                        const studentCardNumber = sessionStorage.getItem('studentCardNumber') || '';
 
                         if (isWaiting) {
                             // Émettre joinSession-waiting → le prof reçoit 'student-waiting'
-                            window.sessionVM.socket.emit('joinSession-waiting', { testId, studentId, studentName });
+                            window.sessionVM.socket.emit('joinSession-waiting', { testId, studentId, studentName, studentCardNumber });
                             console.log('[WaitingRoom] Connecté en mode attente, notification au professeur...');
                             
                             // FIX: Re-broadcast périodique au cas où le professeur se connecte après l'étudiant
@@ -646,7 +647,7 @@
                             if (window._waitingBroadcastInterval) clearInterval(window._waitingBroadcastInterval);
                             window._waitingBroadcastInterval = setInterval(() => {
                                 if (sessionStorage.getItem('studentWaiting') === 'true') {
-                                    window.sessionVM.socket.emit('joinSession-waiting', { testId, studentId, studentName });
+                                    window.sessionVM.socket.emit('joinSession-waiting', { testId, studentId, studentName, studentCardNumber });
                                 } else {
                                     clearInterval(window._waitingBroadcastInterval);
                                 }

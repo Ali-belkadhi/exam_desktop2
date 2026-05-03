@@ -75,13 +75,21 @@ window.SessionVM = class SessionVM {
                 try {
                     const prenom = sessionStorage.getItem('studentPrenom') || '';
                     const nom    = sessionStorage.getItem('studentNom') || '';
+                    const studentCardNumber = sessionStorage.getItem('studentCardNumber') || '';
                     const waitingKey = `_waiting_${testId}`;
                     const existing = JSON.parse(localStorage.getItem(waitingKey) || '[]');
-                    const alreadyIn = existing.some(e => e.studentId === studentId);
-                    if (!alreadyIn) {
-                        existing.push({ studentId, studentName: [prenom, nom].filter(Boolean).join(' ') });
-                        localStorage.setItem(waitingKey, JSON.stringify(existing));
+                    const idx = existing.findIndex(e => e.studentId === studentId);
+                    if (idx >= 0) {
+                        existing[idx].studentName = [prenom, nom].filter(Boolean).join(' ');
+                        existing[idx].studentCardNumber = studentCardNumber;
+                    } else {
+                        existing.push({
+                            studentId,
+                            studentName: [prenom, nom].filter(Boolean).join(' '),
+                            studentCardNumber
+                        });
                     }
+                    localStorage.setItem(waitingKey, JSON.stringify(existing));
                 } catch(e) { /* silent */ }
 
                 // NOTE: Ne pas démarrer le socket WebSocket ICI.

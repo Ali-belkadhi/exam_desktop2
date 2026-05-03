@@ -1090,12 +1090,12 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 9px 10px;
-            border-radius: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
             cursor: pointer;
             transition: background .18s;
             border: 1px solid transparent;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .pm-student-item:hover {
@@ -1193,13 +1193,16 @@
         }
 
         .pm-action-btn {
-            width: 30px;
+            min-width: 34px;
             height: 30px;
+            padding: 0 8px;
             border-radius: 6px;
             border: 1px solid rgba(255, 255, 255, .12);
             background: rgba(255, 255, 255, .06);
             color: rgba(255, 255, 255, .6);
-            font-size: 14px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .02em;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1229,6 +1232,12 @@
             background: rgba(16, 185, 129, .12);
             color: #10b981;
             border-color: rgba(16, 185, 129, .25);
+        }
+
+        .pm-student-badge.waiting {
+            background: rgba(245, 158, 11, .12);
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, .3);
         }
 
         /* COLONNE CENTRE */
