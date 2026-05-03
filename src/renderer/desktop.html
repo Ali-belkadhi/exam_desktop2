@@ -424,6 +424,10 @@
                 // Nettoyer la liste d'attente localStorage
                 try {
                     if (_deniedTestId && _deniedStudentId) {
+                        localStorage.removeItem(`_accessGranted_${_deniedTestId}_${_deniedStudentId}`);
+                        localStorage.removeItem(`_accessDenied_${_deniedTestId}_${_deniedStudentId}`);
+                        localStorage.removeItem('_accessGranted_' + _deniedStudentId);
+                        localStorage.removeItem('_accessDenied_' + _deniedStudentId);
                         const wk = `_waiting_${_deniedTestId}`;
                         const list = JSON.parse(localStorage.getItem(wk) || '[]');
                         const updated = list.filter(e => e.studentId !== _deniedStudentId.toString());
@@ -565,6 +569,10 @@
             // Nettoyer le localStorage partagé (supprime l'entrée dans la liste d'attente)
             try {
                 if (testId && studentId) {
+                    localStorage.removeItem(`_accessGranted_${testId}_${studentId}`);
+                    localStorage.removeItem(`_accessDenied_${testId}_${studentId}`);
+                    localStorage.removeItem('_accessGranted_' + studentId);
+                    localStorage.removeItem('_accessDenied_' + studentId);
                     const waitingKey = `_waiting_${testId}`;
                     const list = JSON.parse(localStorage.getItem(waitingKey) || '[]');
                     const updated = list.filter(e => e.studentId !== studentId.toString());
@@ -598,14 +606,18 @@
                 // Polling de secours : vérifie toutes les 2s si l'accès a été accordé/refusé
                 // via un flag posé dans localStorage par le prof (ou via WebSocket)
                 window._waitingCheckInterval = setInterval(() => {
-                    const granted = localStorage.getItem('_accessGranted_' + sessionStorage.getItem('studentId'));
-                    const denied  = localStorage.getItem('_accessDenied_' + sessionStorage.getItem('studentId'));
+                    const sid = sessionStorage.getItem('studentId');
+                    const tid = sessionStorage.getItem('activeTestId');
+                    const granted = (tid && sid && localStorage.getItem(`_accessGranted_${tid}_${sid}`)) || localStorage.getItem('_accessGranted_' + sid);
+                    const denied  = (tid && sid && localStorage.getItem(`_accessDenied_${tid}_${sid}`)) || localStorage.getItem('_accessDenied_' + sid);
                     if (granted) {
-                        localStorage.removeItem('_accessGranted_' + sessionStorage.getItem('studentId'));
+                        if (tid && sid) localStorage.removeItem(`_accessGranted_${tid}_${sid}`);
+                        localStorage.removeItem('_accessGranted_' + sid);
                         clearInterval(window._waitingCheckInterval);
                         _hideWaitingRoom(true);
                     } else if (denied) {
-                        localStorage.removeItem('_accessDenied_' + sessionStorage.getItem('studentId'));
+                        if (tid && sid) localStorage.removeItem(`_accessDenied_${tid}_${sid}`);
+                        localStorage.removeItem('_accessDenied_' + sid);
                         clearInterval(window._waitingCheckInterval);
                         _hideWaitingRoom(false);
                     }

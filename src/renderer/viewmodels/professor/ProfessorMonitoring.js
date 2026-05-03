@@ -14,7 +14,7 @@ Object.assign(ProfVM, {
         const alertsBox = document.getElementById('pm-global-alerts');
         const countBadge = document.getElementById('pm-alerts-count');
         if (countBadge) { countBadge.style.display = 'none'; countBadge.textContent = '0'; }
-        if (alertsBox) alertsBox.innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte dÃ©tectÃ©e</div>';
+        if (alertsBox) alertsBox.innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte détectée</div>';
         try {
             const savedAlerts = localStorage.getItem('alerts_' + id);
             // PERF FIX: Avoid parsing massive strings that could hang the UI
@@ -82,8 +82,24 @@ Object.assign(ProfVM, {
                     const key = `_waiting_${id}`;
                     const existing = JSON.parse(localStorage.getItem(key) || '[]');
                     const sid = data.studentId ? data.studentId.toString() : '';
-                    if (sid && !existing.some(e => e.studentId === sid)) {
-                        existing.push({ studentId: sid, studentName: data.studentName || '' });
+                    if (sid) {
+                        // New waiting request must clear stale local decision flags
+                        localStorage.removeItem(`_accessGranted_${id}_${sid}`);
+                        localStorage.removeItem(`_accessDenied_${id}_${sid}`);
+                        localStorage.removeItem('_accessGranted_' + sid);
+                        localStorage.removeItem('_accessDenied_' + sid);
+
+                        const idx = existing.findIndex(e => e.studentId === sid);
+                        if (idx >= 0) {
+                            existing[idx].studentName = data.studentName || existing[idx].studentName || '';
+                            existing[idx].studentCardNumber = data.studentCardNumber || existing[idx].studentCardNumber || '';
+                        } else {
+                            existing.push({
+                                studentId: sid,
+                                studentName: data.studentName || '',
+                                studentCardNumber: data.studentCardNumber || ''
+                            });
+                        }
                         localStorage.setItem(key, JSON.stringify(existing));
                     }
                 } catch(e) {}
@@ -118,7 +134,7 @@ Object.assign(ProfVM, {
         if (!isSilent) {
             participantsList.innerHTML = `<div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:120px;gap:10px;"><div class="spin-ring" style="width:24px;height:24px;"></div></div>`;
             controls.style.display = 'none';
-            subheader.textContent = 'RÃ©cupÃ©ration des donnÃ©es...';
+            subheader.textContent = 'Récupération des données...';
         }
         try {
             const token = sessionStorage.getItem('accessToken');
@@ -133,19 +149,19 @@ Object.assign(ProfVM, {
             
             this._pmLastRefresh = Date.now();
             ProfData.currentSessionDetails = data;
-            subheader.textContent = `Session ${data.sessionCode} ${data.classe?.nom ? 'Â· ' + data.classe.nom : ''}`;
+            subheader.textContent = `Session ${data.sessionCode} ${data.classe?.nom ? '- ' + data.classe.nom : ''}`;
             if (data.isActive !== false && !data.endedAt) {
                 controls.style.display = 'block';
-                const pauseLabel = data.isPaused ? 'â–¶ï¸ Reprendre' : 'â¸ï¸ Mettre en pause';
+                const pauseLabel = data.isPaused ? 'Reprendre' : 'Mettre en pause';
                 controls.innerHTML = `<div class="control-panel">
                     <button class="cp-btn ${data.isPaused ? 'resume' : 'pause'}" onclick="ProfVM.togglePause('${id}', ${data.isPaused})">${pauseLabel}</button>
-                    <button class="cp-btn end" onclick="ProfVM.endSession('${id}')">â¹ï¸ Terminer</button>
-                    <button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">ðŸ“„ Rapport</button>
-                    <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 10)">âž• 10 min</button>
+                    <button class="cp-btn end" onclick="ProfVM.endSession('${id}')">Terminer</button>
+                    <button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">Rapport</button>
+                    <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 10)">+ 10 min</button>
                 </div>`;
             } else {
                 controls.style.display = 'block';
-                controls.innerHTML = `<div class="control-panel" style="justify-content:flex-end;"><button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">ðŸ“„ Rapport</button></div>`;
+                controls.innerHTML = `<div class="control-panel" style="justify-content:flex-end;"><button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">Rapport</button></div>`;
             }
             const students = data.classe?.students || [];
             const participants = data.participants || [];
@@ -175,7 +191,7 @@ Object.assign(ProfVM, {
 
             let countActif = 0, countInactif = 0;
             if (students.length === 0) {
-                participantsList.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);">ðŸ“­ Aucun Ã©tudiant inscrit.</div>`;
+                participantsList.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);">Aucun étudiant inscrit.</div>`;
             } else {
                 let html = '';
                 const matchedStudentIds = new Set();
@@ -195,17 +211,23 @@ Object.assign(ProfVM, {
                         ? `${prenom} ${nom}`.trim()
                         : ((waitingEntryById?.studentName || '').toString().trim() || `Étudiant (${sidStr.substring(sidStr.length - 4)})`);
                     const initials = (prenom && nom) ? (prenom[0] + nom[0]).toUpperCase() : (prenom ? prenom[0] : (nom ? nom[0] : '?')).toUpperCase();
-                    const nc = sRef.studentCardNumber || 'N/A';
+                    const nc = sRef.studentCardNumber || waitingEntryById?.studentCardNumber || 'N/A';
 
                     const waitingIdByName = waitingByName.get(normalizeName(displayName)) || null;
                     const waitingControlId = waitingIdByName || sidStr;
                     if (waitingIdByName) matchedWaitingIds.add(waitingIdByName);
 
-                    const hasGranted = localStorage.getItem('_accessGranted_' + waitingControlId) === '1';
-                    const hasDenied = localStorage.getItem('_accessDenied_' + waitingControlId) === '1';
+                    const hasGranted = (
+                        localStorage.getItem(`_accessGranted_${id}_${waitingControlId}`) === '1' ||
+                        localStorage.getItem('_accessGranted_' + waitingControlId) === '1'
+                    );
+                    const hasDenied = (
+                        localStorage.getItem(`_accessDenied_${id}_${waitingControlId}`) === '1' ||
+                        localStorage.getItem('_accessDenied_' + waitingControlId) === '1'
+                    );
 
-                    // Online status from backend (pObj exists if they are in the participants list)
-                    const isOnline = !!pObj;
+                    // A participant entry can exist with status "inscrit" even when offline.
+                    const isOnline = !!pObj && pObj.status !== 'inscrit';
                     
                     // A student is waiting if they have 'waiting' status in DB OR if we received a WebSocket signal
                     // We don't strictly require isOnline here to be more resilient to heartbeat lag
@@ -215,8 +237,8 @@ Object.assign(ProfVM, {
                         (waitingIdByName && this._waitingStudentsSet.has(waitingIdByName))
                     ) && !hasGranted && !hasDenied;
                     
-                    // A student is actif ONLY if they are online AND (have 'actif' status OR have been granted access)
-                    const isActif = isOnline && !isWaiting && !hasDenied && (hasGranted || pObj.status === 'actif');
+                    // A student is actif only when explicitly actif, or just granted while backend sync is pending.
+                    const isActif = isOnline && !isWaiting && !hasDenied && (pObj.status === 'actif' || (hasGranted && pObj.status !== 'inscrit'));
 
                     if (isActif) countActif++; else countInactif++; // Simplified counting
                     const riskLevel = isActif ? (this._studentRiskMap[sidStr] || 'low') : 'inactive';
@@ -225,9 +247,9 @@ Object.assign(ProfVM, {
                         <div class="pm-student-avatar" style="${avatarBg}">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
                         <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: ${nc}</div></div>
                         <div class="pm-student-actions">
-                            ${isWaiting ? `<button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${waitingControlId}')">âœ”ï¸</button><button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${waitingControlId}')">âŒ</button>` : ''}
-                            ${isActif ? `<button class="pm-action-btn" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">ðŸ“º</button><button class="pm-action-btn" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">ðŸ”</button><button class="pm-action-btn" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">ðŸ’¬</button>` : ''}
-                            ${pObj?.quizResult ? `<span class="pm-student-badge actif">âœ“ ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>` : ''}
+                            ${isWaiting ? `<button class="pm-action-btn" title="Accepter" onclick="ProfVM.grantAccess('${id}', '${waitingControlId}')">OK</button><button class="pm-action-btn" title="Refuser" onclick="ProfVM.denyAccess('${id}', '${waitingControlId}')">NO</button>` : ''}
+                            ${isActif ? `<button class="pm-action-btn" title="Écran" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">SCR</button><button class="pm-action-btn" title="Contrôle" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">MON</button><button class="pm-action-btn" title="Message" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">MSG</button>` : ''}
+                            ${pObj?.quizResult ? `<span class="pm-student-badge actif">Score ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>` : ''}
                             <span class="pm-student-badge ${isActif ? 'actif' : (isWaiting ? 'waiting' : '')}">${isActif ? 'Actif' : (isWaiting ? 'En attente' : 'Inscrit')}</span>
                         </div>
                     </div>`;
@@ -239,27 +261,37 @@ Object.assign(ProfVM, {
                     const sidStr = sRaw ? (typeof sRaw === 'object' && sRaw.$oid ? sRaw.$oid : sRaw.toString()) : '';
                     if (!sidStr || matchedStudentIds.has(sidStr)) return;
 
-                    const hasGranted = localStorage.getItem('_accessGranted_' + sidStr) === '1';
-                    const hasDenied = localStorage.getItem('_accessDenied_' + sidStr) === '1';
+                    const hasGranted = (
+                        localStorage.getItem(`_accessGranted_${id}_${sidStr}`) === '1' ||
+                        localStorage.getItem('_accessGranted_' + sidStr) === '1'
+                    );
+                    const hasDenied = (
+                        localStorage.getItem(`_accessDenied_${id}_${sidStr}`) === '1' ||
+                        localStorage.getItem('_accessDenied_' + sidStr) === '1'
+                    );
                     const isWaiting = (pObj?.status === 'waiting' || this._waitingStudentsSet.has(sidStr)) && !hasGranted && !hasDenied;
-                    const isActif = !isWaiting && !hasDenied && (hasGranted || pObj?.status === 'actif');
+                    const isActif = !isWaiting && !hasDenied && (pObj?.status === 'actif' || (hasGranted && pObj?.status !== 'inscrit'));
                     if (!isWaiting && !isActif) return; // hide ghost "inscrit" rows not in class
                     if (isWaiting) matchedWaitingIds.add(sidStr);
 
                     if (isActif) countActif++; else countInactif++;
 
                     const fromWaiting = waitingEntries.find(e => (e?.studentId || '').toString() === sidStr);
-                    const displayName = (fromWaiting?.studentName || '').toString().trim() || `Ã‰tudiant (${sidStr.slice(-4)})`;
+                    const pRef = (pObj && typeof pObj.student === 'object') ? pObj.student : {};
+                    const pPrenom = pRef.prenom || '';
+                    const pNom = pRef.nom || '';
+                    const displayName = (pPrenom || pNom) ? `${pPrenom} ${pNom}`.trim() : ((fromWaiting?.studentName || '').toString().trim() || `Étudiant (${sidStr.slice(-4)})`);
+                    const nc = pRef.studentCardNumber || fromWaiting?.studentCardNumber || 'N/A';
                     const initials = displayName.split(' ').filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase() || '?';
                     const riskLevel = isActif ? (this._studentRiskMap[sidStr] || 'low') : 'inactive';
                     const avatarBg = isActif ? 'background:linear-gradient(135deg,#10b981,#059669);' : (isWaiting ? 'background:linear-gradient(135deg,#f59e0b,#d97706);' : '');
 
                     html += `<div class="pm-student-item" id="pm-student-${sidStr}">
                         <div class="pm-student-avatar" style="${avatarBg}">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
-                        <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: N/A</div></div>
+                        <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: ${nc}</div></div>
                         <div class="pm-student-actions">
-                            ${isWaiting ? `<button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${sidStr}')">âœ”ï¸</button><button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${sidStr}')">âŒ</button>` : ''}
-                            ${isActif ? `<button class="pm-action-btn" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">ðŸ“º</button><button class="pm-action-btn" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">ðŸ”</button><button class="pm-action-btn" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">ðŸ’¬</button>` : ''}
+                            ${isWaiting ? `<button class="pm-action-btn" title="Accepter" onclick="ProfVM.grantAccess('${id}', '${sidStr}')">OK</button><button class="pm-action-btn" title="Refuser" onclick="ProfVM.denyAccess('${id}', '${sidStr}')">NO</button>` : ''}
+                            ${isActif ? `<button class="pm-action-btn" title="Écran" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">SCR</button><button class="pm-action-btn" title="Contrôle" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">MON</button><button class="pm-action-btn" title="Message" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">MSG</button>` : ''}
                             <span class="pm-student-badge ${isActif ? 'actif' : (isWaiting ? 'waiting' : '')}">${isActif ? 'Actif' : (isWaiting ? 'En attente' : 'Inscrit')}</span>
                         </div>
                     </div>`;
@@ -271,22 +303,29 @@ Object.assign(ProfVM, {
                     const waitingId = entry?.studentId ? entry.studentId.toString() : '';
                     if (!waitingId || matchedWaitingIds.has(waitingId)) return;
 
-                    const hasGranted = localStorage.getItem('_accessGranted_' + waitingId) === '1';
-                    const hasDenied = localStorage.getItem('_accessDenied_' + waitingId) === '1';
+                    const hasGranted = (
+                        localStorage.getItem(`_accessGranted_${id}_${waitingId}`) === '1' ||
+                        localStorage.getItem('_accessGranted_' + waitingId) === '1'
+                    );
+                    const hasDenied = (
+                        localStorage.getItem(`_accessDenied_${id}_${waitingId}`) === '1' ||
+                        localStorage.getItem('_accessDenied_' + waitingId) === '1'
+                    );
                     const isWaiting = this._waitingStudentsSet.has(waitingId) && !hasGranted && !hasDenied;
                     if (!isWaiting) return;
 
-                    const displayName = (entry?.studentName || '').toString().trim() || `Ã‰tudiant (${waitingId.slice(-4)})`;
+                    const displayName = (entry?.studentName || '').toString().trim() || `Étudiant (${waitingId.slice(-4)})`;
                     const initials = displayName.split(' ').filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase() || '?';
                     const riskLevel = 'inactive';
+                    const nc = (entry?.studentCardNumber || '').toString().trim() || 'N/A';
                     countInactif++;
 
                     html += `<div class="pm-student-item" id="pm-student-${waitingId}">
                         <div class="pm-student-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
-                        <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: N/A</div></div>
+                        <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: ${nc}</div></div>
                         <div class="pm-student-actions">
-                            <button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${waitingId}')">âœ”ï¸</button>
-                            <button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${waitingId}')">âŒ</button>
+                            <button class="pm-action-btn" title="Accepter" onclick="ProfVM.grantAccess('${id}', '${waitingId}')">OK</button>
+                            <button class="pm-action-btn" title="Refuser" onclick="ProfVM.denyAccess('${id}', '${waitingId}')">NO</button>
                             <span class="pm-student-badge waiting">En attente</span>
                         </div>
                     </div>`;
@@ -298,7 +337,7 @@ Object.assign(ProfVM, {
         } catch (e) {
             if (_retryCount < 2) setTimeout(() => this.refreshSessionDetails(id, isSilent, _retryCount + 1), 2000);
             else if (!isSilent) {
-                participantsList.innerHTML = `<div style="text-align:center;padding:40px;color:#ed4245;">âš ï¸ ${e.message}<br><button onclick="ProfVM.refreshSessionDetails('${id}')" style="margin-top:12px;">ðŸ”„ RÃ©essayer</button></div>`;
+                participantsList.innerHTML = `<div style="text-align:center;padding:40px;color:#ed4245;">${e.message}<br><button onclick="ProfVM.refreshSessionDetails('${id}')" style="margin-top:12px;">Réessayer</button></div>`;
                 subheader.textContent = 'Erreur';
             }
         } finally {
@@ -316,7 +355,9 @@ Object.assign(ProfVM, {
         } catch(e) {}
 
         if (this.socket) this.socket.emit('grant-student-access', { testId, studentId });
+        localStorage.setItem(`_accessGranted_${testId}_${studentId}`, '1');
         localStorage.setItem('_accessGranted_' + studentId, '1');
+        localStorage.removeItem(`_accessDenied_${testId}_${studentId}`);
         localStorage.removeItem('_accessDenied_' + studentId);
         
         // Force DB status update immediately to 'actif'
@@ -342,7 +383,9 @@ Object.assign(ProfVM, {
         } catch(e) {}
 
         if (this.socket) this.socket.emit('deny-student-access', { testId, studentId });
+        localStorage.setItem(`_accessDenied_${testId}_${studentId}`, '1');
         localStorage.setItem('_accessDenied_' + studentId, '1');
+        localStorage.removeItem(`_accessGranted_${testId}_${studentId}`);
         localStorage.removeItem('_accessGranted_' + studentId);
         
         // Force DB status update immediately to 'inscrit'
