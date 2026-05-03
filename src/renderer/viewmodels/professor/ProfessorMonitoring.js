@@ -74,7 +74,7 @@ Object.assign(ProfVM, {
                     if (changed) this._rerenderParticipantsFromCache(id);
                 } catch(e) {}
             }, 10000); // 10s is enough for local fallback
-            this.socket.on('studentPresenceChanged', () => this.refreshSessionDetails(id, true));
+            this.socket.on('studentPresenceChanged', () => this.refreshSessionDetails(id, true, 0, true));
             this.socket.on('student-waiting', (data) => {
                 if (data?.testId && data.testId.toString() !== id.toString()) return;
                 if (data.studentId) this._waitingStudentsSet.add(data.studentId.toString());
@@ -103,7 +103,7 @@ Object.assign(ProfVM, {
                         localStorage.setItem(key, JSON.stringify(existing));
                     }
                 } catch(e) {}
-                this.refreshSessionDetails(id, true);
+                this.refreshSessionDetails(id, true, 0, true);
             });
         }
         if (ProfData.detailsInterval) clearInterval(ProfData.detailsInterval);
@@ -112,15 +112,18 @@ Object.assign(ProfVM, {
 
     _rerenderParticipantsFromCache(id) {
         if (ProfData.currentSessionDetails && (ProfData.currentSessionDetails._id === id || ProfData.currentSessionDetails.id === id)) {
-            this.refreshSessionDetails(id, true);
+            this.refreshSessionDetails(id, true, 0, true);
         }
     },
 
-    async refreshSessionDetails(id, isSilent = false, _retryCount = 0) {
+    async refreshSessionDetails(id, isSilent = false, _retryCount = 0, force = false) {
         // PERF FIX: Prevent multiple concurrent refreshes and throttle frequency
-        if (this._pmIsRefreshing) return;
+        if (this._pmIsRefreshing) {
+            if (force) this._pmPendingForcedRefreshId = id;
+            return;
+        }
         const now = Date.now();
-        if (isSilent && this._pmLastRefresh && (now - this._pmLastRefresh < 5000)) return; // Throttle silent refreshes to 5s min
+        if (!force && isSilent && this._pmLastRefresh && (now - this._pmLastRefresh < 5000)) return; // Throttle silent refreshes to 5s min
 
         const participantsList = document.getElementById('participantsList');
         const subheader = document.getElementById('detailsSubheader');
@@ -348,6 +351,10 @@ Object.assign(ProfVM, {
             }
         } finally {
             this._pmIsRefreshing = false;
+            if (this._pmPendingForcedRefreshId === id) {
+                this._pmPendingForcedRefreshId = null;
+                setTimeout(() => this.refreshSessionDetails(id, true, 0, true), 50);
+            }
         }
     },
 
@@ -376,7 +383,7 @@ Object.assign(ProfVM, {
             }).catch(() => {});
         } catch(e) {}
 
-        this.refreshSessionDetails(testId, true);
+        this.refreshSessionDetails(testId, true, 0, true);
     },
 
     async denyAccess(testId, studentId) {
@@ -404,7 +411,7 @@ Object.assign(ProfVM, {
             }).catch(() => {});
         } catch(e) {}
 
-        this.refreshSessionDetails(testId, true);
+        this.refreshSessionDetails(testId, true, 0, true);
     },
 
     viewStudentScreenInPanel(studentId, studentName) {
@@ -601,7 +608,7 @@ Object.assign(ProfVM, {
             const token = sessionStorage.getItem('accessToken');
             // Backend uses one POST endpoint that toggles pause/resume state.
             const resp = await fetch(`${API_BASE}/practical-tests/${id}/pause`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-            if (resp.ok) this.refreshSessionDetails(id, true);
+            if (resp.ok) this.refreshSessionDetails(id, true, 0, true);
             else alert(`Erreur serveur lors de la ${isPaused ? 'reprise' : 'mise en pause'}.`);
         } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
     },
@@ -611,7 +618,7 @@ Object.assign(ProfVM, {
         try {
             const token = sessionStorage.getItem('accessToken');
             const resp = await fetch(`${API_BASE}/practical-tests/${id}/end`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-            if (resp.ok) this.refreshSessionDetails(id, true);
+            if (resp.ok) this.refreshSessionDetails(id, true, 0, true);
             else alert("Erreur serveur lors de la clÃ´ture.");
         } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
     },
@@ -623,7 +630,7 @@ Object.assign(ProfVM, {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ minutes: mins })
             });
-            if (resp.ok) this.refreshSessionDetails(id, true);
+            if (resp.ok) this.refreshSessionDetails(id, true, 0, true);
             else alert("Erreur serveur lors de la prolongation.");
         } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
     },
