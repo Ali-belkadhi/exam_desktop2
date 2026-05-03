@@ -450,16 +450,15 @@ module.exports = (ipcMain, mainWindow) => {
                         $active = "Unknown"
                     }
 
-                    try {
-                        $procs = Get-Process | Where-Object { $_.Id -gt 0 } | Select-Object Name, Id, @{N='Memory';E={[math]::Round($_.WorkingSet64/1MB,1)}}, @{N='WindowTitle';E={$_.MainWindowTitle}}
-                        $procsJson = $procs | ConvertTo-Json -Compress
-                    } catch {
-                        $procsJson = "[]"
-                    }
+                try {
+                    $procs = Get-Process | Where-Object { $_.Id -gt 0 } | Select-Object Name, Id, @{N='Memory';E={[math]::Round($_.WorkingSet64/1MB,1)}}, @{N='WindowTitle';E={$_.MainWindowTitle}}
+                } catch {
+                    $procs = @()
+                }
 
-                    $final = @{ processes = $procsJson; activeWindow = $active } | ConvertTo-Json -Compress
-                    Write-Output "MONITOR_DATA_START$final"
-                `;
+                $final = @{ processes = @($procs); activeWindow = $active } | ConvertTo-Json -Compress -Depth 4
+                Write-Output "MONITOR_DATA_START$final"
+            `;
 
                 let child;
                 try {
@@ -492,7 +491,7 @@ module.exports = (ipcMain, mainWindow) => {
                         const data = JSON.parse(stdout.substring(idx + marker.length).trim());
                         let procs = [];
                         if (data.processes) {
-                            const raw = typeof data.processes === 'string' ? JSON.parse(data.processes) : data.processes;
+                            const raw = data.processes;
                             procs = Array.isArray(raw) ? raw : [raw];
                         }
                         resolve({ processes: procs, activeWindow: data.activeWindow || 'N/A' });
