@@ -77,6 +77,15 @@ Object.assign(ProfVM, {
             this.socket.on('studentPresenceChanged', () => this.refreshSessionDetails(id, true));
             this.socket.on('student-waiting', (data) => {
                 if (data.studentId) this._waitingStudentsSet.add(data.studentId.toString());
+                try {
+                    const key = `_waiting_${id}`;
+                    const existing = JSON.parse(localStorage.getItem(key) || '[]');
+                    const sid = data.studentId ? data.studentId.toString() : '';
+                    if (sid && !existing.some(e => e.studentId === sid)) {
+                        existing.push({ studentId: sid, studentName: data.studentName || '' });
+                        localStorage.setItem(key, JSON.stringify(existing));
+                    }
+                } catch(e) {}
                 this.refreshSessionDetails(id, true);
             });
         }
@@ -140,17 +149,28 @@ Object.assign(ProfVM, {
             const students = data.classe?.students || [];
             const participants = data.participants || [];
 
-            // PERF FIX: Create a Map of participants for O(1) lookup instead of O(N) .find() inside the loop
+            // PERF FIX: Create a Map of participants for O(1) lookup instead of O(N) .find()
             const participantMap = new Map();
             participants.forEach(p => {
-                const sid = (p.student?._id || p.student?.id || p.student || p._id || p.id)?.toString();
+                // Normalize student ID from participant object
+                const sRaw = p.student?._id || p.student?.id || p.student || p._id || p.id;
+                const sid = sRaw ? (typeof sRaw === 'object' && sRaw.$oid ? sRaw.$oid : sRaw.toString()) : null;
                 if (sid) participantMap.set(sid, p);
             });
 
+            let waitingEntries = [];
             try {
-                const list = JSON.parse(localStorage.getItem(`_waiting_${id}`) || '[]');
-                list.forEach(entry => { if (entry.studentId) this._waitingStudentsSet.add(entry.studentId.toString()); });
+                waitingEntries = JSON.parse(localStorage.getItem(`_waiting_${id}`) || '[]');
+                waitingEntries.forEach(entry => { if (entry.studentId) this._waitingStudentsSet.add(entry.studentId.toString()); });
             } catch(e) {}
+
+            const normalizeName = (v) => (v || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+            const waitingByName = new Map();
+            waitingEntries.forEach(entry => {
+                const key = normalizeName(entry?.studentName);
+                if (key && entry?.studentId && !waitingByName.has(key)) waitingByName.set(key, entry.studentId.toString());
+            });
+            const matchedWaitingIds = new Set();
 
             let countActif = 0, countInactif = 0;
             if (students.length === 0) {
@@ -159,8 +179,8 @@ Object.assign(ProfVM, {
                 let html = '';
                 students.forEach(st => {
                     // st can be a string ID or a populated object
-                    const sid = st._id || st.id || st;
-                    const sidStr = sid ? sid.toString() : '';
+                    const sRaw = st._id || st.id || st;
+                    const sidStr = sRaw ? (typeof sRaw === 'object' && sRaw.$oid ? sRaw.$oid : sRaw.toString()) : '';
                     const pObj = participantMap.get(sidStr);
                     
                     // Robust student data: try to get names from pObj or st
@@ -171,15 +191,23 @@ Object.assign(ProfVM, {
                     const initials = (prenom && nom) ? (prenom[0] + nom[0]).toUpperCase() : (prenom ? prenom[0] : (nom ? nom[0] : '?')).toUpperCase();
                     const nc = sRef.studentCardNumber || 'N/A';
 
-                    const hasGranted = localStorage.getItem('_accessGranted_' + sidStr) === '1';
-                    const hasDenied = localStorage.getItem('_accessDenied_' + sidStr) === '1';
+                    const waitingIdByName = waitingByName.get(normalizeName(displayName)) || null;
+                    const waitingControlId = waitingIdByName || sidStr;
+                    if (waitingIdByName) matchedWaitingIds.add(waitingIdByName);
+
+                    const hasGranted = localStorage.getItem('_accessGranted_' + waitingControlId) === '1';
+                    const hasDenied = localStorage.getItem('_accessDenied_' + waitingControlId) === '1';
 
                     // Online status from backend (pObj exists if they are in the participants list)
                     const isOnline = !!pObj;
                     
                     // A student is waiting if they have 'waiting' status in DB OR if we received a WebSocket signal
                     // We don't strictly require isOnline here to be more resilient to heartbeat lag
-                    const isWaiting = (pObj?.status === 'waiting' || this._waitingStudentsSet.has(sidStr)) && !hasGranted && !hasDenied;
+                    const isWaiting = (
+                        pObj?.status === 'waiting' ||
+                        this._waitingStudentsSet.has(sidStr) ||
+                        (waitingIdByName && this._waitingStudentsSet.has(waitingIdByName))
+                    ) && !hasGranted && !hasDenied;
                     
                     // A student is actif ONLY if they are online AND (have 'actif' status OR have been granted access)
                     const isActif = isOnline && !isWaiting && !hasDenied && (hasGranted || pObj.status === 'actif');
@@ -191,10 +219,37 @@ Object.assign(ProfVM, {
                         <div class="pm-student-avatar" style="${avatarBg}">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
                         <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: ${nc}</div></div>
                         <div class="pm-student-actions">
-                            ${isWaiting ? `<button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${sidStr}')">✔️</button><button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${sidStr}')">❌</button>` : ''}
+                            ${isWaiting ? `<button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${waitingControlId}')">✔️</button><button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${waitingControlId}')">❌</button>` : ''}
                             ${isActif ? `<button class="pm-action-btn" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">📺</button><button class="pm-action-btn" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">🔍</button><button class="pm-action-btn" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">💬</button>` : ''}
                             ${pObj?.quizResult ? `<span class="pm-student-badge actif">✓ ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>` : ''}
                             <span class="pm-student-badge ${isActif ? 'actif' : (isWaiting ? 'waiting' : '')}">${isActif ? 'Actif' : (isWaiting ? 'En attente' : 'Inscrit')}</span>
+                        </div>
+                    </div>`;
+                });
+
+                // Some waiting students can use an ID that differs from classe.students IDs.
+                // Add fallback rows so professor can always accept/refuse immediately.
+                waitingEntries.forEach((entry) => {
+                    const waitingId = entry?.studentId ? entry.studentId.toString() : '';
+                    if (!waitingId || matchedWaitingIds.has(waitingId)) return;
+
+                    const hasGranted = localStorage.getItem('_accessGranted_' + waitingId) === '1';
+                    const hasDenied = localStorage.getItem('_accessDenied_' + waitingId) === '1';
+                    const isWaiting = this._waitingStudentsSet.has(waitingId) && !hasGranted && !hasDenied;
+                    if (!isWaiting) return;
+
+                    const displayName = (entry?.studentName || '').toString().trim() || `Étudiant (${waitingId.slice(-4)})`;
+                    const initials = displayName.split(' ').filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase() || '?';
+                    const riskLevel = 'inactive';
+                    countInactif++;
+
+                    html += `<div class="pm-student-item" id="pm-student-${waitingId}">
+                        <div class="pm-student-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
+                        <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: N/A</div></div>
+                        <div class="pm-student-actions">
+                            <button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${waitingId}')">✔️</button>
+                            <button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${waitingId}')">❌</button>
+                            <span class="pm-student-badge waiting">En attente</span>
                         </div>
                     </div>`;
                 });
