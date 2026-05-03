@@ -446,8 +446,20 @@ Object.assign(ProfVM, {
     _processIncomingAlert(data) {
         const sid = data.studentId?.toString();
         const now = Date.now();
-        
-        // PERF FIX: Ignore repeated alerts from the same student within 3 seconds
+
+        // Keep latest monitoring payload for modal rendering.
+        if (!this._monitorLiveData) this._monitorLiveData = {};
+        if (sid) this._monitorLiveData[sid] = data;
+
+        // Update monitor modal immediately when the selected student pushes data.
+        if (sid && ProfData.monitoringStudentId && sid === ProfData.monitoringStudentId.toString()) {
+            this._renderMonitorData(data);
+        }
+
+        const procs = data.processes || [];
+        let globalRisk = 'low';
+
+        // PERF FIX: Ignore repeated alert creation from the same student within 3 seconds.
         if (sid) {
             const lastAlertTime = this._lastAlertTimes?.[sid] || 0;
             if (now - lastAlertTime < 3000) return;
@@ -455,8 +467,6 @@ Object.assign(ProfVM, {
             this._lastAlertTimes[sid] = now;
         }
 
-        const procs = data.processes || [];
-        let globalRisk = 'low';
         procs.forEach(p => {
             const risk = this._getRisk(p);
             if (risk === 'HIGH') { globalRisk = 'high'; this.addGlobalAlert(data.studentName || 'Ã‰tudiant', data.studentId, `Application suspecte : ${p.Name}`, 'high'); }
@@ -540,38 +550,164 @@ Object.assign(ProfVM, {
     },
 
     openMonitorModal(sid, name) {
-        ProfData.monitoringStudentId = sid;
+        ProfData.monitoringStudentId = sid ? sid.toString() : '';
         const modal = document.getElementById('monitorModal'); if (!modal) return;
         modal.classList.add('open');
-        document.getElementById('monitorTitle').textContent = `ActivitÃ©s : ${name}`;
-        this.fetchStudentMonitoring(sid);
+        const studentTitle = document.getElementById('monitorStudentName');
+        if (studentTitle) studentTitle.textContent = `Surveillance : ${name}`;
+        const statusBar = document.getElementById('monitorStatusBar');
+        if (statusBar) statusBar.textContent = 'Connexion au flux de surveillance...';
+
+        const activeWindow = document.getElementById('monitorActiveWindow');
+        const focusCount = document.getElementById('monitorFocusCount');
+        const processCount = document.getElementById('monitorProcessCount');
+        const lastUpdate = document.getElementById('monitorLastUpdate');
+        const table = document.getElementById('monitorProcessTable');
+        const alertList = document.getElementById('monitorAlertList');
+        if (activeWindow) activeWindow.textContent = '—';
+        if (focusCount) focusCount.textContent = '0';
+        if (processCount) processCount.textContent = '0';
+        if (lastUpdate) lastUpdate.textContent = '—';
+        if (table) table.innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,.2);">En attente des données de surveillance...</div>`;
+        if (alertList) alertList.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte</div>`;
+
+        if (!this._lockedStudentsSet) this._lockedStudentsSet = new Set();
+        this._updateMonitorLockButtons(this._lockedStudentsSet.has(ProfData.monitoringStudentId));
+        this.fetchStudentMonitoring(ProfData.monitoringStudentId);
     },
 
-    closeMonitorModal() { document.getElementById('monitorModal')?.classList.remove('open'); },
+    closeMonitorModal() {
+        ProfData.monitoringStudentId = null;
+        document.getElementById('monitorModal')?.classList.remove('open');
+    },
 
     async fetchStudentMonitoring(sid) {
-        const list = document.getElementById('monitorList'); if (!list) return;
-        list.innerHTML = `<div style="text-align:center;padding:20px;"><div class="spin-ring" style="width:20px;height:20px;"></div></div>`;
-        try {
-            const token = sessionStorage.getItem('accessToken');
-            const resp = await fetch(`${API_BASE}/monitoring/student/${sid}`, { headers: { 'Authorization': `Bearer ${token}` } });
-            if (!resp.ok) throw new Error();
-            const data = await resp.json();
-            const procs = Array.isArray(data.processes) ? data.processes : [];
-            if (!procs.length) list.innerHTML = `<div style="text-align:center;padding:20px;opacity:0.5;">Aucun processus dÃ©tectÃ©.</div>`;
-            else {
-                list.innerHTML = `<table style="width:100%; border-collapse:collapse; font-size:12px;">
-                    <thead><tr style="text-align:left; opacity:0.5; border-bottom:1px solid rgba(255,255,255,0.1);"><th style="padding:8px;">Processus</th><th>Statut</th><th>Risque</th></tr></thead>
-                    <tbody>${procs.map(p => {
-                        const risk = this._getRisk(p);
-                        return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:8px;">${p.Name}</td><td>En cours</td><td><span class="risk-badge ${risk.toLowerCase()}">${risk}</span></td></tr>`;
-                    }).join('')}</tbody></table>`;
+        const sidStr = sid ? sid.toString() : '';
+        if (!sidStr) return;
+        const cached = this._monitorLiveData?.[sidStr];
+        if (cached) this._renderMonitorData(cached);
+    },
+
+    lockdownStudent() {
+        const sid = ProfData.monitoringStudentId ? ProfData.monitoringStudentId.toString() : '';
+        if (!sid) { alert("Aucun étudiant sélectionné."); return; }
+        if (!this.socket) this.initSocket();
+        if (!this.socket) { alert("WebSocket indisponible."); return; }
+
+        this.socket.emit('lockdown-student', { studentId: sid });
+        if (!this._lockedStudentsSet) this._lockedStudentsSet = new Set();
+        this._lockedStudentsSet.add(sid);
+        this._updateMonitorLockButtons(true);
+        const statusBar = document.getElementById('monitorStatusBar');
+        if (statusBar) statusBar.textContent = 'Commande envoyée: verrouillage demandé.';
+    },
+
+    unlockStudent() {
+        const sid = ProfData.monitoringStudentId ? ProfData.monitoringStudentId.toString() : '';
+        if (!sid) { alert("Aucun étudiant sélectionné."); return; }
+        if (!this.socket) this.initSocket();
+        if (!this.socket) { alert("WebSocket indisponible."); return; }
+
+        this.socket.emit('unlock-student', { studentId: sid });
+        if (!this._lockedStudentsSet) this._lockedStudentsSet = new Set();
+        this._lockedStudentsSet.delete(sid);
+        this._updateMonitorLockButtons(false);
+        const statusBar = document.getElementById('monitorStatusBar');
+        if (statusBar) statusBar.textContent = 'Commande envoyée: déverrouillage demandé.';
+    },
+
+    _updateMonitorLockButtons(isLocked) {
+        const lockBtn = document.getElementById('monitorLockBtn');
+        const unlockBtn = document.getElementById('monitorUnlockBtn');
+        if (lockBtn) lockBtn.style.display = isLocked ? 'none' : 'inline-flex';
+        if (unlockBtn) unlockBtn.style.display = isLocked ? 'inline-flex' : 'none';
+    },
+
+    _renderMonitorData(data) {
+        const sid = data?.studentId ? data.studentId.toString() : '';
+        const selectedSid = ProfData.monitoringStudentId ? ProfData.monitoringStudentId.toString() : '';
+        if (!sid || sid !== selectedSid) return;
+
+        const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        const procs = Array.isArray(data.processes) ? data.processes : [];
+        const activeWindow = (data.activeWindow || '—').toString();
+        const focusChanges = Number.isFinite(Number(data.focusChanges)) ? Number(data.focusChanges) : 0;
+        const statusBar = document.getElementById('monitorStatusBar');
+        const activeWindowEl = document.getElementById('monitorActiveWindow');
+        const focusCountEl = document.getElementById('monitorFocusCount');
+        const processCountEl = document.getElementById('monitorProcessCount');
+        const lastUpdateEl = document.getElementById('monitorLastUpdate');
+        const riskBadgeEl = document.getElementById('monitorRiskBadge');
+        const processTableEl = document.getElementById('monitorProcessTable');
+        const alertListEl = document.getElementById('monitorAlertList');
+
+        if (statusBar) statusBar.textContent = `Flux actif pour ${data.studentName || 'étudiant'}`;
+        if (activeWindowEl) activeWindowEl.textContent = activeWindow || '—';
+        if (focusCountEl) focusCountEl.textContent = String(focusChanges);
+        if (processCountEl) processCountEl.textContent = String(procs.length);
+        if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('fr-FR');
+
+        let risk = 'LOW';
+        for (const p of procs) {
+            const r = this._getRisk(p);
+            if (r === 'HIGH') { risk = 'HIGH'; break; }
+            if (r === 'MEDIUM' && risk !== 'HIGH') risk = 'MEDIUM';
+        }
+        if (focusChanges >= 5 && risk !== 'HIGH') risk = 'MEDIUM';
+
+        if (riskBadgeEl) {
+            if (risk === 'HIGH') {
+                riskBadgeEl.textContent = '⛔ ÉLEVÉ';
+                riskBadgeEl.style.background = 'rgba(239,68,68,0.15)';
+                riskBadgeEl.style.color = '#ef4444';
+                riskBadgeEl.style.borderColor = 'rgba(239,68,68,0.35)';
+            } else if (risk === 'MEDIUM') {
+                riskBadgeEl.textContent = '⚠️ MOYEN';
+                riskBadgeEl.style.background = 'rgba(245,158,11,0.15)';
+                riskBadgeEl.style.color = '#f59e0b';
+                riskBadgeEl.style.borderColor = 'rgba(245,158,11,0.35)';
+            } else {
+                riskBadgeEl.textContent = '✅ FAIBLE';
+                riskBadgeEl.style.background = 'rgba(34,197,94,0.15)';
+                riskBadgeEl.style.color = '#22c55e';
+                riskBadgeEl.style.borderColor = 'rgba(34,197,94,0.3)';
             }
-        } catch(e) { list.innerHTML = `<div style="color:#ed4245;padding:20px;">Erreur rÃ©seau</div>`; }
+        }
+
+        if (processTableEl) {
+            if (!procs.length) {
+                processTableEl.innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,.25);">Aucun processus détecté</div>`;
+            } else {
+                processTableEl.innerHTML = procs.slice(0, 80).map((p) => {
+                    const name = esc(p.Name || p.ProcessName || '—');
+                    const pid = esc(p.Id || p.PID || '—');
+                    const mem = esc((p.Memory !== undefined && p.Memory !== null) ? `${p.Memory} MB` : (p.WorkingSet || '—'));
+                    const title = esc(p.WindowTitle || p.MainWindowTitle || '');
+                    const r = this._getRisk(p);
+                    const color = r === 'HIGH' ? '#ef4444' : (r === 'MEDIUM' ? '#f59e0b' : '#22c55e');
+                    return `<div style="display:grid;grid-template-columns:2fr 60px 70px 2fr 90px;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center;">
+                        <span style="color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span>
+                        <span style="color:rgba(255,255,255,.65);">${pid}</span>
+                        <span style="color:rgba(255,255,255,.65);">${mem}</span>
+                        <span style="color:rgba(255,255,255,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title || '—'}</span>
+                        <span style="font-weight:700;color:${color};">${r}</span>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        if (alertListEl) {
+            const alerts = Array.isArray(data.alerts) ? data.alerts.slice(-20) : [];
+            if (!alerts.length) {
+                alertListEl.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte</div>`;
+            } else {
+                alertListEl.innerHTML = alerts.reverse().map(a => `<div style="padding:8px 10px;margin-bottom:6px;border:1px solid rgba(245,158,11,.25);background:rgba(245,158,11,.08);border-radius:8px;font-size:11px;color:#fcd34d;">${esc(a)}</div>`).join('');
+            }
+        }
     },
 
     _getRisk(p) {
-        const name = (p.Name || '').toLowerCase();
+        const name = (p.Name || p.ProcessName || '').toLowerCase();
         const suspicious = ['chrome', 'firefox', 'msedge', 'opera', 'brave', 'anydesk', 'teamviewer', 'discord', 'skype', 'whatsapp', 'telegram'];
         if (suspicious.some(s => name.includes(s))) return 'HIGH';
         const medium = ['cmd', 'powershell', 'terminal', 'code', 'visual studio', 'calculator'];
