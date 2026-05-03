@@ -390,78 +390,143 @@ module.exports = (ipcMain, mainWindow) => {
 
     // ── Monitoring des processus (Surveillance) ────────────────────────────────
     ipcMain.handle('monitor:getProcesses', async () => {
-        return new Promise((resolve) => {
-            const psScript = `
-                $ErrorActionPreference = 'SilentlyContinue'
-                $active = "N/A"
-                try {
-                    $signature = '[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int count);'
-                    $type = Add-Type -MemberDefinition $signature -Name "Win32Utils" -Namespace "Win32Monitoring" -PassThru
-                    $hwnd = $type::GetForegroundWindow()
-                    $sb = New-Object System.Text.StringBuilder 256
-                    $null = $type::GetWindowText($hwnd, $sb, 256)
-                    $active = $sb.ToString()
-                } catch {
-                    $active = "Unknown"
-                }
+        const parseUnixProcessList = (text) => {
+            const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const out = [];
+            for (const line of lines) {
+                const m = line.match(/^(\S+)\s+(\d+)\s+(\d+)\s*(.*)$/);
+                if (!m) continue;
+                const name = m[1];
+                const pid = Number(m[2]);
+                const rssKb = Number(m[3]);
+                const args = (m[4] || '').trim();
+                out.push({
+                    Name: name,
+                    Id: Number.isFinite(pid) ? pid : 0,
+                    Memory: Number.isFinite(rssKb) ? Math.round((rssKb / 1024) * 10) / 10 : 0,
+                    WindowTitle: args
+                });
+            }
+            return out;
+        };
 
-                try {
-                    $procs = Get-Process | Where-Object { $_.Id -gt 0 } | Select-Object Name, Id, @{N='Memory';E={[math]::Round($_.WorkingSet64/1MB,1)}}, @{N='WindowTitle';E={$_.MainWindowTitle}}
-                    $procsJson = $procs | ConvertTo-Json -Compress
-                } catch {
-                    $procsJson = "[]"
-                }
-
-                $final = @{ processes = $procsJson; activeWindow = $active } | ConvertTo-Json -Compress
-                Write-Output "MONITOR_DATA_START$final"
-            `;
-
+        const runCmd = (command, args, timeoutMs = 8000) => new Promise((resolve) => {
             let child;
             try {
-                // Essayer d'abord le chemin standard
-                child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', psScript]);
+                child = spawn(command, args, { windowsHide: true });
             } catch (e) {
-                try {
-                    // Fallback sur le chemin absolu Windows standard si spawn direct échoue (ENOENT)
-                    const absolutePS = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
-                    child = spawn(absolutePS, ['-NoProfile', '-NonInteractive', '-Command', psScript]);
-                } catch (e2) {
-                    console.error('PowerShell spawn failed:', e2);
-                    return resolve({ processes: [], activeWindow: 'Error: PowerShell introuvable' });
-                }
+                resolve({ ok: false, stdout: '', stderr: e.message || String(e) });
+                return;
             }
-            
             let stdout = '';
-            child.on('error', (err) => {
-                console.error('Child process error:', err);
-                resolve({ processes: [], activeWindow: 'Error: ' + err.message });
-            });
+            let stderr = '';
             child.stdout?.on('data', (d) => { stdout += d.toString(); });
-            
+            child.stderr?.on('data', (d) => { stderr += d.toString(); });
+            child.on('error', (err) => resolve({ ok: false, stdout, stderr: err.message || String(err) }));
             const timer = setTimeout(() => {
-                child.kill();
-                resolve({ processes: [], activeWindow: 'Timeout' });
-            }, 8000);
-
-            child.on('close', () => {
+                try { child.kill(); } catch (_) { }
+                resolve({ ok: false, stdout, stderr: 'Timeout' });
+            }, timeoutMs);
+            child.on('close', (code) => {
                 clearTimeout(timer);
-                try {
-                    const marker = "MONITOR_DATA_START";
-                    const idx = stdout.indexOf(marker);
-                    if (idx === -1) throw new Error("Marker not found");
-                    
-                    const data = JSON.parse(stdout.substring(idx + marker.length).trim());
-                    let procs = [];
-                    if (data.processes) {
-                        const raw = typeof data.processes === 'string' ? JSON.parse(data.processes) : data.processes;
-                        procs = Array.isArray(raw) ? raw : [raw];
-                    }
-                    resolve({ processes: procs, activeWindow: data.activeWindow });
-                } catch (e) {
-                    resolve({ processes: [], activeWindow: 'Error: ' + e.message });
-                }
+                resolve({ ok: code === 0, stdout, stderr });
             });
         });
+
+        // Windows: keep PowerShell pipeline (best quality on Windows)
+        if (process.platform === 'win32') {
+            return new Promise((resolve) => {
+                const psScript = `
+                    $ErrorActionPreference = 'SilentlyContinue'
+                    $active = "N/A"
+                    try {
+                        $signature = '[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int count);'
+                        $type = Add-Type -MemberDefinition $signature -Name "Win32Utils" -Namespace "Win32Monitoring" -PassThru
+                        $hwnd = $type::GetForegroundWindow()
+                        $sb = New-Object System.Text.StringBuilder 256
+                        $null = $type::GetWindowText($hwnd, $sb, 256)
+                        $active = $sb.ToString()
+                    } catch {
+                        $active = "Unknown"
+                    }
+
+                    try {
+                        $procs = Get-Process | Where-Object { $_.Id -gt 0 } | Select-Object Name, Id, @{N='Memory';E={[math]::Round($_.WorkingSet64/1MB,1)}}, @{N='WindowTitle';E={$_.MainWindowTitle}}
+                        $procsJson = $procs | ConvertTo-Json -Compress
+                    } catch {
+                        $procsJson = "[]"
+                    }
+
+                    $final = @{ processes = $procsJson; activeWindow = $active } | ConvertTo-Json -Compress
+                    Write-Output "MONITOR_DATA_START$final"
+                `;
+
+                let child;
+                try {
+                    child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', psScript], { windowsHide: true });
+                } catch (e) {
+                    try {
+                        const absolutePS = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+                        child = spawn(absolutePS, ['-NoProfile', '-NonInteractive', '-Command', psScript], { windowsHide: true });
+                    } catch (e2) {
+                        console.error('PowerShell spawn failed:', e2);
+                        return resolve({ processes: [], activeWindow: 'Error: PowerShell introuvable' });
+                    }
+                }
+
+                let stdout = '';
+                child.on('error', (err) => resolve({ processes: [], activeWindow: 'Error: ' + err.message }));
+                child.stdout?.on('data', (d) => { stdout += d.toString(); });
+
+                const timer = setTimeout(() => {
+                    try { child.kill(); } catch (_) { }
+                    resolve({ processes: [], activeWindow: 'Timeout' });
+                }, 8000);
+
+                child.on('close', () => {
+                    clearTimeout(timer);
+                    try {
+                        const marker = "MONITOR_DATA_START";
+                        const idx = stdout.indexOf(marker);
+                        if (idx === -1) throw new Error("Marker not found");
+                        const data = JSON.parse(stdout.substring(idx + marker.length).trim());
+                        let procs = [];
+                        if (data.processes) {
+                            const raw = typeof data.processes === 'string' ? JSON.parse(data.processes) : data.processes;
+                            procs = Array.isArray(raw) ? raw : [raw];
+                        }
+                        resolve({ processes: procs, activeWindow: data.activeWindow || 'N/A' });
+                    } catch (e) {
+                        resolve({ processes: [], activeWindow: 'Error: ' + e.message });
+                    }
+                });
+            });
+        }
+
+        // macOS / Linux fallback: use standard POSIX tools.
+        try {
+            const listCmd = process.platform === 'darwin'
+                ? "ps -axo comm=,pid=,rss=,args= | head -n 400"
+                : "ps -eo comm=,pid=,rss=,args= --sort=-rss | head -n 400";
+
+            const procRes = await runCmd('sh', ['-lc', listCmd], 7000);
+            const processes = parseUnixProcessList(procRes.stdout);
+
+            let activeWindow = 'N/A';
+            if (process.platform === 'darwin') {
+                const aw = await runCmd('osascript', ['-e', 'tell application "System Events" to get name of first application process whose frontmost is true'], 4000);
+                const parsed = String(aw.stdout || '').trim();
+                if (parsed) activeWindow = parsed;
+            } else {
+                const aw = await runCmd('sh', ['-lc', 'xdotool getwindowfocus getwindowname 2>/dev/null || echo N/A'], 3000);
+                const parsed = String(aw.stdout || '').trim();
+                if (parsed) activeWindow = parsed;
+            }
+
+            return { processes, activeWindow };
+        } catch (e) {
+            return { processes: [], activeWindow: 'Error: ' + e.message };
+        }
     });
 
     // ── Contrôle de la fenêtre (Safe Mode) ───────────────────────────────────

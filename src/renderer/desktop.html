@@ -601,6 +601,15 @@
         function robustInit() {
             console.log("[App] Running robust initialization...");
 
+            // Sécurité: pour toute nouvelle ouverture/reconnexion étudiante d'une session,
+            // repasser obligatoirement par la salle d'attente.
+            const currentRole = sessionStorage.getItem('role') || '';
+            const hasStudentSession = !!sessionStorage.getItem('activeTestId') && !!sessionStorage.getItem('studentId');
+            if (currentRole === 'student' && hasStudentSession) {
+                sessionStorage.setItem('studentWaiting', 'true');
+                sessionStorage.setItem('accessApproved', 'false');
+            }
+
             // ── Vérifier si l'étudiant est en salle d'attente ──
             const waitingStatus = sessionStorage.getItem('studentWaiting');
             if (waitingStatus === 'true') {
@@ -645,7 +654,7 @@
                     window.sessionVM.socket = window.io(API_BASE);
 
                     window.sessionVM.socket.on('connect', () => {
-                        const isWaiting = sessionStorage.getItem('studentWaiting') === 'true' || sessionStorage.getItem('accessApproved') !== 'true';
+                        const isWaiting = sessionStorage.getItem('studentWaiting') === 'true';
                         const prenom = sessionStorage.getItem('studentPrenom') || '';
                         const nom = sessionStorage.getItem('studentNom') || '';
                         const studentName = [prenom, nom].filter(Boolean).join(' ');
@@ -695,6 +704,14 @@
                         if (data && data.studentId && data.studentId.toString() !== studentId.toString()) return;
                         console.log('[WaitingRoom] Accès refusé par le professeur');
                         _hideWaitingRoom(false); // false = denied
+                    });
+
+                    window.sessionVM.socket.on('student-waiting-required', (data) => {
+                        if (data && data.studentId && data.studentId.toString() !== studentId.toString()) return;
+                        console.log('[WaitingRoom] Accès actif non autorisé: retour en attente.');
+                        sessionStorage.setItem('studentWaiting', 'true');
+                        sessionStorage.setItem('accessApproved', 'false');
+                        _showWaitingRoom();
                     });
 
                     window.sessionVM.socket.on('start-sharing-screen', () => {
