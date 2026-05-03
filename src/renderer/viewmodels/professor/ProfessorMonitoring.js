@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ViewModel : ProfessorVM (Monitoring, Real-time Alerts, Access Control, Reports)
  */
 Object.assign(ProfVM, {
@@ -27,7 +27,7 @@ Object.assign(ProfVM, {
                 // Limit to 500 items if we over-saved before the fix
                 if (this._reportLog.length > 500) this._reportLog = this._reportLog.slice(-500);
             }
-            
+
             if (this._reportLog?.length > 0) {
                 this._pmAlertCount = this._reportLog.length;
                 if (countBadge) { countBadge.style.display = 'inline'; countBadge.textContent = this._pmAlertCount; }
@@ -48,16 +48,16 @@ Object.assign(ProfVM, {
                     });
                 }
             }
-        } catch(e) { 
+        } catch (e) {
             console.error("[Perf] Failed to load alerts from storage:", e);
-            this._reportLog = []; 
+            this._reportLog = [];
         }
         await this.refreshSessionDetails(id);
         if (window.io) {
             const emitWatch = () => { if (this.socket) this.socket.emit('watchSession', id); };
             if (this.socket?.connected) emitWatch();
-            else { 
-                this.initSocket(); 
+            else {
+                this.initSocket();
                 if (this.socket) {
                     this.socket.off('connect', emitWatch);
                     this.socket.on('connect', emitWatch);
@@ -72,7 +72,7 @@ Object.assign(ProfVM, {
                         if (entry.studentId && !this._waitingStudentsSet.has(entry.studentId.toString())) { this._waitingStudentsSet.add(entry.studentId.toString()); changed = true; }
                     });
                     if (changed) this._rerenderParticipantsFromCache(id);
-                } catch(e) {}
+                } catch (e) { }
             }, 10000); // 10s is enough for local fallback
             this.socket.on('studentPresenceChanged', () => this.refreshSessionDetails(id, true, 0, true));
             this.socket.on('student-waiting', (data) => {
@@ -102,7 +102,7 @@ Object.assign(ProfVM, {
                         }
                         localStorage.setItem(key, JSON.stringify(existing));
                     }
-                } catch(e) {}
+                } catch (e) { }
                 this.refreshSessionDetails(id, true, 0, true);
             });
         }
@@ -149,7 +149,7 @@ Object.assign(ProfVM, {
             } finally { clearTimeout(timeout); }
             if (!resp.ok) throw new Error("Erreur serveur.");
             const data = await resp.json();
-            
+
             this._pmLastRefresh = Date.now();
             ProfData.currentSessionDetails = data;
             subheader.textContent = `Session ${data.sessionCode} ${data.classe?.nom ? '- ' + data.classe.nom : ''}`;
@@ -157,14 +157,17 @@ Object.assign(ProfVM, {
                 controls.style.display = 'block';
                 const pauseLabel = data.isPaused ? 'Reprendre' : 'Mettre en pause';
                 controls.innerHTML = `<div class="control-panel">
-                    <button class="cp-btn ${data.isPaused ? 'resume' : 'pause'}" onclick="ProfVM.togglePause('${id}', ${data.isPaused})">${pauseLabel}</button>
-                    <button class="cp-btn end" onclick="ProfVM.endSession('${id}')">Terminer</button>
-                    <button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">Rapport</button>
-                    <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 10)">+ 10 min</button>
+                    <button class="cp-btn ${data.isPaused ? 'resume' : 'pause'}" onclick="ProfVM.togglePause('${id}', ${data.isPaused})">
+                        ${data.isPaused ? '▶️ Reprendre' : '⏸️ Mettre en pause'}
+                    </button>
+                    <button class="cp-btn end" onclick="ProfVM.endSession('${id}')">⏹️ Terminer</button>
+                    <button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">📄 Rapport</button>
+                    <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 10)">➕ 10 min</button>
+                   
                 </div>`;
             } else {
                 controls.style.display = 'block';
-                controls.innerHTML = `<div class="control-panel" style="justify-content:flex-end;"><button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">Rapport</button></div>`;
+                controls.innerHTML = `<div class="control-panel" style="justify-content:flex-end;"><button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">📄 Rapport</button></div>`;
             }
             const students = data.classe?.students || [];
             const participants = data.participants || [];
@@ -182,7 +185,7 @@ Object.assign(ProfVM, {
             try {
                 waitingEntries = JSON.parse(localStorage.getItem(`_waiting_${id}`) || '[]');
                 waitingEntries.forEach(entry => { if (entry.studentId) this._waitingStudentsSet.add(entry.studentId.toString()); });
-            } catch(e) {}
+            } catch (e) { }
 
             const normalizeName = (v) => (v || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
             const waitingByName = new Map();
@@ -206,7 +209,7 @@ Object.assign(ProfVM, {
                     const sidStr = sRaw ? (typeof sRaw === 'object' && sRaw.$oid ? sRaw.$oid : sRaw.toString()) : '';
                     if (sidStr) matchedStudentIds.add(sidStr);
                     const pObj = participantMap.get(sidStr);
-                    
+
                     // Robust student data: try to get names from pObj or st
                     const sRef = (pObj && pObj.student) ? pObj.student : (typeof st === 'object' ? st : {});
                     const prenom = sRef.prenom || '';
@@ -235,7 +238,7 @@ Object.assign(ProfVM, {
                     const isFresh = Number.isFinite(pLastSeenTs) && pLastSeenTs > 0 && (nowTs - pLastSeenTs) <= onlineWindowMs;
                     // Do not trust status alone; require fresh lastSeen.
                     const isOnline = !!pObj && pObj.status !== 'inscrit' && isFresh;
-                    
+
                     // A student is waiting if they have 'waiting' status in DB OR if we received a WebSocket signal
                     // We don't strictly require isOnline here to be more resilient to heartbeat lag
                     const isWaiting = (
@@ -243,7 +246,7 @@ Object.assign(ProfVM, {
                         this._waitingStudentsSet.has(sidStr) ||
                         (waitingIdByName && this._waitingStudentsSet.has(waitingIdByName))
                     ) && !hasGranted && !hasDenied;
-                    
+
                     // A student is actif only when explicitly actif, or just granted while backend sync is pending.
                     const isActif = isOnline && !isWaiting && !hasDenied && (pObj.status === 'actif' || (hasGranted && pObj.status !== 'inscrit'));
 
@@ -254,8 +257,8 @@ Object.assign(ProfVM, {
                         <div class="pm-student-avatar" style="${avatarBg}">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
                         <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: ${nc}</div></div>
                         <div class="pm-student-actions">
-                            ${isWaiting ? `<button class="pm-action-btn" title="Accepter" onclick="ProfVM.grantAccess('${id}', '${waitingControlId}')">OK</button><button class="pm-action-btn" title="Refuser" onclick="ProfVM.denyAccess('${id}', '${waitingControlId}')">NO</button>` : ''}
-                            ${isActif ? `<button class="pm-action-btn" title="Écran" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">SCR</button><button class="pm-action-btn" title="Contrôle" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">MON</button><button class="pm-action-btn" title="Message" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">MSG</button>` : ''}
+                            ${isWaiting ? `<button class="pm-action-btn" title="Accepter" onclick="ProfVM.grantAccess('${id}', '${waitingControlId}')">✔️</button><button class="pm-action-btn" title="Refuser" onclick="ProfVM.denyAccess('${id}', '${waitingControlId}')">❌</button>` : ''}
+                            ${isActif ? `<button class="pm-action-btn" title="Écran" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">📺</button><button class="pm-action-btn" title="Contrôle" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">🔍</button><button class="pm-action-btn" title="Message" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">💬</button>` : ''}
                             ${pObj?.quizResult ? `<span class="pm-student-badge actif">Score ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>` : ''}
                             <span class="pm-student-badge ${isActif ? 'actif' : (isWaiting ? 'waiting' : '')}">${isActif ? 'Actif' : (isWaiting ? 'En attente' : 'Inscrit')}</span>
                         </div>
@@ -299,8 +302,8 @@ Object.assign(ProfVM, {
                         <div class="pm-student-avatar" style="${avatarBg}">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
                         <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: ${nc}</div></div>
                         <div class="pm-student-actions">
-                            ${isWaiting ? `<button class="pm-action-btn" title="Accepter" onclick="ProfVM.grantAccess('${id}', '${sidStr}')">OK</button><button class="pm-action-btn" title="Refuser" onclick="ProfVM.denyAccess('${id}', '${sidStr}')">NO</button>` : ''}
-                            ${isActif ? `<button class="pm-action-btn" title="Écran" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">SCR</button><button class="pm-action-btn" title="Contrôle" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">MON</button><button class="pm-action-btn" title="Message" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">MSG</button>` : ''}
+                            ${isWaiting ? `<button class="pm-action-btn" title="Accepter" onclick="ProfVM.grantAccess('${id}', '${sidStr}')">✔️</button><button class="pm-action-btn" title="Refuser" onclick="ProfVM.denyAccess('${id}', '${sidStr}')">❌</button>` : ''}
+                            ${isActif ? `<button class="pm-action-btn" title="Écran" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">📺</button><button class="pm-action-btn" title="Contrôle" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">🔍</button><button class="pm-action-btn" title="Message" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">💬</button>` : ''}
                             <span class="pm-student-badge ${isActif ? 'actif' : (isWaiting ? 'waiting' : '')}">${isActif ? 'Actif' : (isWaiting ? 'En attente' : 'Inscrit')}</span>
                         </div>
                     </div>`;
@@ -333,8 +336,8 @@ Object.assign(ProfVM, {
                         <div class="pm-student-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
                         <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: ${nc}</div></div>
                         <div class="pm-student-actions">
-                            <button class="pm-action-btn" title="Accepter" onclick="ProfVM.grantAccess('${id}', '${waitingId}')">OK</button>
-                            <button class="pm-action-btn" title="Refuser" onclick="ProfVM.denyAccess('${id}', '${waitingId}')">NO</button>
+                            <button class="pm-action-btn" title="Accepter" onclick="ProfVM.grantAccess('${id}', '${waitingId}')">✔️</button>
+                            <button class="pm-action-btn" title="Refuser" onclick="ProfVM.denyAccess('${id}', '${waitingId}')">❌</button>
                             <span class="pm-student-badge waiting">En attente</span>
                         </div>
                     </div>`;
@@ -365,14 +368,14 @@ Object.assign(ProfVM, {
             const list = JSON.parse(localStorage.getItem(key) || '[]');
             const updated = list.filter(e => e.studentId !== studentId.toString());
             if (updated.length) localStorage.setItem(key, JSON.stringify(updated)); else localStorage.removeItem(key);
-        } catch(e) {}
+        } catch (e) { }
 
         if (this.socket) this.socket.emit('grant-student-access', { testId, studentId });
         localStorage.setItem(`_accessGranted_${testId}_${studentId}`, '1');
         localStorage.setItem('_accessGranted_' + studentId, '1');
         localStorage.removeItem(`_accessDenied_${testId}_${studentId}`);
         localStorage.removeItem('_accessDenied_' + studentId);
-        
+
         // Force DB status update immediately to 'actif'
         try {
             const token = sessionStorage.getItem('accessToken');
@@ -380,8 +383,8 @@ Object.assign(ProfVM, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ status: 'actif' })
-            }).catch(() => {});
-        } catch(e) {}
+            }).catch(() => { });
+        } catch (e) { }
 
         this.refreshSessionDetails(testId, true, 0, true);
     },
@@ -393,14 +396,14 @@ Object.assign(ProfVM, {
             const list = JSON.parse(localStorage.getItem(key) || '[]');
             const updated = list.filter(e => e.studentId !== studentId.toString());
             if (updated.length) localStorage.setItem(key, JSON.stringify(updated)); else localStorage.removeItem(key);
-        } catch(e) {}
+        } catch (e) { }
 
         if (this.socket) this.socket.emit('deny-student-access', { testId, studentId });
         localStorage.setItem(`_accessDenied_${testId}_${studentId}`, '1');
         localStorage.setItem('_accessDenied_' + studentId, '1');
         localStorage.removeItem(`_accessGranted_${testId}_${studentId}`);
         localStorage.removeItem('_accessGranted_' + studentId);
-        
+
         // Force DB status update immediately to 'inscrit'
         try {
             const token = sessionStorage.getItem('accessToken');
@@ -408,8 +411,8 @@ Object.assign(ProfVM, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ status: 'inscrit' })
-            }).catch(() => {});
-        } catch(e) {}
+            }).catch(() => { });
+        } catch (e) { }
 
         this.refreshSessionDetails(testId, true, 0, true);
     },
@@ -477,21 +480,21 @@ Object.assign(ProfVM, {
     addGlobalAlert(studentName, studentId, message, level = 'high') {
         const time = new Date().toLocaleTimeString('fr-FR');
         this._pmAlertCount++;
-        
+
         // PERF FIX: Prune report log to keep it under 500 items
         if (this._reportLog.length > 500) {
             this._reportLog = this._reportLog.slice(-450);
         }
 
         this._reportLog.push({ time, studentName: studentName || 'Ã‰tudiant', studentId: studentId || '', message, level });
-        
+
         // PERF FIX: Debounced save to localStorage
         if (ProfData.currentSessionDetails?._id) {
             if (this._alertSaveTimeout) clearTimeout(this._alertSaveTimeout);
             this._alertSaveTimeout = setTimeout(() => {
-                try { 
-                    localStorage.setItem('alerts_' + ProfData.currentSessionDetails._id, JSON.stringify(this._reportLog)); 
-                } catch(e) {}
+                try {
+                    localStorage.setItem('alerts_' + ProfData.currentSessionDetails._id, JSON.stringify(this._reportLog));
+                } catch (e) { }
             }, 2000); // Wait 2s before saving to Disk
         }
 
@@ -502,7 +505,7 @@ Object.assign(ProfVM, {
             osc.connect(gain); gain.connect(ctx.destination);
             if (level === 'high') { osc.type = 'triangle'; osc.frequency.setValueAtTime(600, ctx.currentTime); osc.frequency.setValueAtTime(800, ctx.currentTime + 0.15); gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4); osc.start(); osc.stop(ctx.currentTime + 0.4); }
             else { osc.type = 'sine'; osc.frequency.value = 440; gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25); osc.start(); osc.stop(ctx.currentTime + 0.25); }
-        } catch(e) {}
+        } catch (e) { }
         const sid = studentId?.toString() || '';
         const prevRisk = this._studentRiskMap[sid] || 'low';
         if (level === 'high' || (level === 'medium' && prevRisk === 'low')) {
@@ -527,7 +530,7 @@ Object.assign(ProfVM, {
             c.style.cssText = 'position:fixed; top:20px; right:20px; z-index:100000; display:flex; flex-direction:column; gap:12px; pointer-events:none;';
             document.body.appendChild(c); return c;
         })();
-        
+
         // PERF FIX: Limit number of concurrent toasts to avoid DOM bloat
         if (container.children.length >= 3) {
             container.removeChild(container.firstChild);
@@ -714,30 +717,77 @@ Object.assign(ProfVM, {
         if (medium.some(s => name.includes(s))) return 'MEDIUM';
         return 'LOW';
     },
-
     openMessageModal(sid, name) {
-        ProfData.messageStudentId = sid;
-        const modal = document.getElementById('messageModal'); if (!modal) return;
+        ProfData.messageStudentId = sid ? sid.toString() : '';
+        const modal = document.getElementById('privateMsgModal') || document.getElementById('messageModal');
+        if (!modal) return;
         modal.classList.add('open');
-        document.getElementById('messageTitle').textContent = `Message Ã  ${name}`;
-        const input = document.getElementById('messageInput'); if (input) input.value = '';
+
+        const privateTargetEl = document.getElementById('privateMsgTarget');
+        if (privateTargetEl) privateTargetEl.textContent = `A ${name}`;
+
+        const legacyTitleEl = document.getElementById('messageTitle');
+        if (legacyTitleEl) legacyTitleEl.textContent = `Message a ${name}`;
+
+        const statusEl = document.getElementById('privateMsgStatus');
+        if (statusEl) statusEl.textContent = '';
+
+        const input = document.getElementById('privateMsgInput') || document.getElementById('messageInput');
+        if (input) { input.value = ''; input.focus(); }
     },
 
-    closeMessageModal() { document.getElementById('messageModal')?.classList.remove('open'); },
+    closeMessageModal() {
+        document.getElementById('privateMsgModal')?.classList.remove('open');
+        document.getElementById('messageModal')?.classList.remove('open');
+    },
 
-    async sendMessage() {
-        const text = document.getElementById('messageInput')?.value.trim();
+    async sendPrivateMessage() {
+        const input = document.getElementById('privateMsgInput') || document.getElementById('messageInput');
+        const text = input?.value.trim();
         if (!text) return;
+
+        const studentId = ProfData.messageStudentId ? ProfData.messageStudentId.toString() : '';
+        if (!studentId) {
+            alert('Aucun etudiant selectionne.');
+            return;
+        }
+
+        const sendBtn = document.getElementById('privateMsgSendBtn');
+        const statusEl = document.getElementById('privateMsgStatus');
+        if (sendBtn) sendBtn.disabled = true;
+        if (statusEl) statusEl.textContent = 'Envoi en cours...';
+
         try {
+            // Preferred path: backend WebSocket event supported by PracticalTestGateway.
+            if (!this.socket) this.initSocket();
+            if (this.socket) {
+                this.socket.emit('send-private-message', { studentId, message: text });
+                if (statusEl) statusEl.textContent = 'Message envoye.';
+                this.closeMessageModal();
+                alert('Message envoye.');
+                return;
+            }
+
+            // Fallback path for older deployments exposing HTTP.
             const token = sessionStorage.getItem('accessToken');
             const resp = await fetch(`${API_BASE}/practical-tests/message`, {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ studentId: ProfData.messageStudentId, message: text, testId: ProfData.currentSessionDetails?._id })
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ studentId, message: text, testId: ProfData.currentSessionDetails?._id })
             });
-            if (resp.ok) { this.closeMessageModal(); alert("Message envoyÃ©."); }
-            else alert("Erreur envoi.");
-        } catch(e) { alert("Erreur rÃ©seau"); }
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            if (statusEl) statusEl.textContent = 'Message envoye.';
+            this.closeMessageModal();
+            alert('Message envoye.');
+        } catch (e) {
+            if (statusEl) statusEl.textContent = 'Echec de l envoi.';
+            alert('Erreur d envoi du message.');
+        } finally {
+            if (sendBtn) sendBtn.disabled = false;
+        }
     },
+
+    async sendMessage() { return this.sendPrivateMessage(); },
 
     async togglePause(id, isPaused) {
         try {
@@ -746,7 +796,7 @@ Object.assign(ProfVM, {
             const resp = await fetch(`${API_BASE}/practical-tests/${id}/pause`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
             if (resp.ok) this.refreshSessionDetails(id, true, 0, true);
             else alert(`Erreur serveur lors de la ${isPaused ? 'reprise' : 'mise en pause'}.`);
-        } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
+        } catch (e) { alert("Erreur rÃ©seau : " + e.message); }
     },
 
     async endSession(id) {
@@ -756,7 +806,7 @@ Object.assign(ProfVM, {
             const resp = await fetch(`${API_BASE}/practical-tests/${id}/end`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
             if (resp.ok) this.refreshSessionDetails(id, true, 0, true);
             else alert("Erreur serveur lors de la clÃ´ture.");
-        } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
+        } catch (e) { alert("Erreur rÃ©seau : " + e.message); }
     },
 
     async extendSession(id, mins) {
@@ -768,7 +818,7 @@ Object.assign(ProfVM, {
             });
             if (resp.ok) this.refreshSessionDetails(id, true, 0, true);
             else alert("Erreur serveur lors de la prolongation.");
-        } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
+        } catch (e) { alert("Erreur rÃ©seau : " + e.message); }
     },
 
     async generatePDFReport() {
