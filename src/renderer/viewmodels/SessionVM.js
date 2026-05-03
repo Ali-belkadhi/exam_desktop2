@@ -162,6 +162,27 @@ window.SessionVM = class SessionVM {
         // Traceur de battement pour le UI
         sessionStorage.setItem('lastHeartbeatAt', Date.now());
         sessionStorage.setItem('lastHeartbeatAttemptAt', Date.now());
+
+        // Check our own participant status if we are in the waiting room!
+        const sid = sessionStorage.getItem('studentId');
+        if (sid && data.participants) {
+            const me = data.participants.find(p => {
+                const pid = p.student?._id || p.student?.id || p.student || p._id || p.id;
+                return pid?.toString() === sid.toString();
+            });
+            if (me) {
+                const isWaiting = sessionStorage.getItem('studentWaiting') === 'true';
+                if (isWaiting && me.status === 'actif') {
+                    // The backend says we are actif, but we are still waiting locally!
+                    console.log('[Heartbeat] Le serveur indique un statut ACTIF. Déverrouillage salle d\'attente...');
+                    if (window._hideWaitingRoom) window._hideWaitingRoom(true);
+                } else if (isWaiting && me.status === 'inscrit') {
+                    // Denied!
+                    console.log('[Heartbeat] Le serveur indique un statut INSCRIT. Accès refusé.');
+                    if (window._hideWaitingRoom) window._hideWaitingRoom(false);
+                }
+            }
+        }
     }
 
     async _sendPing() {
@@ -192,7 +213,8 @@ window.SessionVM = class SessionVM {
             if (studentId && testId) {
                 url = `${API_BASE}/practical-tests/${testId}/join`;
                 method = 'POST';
-                body = JSON.stringify({ studentId });
+                const isWaiting = sessionStorage.getItem('studentWaiting') === 'true';
+                body = JSON.stringify({ studentId, status: isWaiting ? 'waiting' : 'actif' });
             } else {
                 // Mode moniteur (Professeur)
                 url = testId

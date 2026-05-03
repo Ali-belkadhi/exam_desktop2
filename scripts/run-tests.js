@@ -14,7 +14,7 @@
 // Simuler le contexte navigateur pour les classes
 global.window = {
     APP_CONFIG: {
-        API_BASE:          'https://safe-exam-db-2.onrender.com',
+        API_BASE:          'https://safe-exam-db-ll3f.onrender.com',
         SERVICE_EMAIL:     'jean.dupont@university.edu',
         SERVICE_PASSWORD:  'SecureP@ss123',
         ALLOWED_ROLES:     ['professor', 'admin', 'super_admin'],

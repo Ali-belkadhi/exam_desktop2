@@ -222,11 +222,19 @@
                         </div>
 
                         <div class="modal-field" style="margin-top:12px;">
-                            <label>Applications Interdites (Blacklist) <span
-                                    style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des
-                                    virgules</span></label>
-                            <input type="text" id="af_whitelist" placeholder="ex: facebook, youtube, steam, spotify"
-                                style="background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#fff; padding:10px 14px; font-size:13px; width:100%; transition:all .2s;" />
+                            <label>Applications Interdites (Blacklist)</label>
+                            <div style="display:flex; gap:10px;">
+                                <select onchange="document.getElementById('af_whitelist').value = (document.getElementById('af_whitelist').value ? document.getElementById('af_whitelist').value + ', ' : '') + this.value; this.value='';" 
+                                    style="width:160px; background:rgba(88,101,242,0.1); border:1px solid rgba(88,101,242,0.3); color:#818cf8; font-weight:600; cursor:pointer;">
+                                    <option value="" style="background:#1a1b1e; color:#fff;">+ Groupe prédéfini</option>
+                                    <option value="browser" style="background:#1a1b1e; color:#fff;">🌐 Navigateurs</option>
+                                    <option value="ide" style="background:#1a1b1e; color:#fff;">💻 IDEs / Éditeurs</option>
+                                    <option value="facebook, youtube, instagram, tiktok" style="background:#1a1b1e; color:#fff;">📱 Réseaux Sociaux</option>
+                                    <option value="steam, discord, spotify, games" style="background:#1a1b1e; color:#fff;">🎮 Divertissement</option>
+                                </select>
+                                <input type="text" id="af_whitelist" placeholder="ex: browser, ide, facebook..."
+                                    style="flex:1; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#fff; padding:10px 14px; font-size:13px; transition:all .2s;" />
+                            </div>
                         </div>
                     </div> <!-- fin autoFilledFields -->
 
@@ -270,11 +278,19 @@
                         </div>
                     </div>
                     <div class="modal-field" style="margin-top:12px;">
-                        <label>Applications Interdites (Blacklist) <span
-                                style="font-size:10px; opacity:0.6; font-weight:normal;">— Séparez par des
-                                virgules</span></label>
-                        <input type="text" id="n_whitelist" placeholder="ex: facebook, youtube, steam, spotify"
-                            style="background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#fff; padding:10px 14px; font-size:13px; width:100%; transition:all .2s;" />
+                        <label>Applications Interdites (Blacklist)</label>
+                        <div style="display:flex; gap:10px;">
+                            <select onchange="document.getElementById('n_whitelist').value = (document.getElementById('n_whitelist').value ? document.getElementById('n_whitelist').value + ', ' : '') + this.value; this.value='';"
+                                style="width:160px; background:rgba(88,101,242,0.1); border:1px solid rgba(88,101,242,0.3); color:#818cf8; font-weight:600; cursor:pointer;">
+                                <option value="" style="background:#1a1b1e; color:#fff;">+ Groupe prédéfini</option>
+                                <option value="browser" style="background:#1a1b1e; color:#fff;">🌐 Navigateurs</option>
+                                <option value="ide" style="background:#1a1b1e; color:#fff;">💻 IDEs / Éditeurs</option>
+                                <option value="facebook, youtube, instagram, tiktok" style="background:#1a1b1e; color:#fff;">📱 Réseaux Sociaux</option>
+                                <option value="steam, discord, spotify, games" style="background:#1a1b1e; color:#fff;">🎮 Divertissement</option>
+                            </select>
+                            <input type="text" id="n_whitelist" placeholder="ex: browser, ide, facebook..."
+                                style="flex:1; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:8px; color:#fff; padding:10px 14px; font-size:13px; transition:all .2s;" />
+                        </div>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                         <div class="modal-field">
@@ -676,12 +692,36 @@
     
     
 
-        <script src="./models/User.js"></script>
+    <script src="socket.io.min.js"></script>
+    <script src="./models/User.js"></script>
     <script src="./models/Session.js"></script>
     <script src="./models/Student.js"></script>
-    <script src="./viewmodels/QuizVM.js"></script>
-    <script src="./viewmodels/ProfessorVM.js"></script>
-    <script src="socket.io.min.js"></script>
+    
+    <!-- Professor VM Modular Split -->
+    <script src="./viewmodels/professor/ProfessorCore.js"></script>
+    <script src="./viewmodels/professor/ProfessorWork.js"></script>
+    <script src="./viewmodels/professor/ProfessorSessions.js"></script>
+    <script src="./viewmodels/professor/ProfessorMonitoring.js"></script>
+    <script src="./viewmodels/professor/ProfessorQuiz.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => ProfVM.init());
+        
+        // Modal close listeners
+        const createModal = document.getElementById('createModal');
+        if (createModal) {
+            createModal.addEventListener('click', function (e) {
+                if (e.target === this) ProfVM.closeCreateModal();
+            });
+        }
+        
+        const workModal = document.getElementById('workModal');
+        if (workModal) {
+            workModal.addEventListener('click', function (e) {
+                if (e.target === this) ProfVM.closeWorkModal();
+            });
+        }
+    </script>
 </body>
 
 </html>

@@ -627,7 +627,7 @@
                 const testId = sessionStorage.getItem('activeTestId');
                 const studentId = sessionStorage.getItem('studentId');
                 if (testId && studentId && window.io) {
-                    const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-2.onrender.com';
+                    const API_BASE = window.APP_CONFIG?.API_BASE || 'https://safe-exam-db-2.onrender.com';
                     window.sessionVM.socket = window.io(API_BASE);
 
                     window.sessionVM.socket.on('connect', () => {
@@ -659,6 +659,11 @@
                     });
 
                     // ── Salle d'attente: écouter l'autorisation du professeur ──
+                    window.sessionVM.socket.on('error-notice', (data) => {
+                        alert(data.message || 'Une erreur est survenue.');
+                        window.location.replace('./login.html');
+                    });
+
                     window.sessionVM.socket.on('student-access-granted', (data) => {
                         if (data && data.studentId && data.studentId.toString() !== studentId.toString()) return;
                         console.log('[WaitingRoom] Accès accordé par le professeur!');
@@ -843,7 +848,7 @@
             const updateSubjectView = () => {
                 const pdfUrl = sessionStorage.getItem('sessionPdfUrl');
                 const sessionLink = sessionStorage.getItem('sessionLink');
-                const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-2.onrender.com';
+                const API_BASE = window.APP_CONFIG?.API_BASE || 'https://safe-exam-db-2.onrender.com';
 
                 // PDF Visibility
                 if (pdfUrl) {
@@ -1115,7 +1120,7 @@
                 return;
             }
 
-            const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-2.onrender.com';
+            const API_BASE = window.APP_CONFIG?.API_BASE || 'https://safe-exam-db-2.onrender.com';
             const testId = sessionStorage.getItem('activeTestId');
             const token = sessionStorage.getItem('accessToken');
             const studentId = sessionStorage.getItem('studentId') || '';
@@ -1215,7 +1220,7 @@
             if (testId && studentId) {
                 // sendBeacon est le SEUL moyen fiable d'envoyer des données quand la page se ferme
                 const blob = new Blob([JSON.stringify({ studentId })], { type: 'application/json' });
-                const API_BASE = localStorage.getItem('apiBase') || 'https://safe-exam-db-2.onrender.com';
+                const API_BASE = window.APP_CONFIG?.API_BASE || 'https://safe-exam-db-2.onrender.com';
                 navigator.sendBeacon(`${API_BASE}/practical-tests/${testId}/leave`, blob);
             }
             if (window.sessionVM && window.sessionVM.socket) window.sessionVM.socket.disconnect();

@@ -65,7 +65,7 @@ Le code frontend est organisé selon le pattern **MVVM** (Model-View-ViewModel) 
 ## 📡 4. Communication avec le Backend
 
 L'application communique avec l'API **NestJS** (`safe_exam_DB`) via des requêtes HTTP (fetch) :
-*   **Base URL** : `https://safe-exam-db-2.onrender.com` (ou `localhost:3000` en mode dev).
+*   **Base URL** : `https://safe-exam-db-ll3f.onrender.com` (ou `localhost:3000` en mode dev).
 *   **Authentification** : Utilisation de **Bearer Tokens (JWT)** dans les headers de chaque requête.
 *   **Synchronisation** : Les sessions sont synchronisées toutes les quelques secondes pour vérifier l'état (Active, Pausée, Terminée).
 
