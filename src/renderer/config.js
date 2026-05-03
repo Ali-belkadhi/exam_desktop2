@@ -19,7 +19,7 @@ window.APP_CONFIG = Object.freeze({
 
     // ── Timing ───────────────────────────────────────────────────
     /** Intervalle du heartbeat étudiant en millisecondes */
-    HEARTBEAT_INTERVAL_MS: 1000,
+    HEARTBEAT_INTERVAL_MS: 4000,
     /** Timeout réseau pour les requêtes fetch (ms) */
     FETCH_TIMEOUT_MS: 8000,
 

@@ -265,11 +265,12 @@ window.SessionVM = class SessionVM {
 
     startHeartbeat() {
         if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+        const heartbeatMs = window.APP_CONFIG?.HEARTBEAT_INTERVAL_MS || 4000;
 
         // Use a persistent interval that survives context
         this.heartbeatInterval = setInterval(() => {
             this._sendPing();
-        }, 1000); // 1 second for "Real Time" sync
+        }, heartbeatMs);
 
         // Immediate ping after setting interval (to avoid race conditions)
         this._sendPing();
