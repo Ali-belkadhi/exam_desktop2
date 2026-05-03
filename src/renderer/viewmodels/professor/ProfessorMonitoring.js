@@ -423,7 +423,10 @@ Object.assign(ProfVM, {
         const btnFullscreen = document.getElementById('pm-btn-fullscreen');
         if (!container) return;
         if (nameLabel) nameLabel.textContent = studentName;
-        if (btnFullscreen) btnFullscreen.style.display = 'flex';
+        if (btnFullscreen) {
+            btnFullscreen.style.display = 'flex';
+            btnFullscreen.innerHTML = '⛶';
+        }
         container.innerHTML = `<div id="pm-screen-loading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;"><div class="spin-ring" style="width:36px;height:36px;border-width:3px;margin-bottom:12px;"></div><p>Flux de ${studentName}...</p></div><img id="pm-screen-img" style="display:none;width:100%;height:100%;object-fit:contain;" src="" onclick="ProfVM.toggleScreenFullscreen()" />`;
         ProfData.watchingStudentId = studentId;
         if (this.socket) {
@@ -443,7 +446,7 @@ Object.assign(ProfVM, {
         if (!container) return;
         const isFS = container.classList.toggle('pm-screen-fullscreen');
         const btn = document.getElementById('pm-btn-fullscreen');
-        if (btn) btn.innerHTML = isFS ? 'âœ–' : 'â›¶';
+        if (btn) btn.innerHTML = isFS ? '✖' : '⛶';
     },
 
     _processIncomingAlert(data) {

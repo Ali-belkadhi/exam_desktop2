@@ -970,9 +970,13 @@
                 const nowMs = Date.now();
                 const lastPulse = parseInt(sessionStorage.getItem('lastHeartbeatAt') || '0', 10);
                 const lastAttempt = parseInt(sessionStorage.getItem('lastHeartbeatAttemptAt') || '0', 10);
-                const isSynced = (nowMs - lastPulse) < 6000; 
+                const staleMs = window.APP_CONFIG?.HEARTBEAT_STALE_MS || 25000;
+                const isSynced = (nowMs - lastPulse) < staleMs;
                 const heartbeatError = sessionStorage.getItem('heartbeatError');
-                const isAlive = (nowMs - lastAttempt) < 3000;
+                const heartbeatWarn = sessionStorage.getItem('heartbeatWarn');
+                const heartbeatFailCount = parseInt(sessionStorage.getItem('heartbeatFailCount') || '0', 10);
+                const isAlive = (nowMs - lastAttempt) < Math.max(7000, (window.APP_CONFIG?.HEARTBEAT_INTERVAL_MS || 4000) * 2);
+                const hardDesync = (nowMs - lastPulse) > (staleMs + 5000);
 
                 const pauseOverlay = document.getElementById('pauseOverlay');
                 const overlayIcon = document.getElementById('pauseOverlayIcon');
@@ -1016,15 +1020,17 @@
                         timerEl.style.color = (remaining < 300) ? '#EF4444' : 'var(--warning)';
                     }
                     if (statusDot) {
-                        if (heartbeatError && !isSynced) statusDot.style.backgroundColor = '#EF4444';
+                        if ((heartbeatError && hardDesync) || heartbeatFailCount >= 3) statusDot.style.backgroundColor = '#EF4444';
+                        else if (heartbeatWarn || !isSynced) statusDot.style.backgroundColor = '#F59E0B';
                         else if (lastPulse === 0 && isAlive) statusDot.style.backgroundColor = 'var(--primary)';
                         else statusDot.style.backgroundColor = 'var(--success)';
-                        statusDot.style.opacity = isSynced ? '1' : '0.4';
+                        statusDot.style.opacity = isSynced ? '1' : '0.7';
                     }
                     if (widgetStatus) {
-                        if (heartbeatError && !isSynced) widgetStatus.textContent = 'Erreur Synchro';
+                        if ((heartbeatError && hardDesync) || heartbeatFailCount >= 3) widgetStatus.textContent = 'Erreur Synchro';
+                        else if (heartbeatWarn || !isSynced) widgetStatus.textContent = 'Connexion lente...';
                         else if (lastPulse === 0 && isAlive) widgetStatus.textContent = 'Initialisation...';
-                        else widgetStatus.textContent = isSynced ? 'Session Active' : 'Connexion...';
+                        else widgetStatus.textContent = 'Session Active';
                     }
                 }
 
@@ -1037,7 +1043,7 @@
                 if (diagPulse) {
                     const diffS = Math.floor((Date.now() - lastPulse) / 1000);
                     diagPulse.textContent = `Pulse: ${lastPulse === 0 ? '—' : diffS + 's'}`;
-                    diagPulse.style.color = diffS > 5 ? '#EF4444' : (isSynced ? '#10B981' : '#F59E0B');
+                    diagPulse.style.color = diffS > Math.floor(staleMs / 1000) ? '#EF4444' : (isSynced ? '#10B981' : '#F59E0B');
                 }
                 if (diagOffset) {
                     const offset = parseInt(sessionStorage.getItem('sessionClockOffset') || '0', 10);
@@ -1048,6 +1054,7 @@
                 const diagError = document.getElementById('diagError');
                 if (diagError) {
                     if (heartbeatError) diagError.textContent = `Err: ${heartbeatError}`;
+                    else if (heartbeatWarn) diagError.textContent = `Warn: ${heartbeatWarn}`;
                     else if (isWaitingForStart) diagError.textContent = 'En attente du demarrage...';
                     else diagError.textContent = (isPaused ? ' (PAUSE SUR SERVEUR)' : '');
                 }
