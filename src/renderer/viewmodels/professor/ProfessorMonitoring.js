@@ -720,7 +720,11 @@ Object.assign(ProfVM, {
     openMessageModal(sid, name) {
         ProfData.messageStudentId = sid ? sid.toString() : '';
         const modal = document.getElementById('privateMsgModal') || document.getElementById('messageModal');
-        if (!modal) return;
+        if (!modal) {
+            const quickText = prompt(`Message a ${name}:`);
+            if (quickText && quickText.trim()) this.sendPrivateMessage(quickText.trim());
+            return;
+        }
         modal.classList.add('open');
 
         const privateTargetEl = document.getElementById('privateMsgTarget');
@@ -741,9 +745,9 @@ Object.assign(ProfVM, {
         document.getElementById('messageModal')?.classList.remove('open');
     },
 
-    async sendPrivateMessage() {
+    async sendPrivateMessage(forcedText = null) {
         const input = document.getElementById('privateMsgInput') || document.getElementById('messageInput');
-        const text = input?.value.trim();
+        const text = (forcedText !== null ? String(forcedText) : (input?.value || '')).trim();
         if (!text) return;
 
         const studentId = ProfData.messageStudentId ? ProfData.messageStudentId.toString() : '';
@@ -761,6 +765,16 @@ Object.assign(ProfVM, {
             // Preferred path: backend WebSocket event supported by PracticalTestGateway.
             if (!this.socket) this.initSocket();
             if (this.socket) {
+                if (!this.socket.connected && typeof this.socket.connect === 'function') this.socket.connect();
+                if (!this.socket.connected) {
+                    await new Promise((resolve, reject) => {
+                        const to = setTimeout(() => reject(new Error('Socket connection timeout')), 2500);
+                        const onConnect = () => { clearTimeout(to); this.socket.off('connect_error', onErr); resolve(); };
+                        const onErr = (err) => { clearTimeout(to); this.socket.off('connect', onConnect); reject(err || new Error('Socket connect error')); };
+                        this.socket.once('connect', onConnect);
+                        this.socket.once('connect_error', onErr);
+                    });
+                }
                 this.socket.emit('send-private-message', { studentId, message: text });
                 if (statusEl) statusEl.textContent = 'Message envoye.';
                 this.closeMessageModal();
