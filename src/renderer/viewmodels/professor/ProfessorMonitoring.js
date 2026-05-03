@@ -447,8 +447,7 @@ Object.assign(ProfVM, {
         const isFS = container.classList.toggle('pm-screen-fullscreen');
         const btn = document.getElementById('pm-btn-fullscreen');
         if (btn) btn.innerHTML = isFS ? '✖' : '⛶';
-    },
-
+    },
     _processIncomingAlert(data) {
         const sid = data.studentId?.toString();
         const now = Date.now();
@@ -462,24 +461,55 @@ Object.assign(ProfVM, {
             this._renderMonitorData(data);
         }
 
-        const procs = data.processes || [];
-        let globalRisk = 'low';
+        const procs = Array.isArray(data.processes) ? data.processes : [];
+        const baseAlerts = Array.isArray(data.alerts) ? data.alerts : [];
+        const generatedAlerts = [];
 
-        // PERF FIX: Ignore repeated alert creation from the same student within 3 seconds.
-        if (sid) {
-            const lastAlertTime = this._lastAlertTimes?.[sid] || 0;
-            if (now - lastAlertTime < 3000) return;
-            if (!this._lastAlertTimes) this._lastAlertTimes = {};
-            this._lastAlertTimes[sid] = now;
+        if (!this._riskAlertCooldownMap) this._riskAlertCooldownMap = {};
+
+        // Build a compact risky process list (dedup by normalized process label)
+        const risky = [];
+        const seen = new Set();
+        for (const p of procs) {
+            const risk = this._getRisk(p);
+            if (risk === 'LOW') continue;
+            const label = this._extractProcessLabel(p);
+            const key = `${risk}:${label}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            risky.push({ p, risk, label });
         }
 
-        procs.forEach(p => {
-            const risk = this._getRisk(p);
-            if (risk === 'HIGH') { globalRisk = 'high'; this.addGlobalAlert(data.studentName || 'Ã‰tudiant', data.studentId, `Application suspecte : ${p.Name}`, 'high'); }
-            else if (risk === 'MEDIUM' && globalRisk !== 'high') { globalRisk = 'medium'; this.addGlobalAlert(data.studentName || 'Ã‰tudiant', data.studentId, `Risque moyen : ${p.Name}`, 'medium'); }
+        risky.sort((a, b) => {
+            const wa = a.risk === 'HIGH' ? 2 : 1;
+            const wb = b.risk === 'HIGH' ? 2 : 1;
+            return wb - wa;
         });
-    },
 
+        // Emit at most 2 new alerts per payload, with per-process cooldown
+        for (const item of risky) {
+            const cooldownMs = item.risk === 'HIGH' ? 20000 : 30000;
+            const ckey = `${sid || 'unknown'}|${item.risk}|${item.label}`;
+            const last = this._riskAlertCooldownMap[ckey] || 0;
+            if ((now - last) < cooldownMs) continue;
+            this._riskAlertCooldownMap[ckey] = now;
+
+            const msg = item.risk === 'HIGH'
+                ? `Application suspecte : ${item.label}`
+                : `Risque moyen : ${item.label}`;
+            this.addGlobalAlert(data.studentName || 'Etudiant', data.studentId, msg, item.risk === 'HIGH' ? 'high' : 'medium');
+            generatedAlerts.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
+            if (generatedAlerts.length >= 2) break;
+        }
+
+        // Feed monitor alert panel with both local detection and source alerts
+        data.alerts = [...baseAlerts.slice(-15), ...generatedAlerts].slice(-20);
+
+        // Refresh modal once alerts are augmented so the right panel updates immediately.
+        if (sid && ProfData.monitoringStudentId && sid === ProfData.monitoringStudentId.toString()) {
+            this._renderMonitorData(data);
+        }
+    },
     addGlobalAlert(studentName, studentId, message, level = 'high') {
         const time = new Date().toLocaleTimeString('fr-FR');
         this._pmAlertCount++;
@@ -489,7 +519,7 @@ Object.assign(ProfVM, {
             this._reportLog = this._reportLog.slice(-450);
         }
 
-        this._reportLog.push({ time, studentName: studentName || 'Ã‰tudiant', studentId: studentId || '', message, level });
+        this._reportLog.push({ time, studentName: studentName || 'Etudiant', studentId: studentId || '', message, level });
 
         // PERF FIX: Debounced save to localStorage
         if (ProfData.currentSessionDetails?._id) {
@@ -498,17 +528,42 @@ Object.assign(ProfVM, {
                 try {
                     localStorage.setItem('alerts_' + ProfData.currentSessionDetails._id, JSON.stringify(this._reportLog));
                 } catch (e) { }
-            }, 2000); // Wait 2s before saving to Disk
+            }, 2000);
         }
 
         this.showGlobalToast(studentName, message, level);
+
         try {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator(); const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            if (level === 'high') { osc.type = 'triangle'; osc.frequency.setValueAtTime(600, ctx.currentTime); osc.frequency.setValueAtTime(800, ctx.currentTime + 0.15); gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4); osc.start(); osc.stop(ctx.currentTime + 0.4); }
-            else { osc.type = 'sine'; osc.frequency.value = 440; gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25); osc.start(); osc.stop(ctx.currentTime + 0.25); }
+            // Audio spam protection: one beep max every 1.5s.
+            const nowMs = Date.now();
+            this._lastAlertBeepAt = this._lastAlertBeepAt || 0;
+            if ((nowMs - this._lastAlertBeepAt) > 1500) {
+                this._lastAlertBeepAt = nowMs;
+                if (!this._alertAudioCtx) this._alertAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const ctx = this._alertAudioCtx;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                if (level === 'high') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(600, ctx.currentTime);
+                    osc.frequency.setValueAtTime(800, ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.4);
+                } else {
+                    osc.type = 'sine';
+                    osc.frequency.value = 440;
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.25);
+                }
+            }
         } catch (e) { }
+
         const sid = studentId?.toString() || '';
         const prevRisk = this._studentRiskMap[sid] || 'low';
         if (level === 'high' || (level === 'medium' && prevRisk === 'low')) {
@@ -516,17 +571,24 @@ Object.assign(ProfVM, {
             const dot = document.getElementById(`pm-student-${sid}`)?.querySelector('.pm-risk-dot');
             if (dot) dot.className = `pm-risk-dot ${level}`;
         }
+
         const alertsBox = document.getElementById('pm-global-alerts');
         if (alertsBox) {
-            const alertEl = document.createElement('div'); alertEl.className = `pm-alert-item ${level === 'high' ? '' : 'medium'}`;
-            alertEl.innerHTML = `<span>${level === 'high' ? 'ðŸ”´' : 'ðŸŸ¡'}</span><div><strong>${studentName}</strong> â€” ${message}<br><span style="font-size:9px;opacity:.6;">${new Date().toLocaleTimeString()}</span></div>`;
-            const ph = alertsBox.querySelector('[style*="Aucune alerte"]'); if (ph) ph.remove();
+            const alertEl = document.createElement('div');
+            alertEl.className = `pm-alert-item ${level === 'high' ? '' : 'medium'}`;
+            alertEl.innerHTML = `<span>${level === 'high' ? 'ALERTE' : 'WARN'}</span><div><strong>${studentName}</strong> - ${message}<br><span style="font-size:9px;opacity:.6;">${new Date().toLocaleTimeString()}</span></div>`;
+            const ph = alertsBox.querySelector('[style*="Aucune alerte"]');
+            if (ph) ph.remove();
             alertsBox.insertBefore(alertEl, alertsBox.firstChild);
             if (alertsBox.children.length > 50) alertsBox.lastChild.remove();
         }
-        const badge = document.getElementById('pm-alerts-count'); if (badge) { badge.style.display = 'inline'; badge.textContent = this._pmAlertCount; }
-    },
 
+        const badge = document.getElementById('pm-alerts-count');
+        if (badge) {
+            badge.style.display = 'inline';
+            badge.textContent = this._pmAlertCount;
+        }
+    },
     showGlobalToast(studentName, message, level) {
         const container = document.getElementById('global-toast-container') || (() => {
             const c = document.createElement('div'); c.id = 'global-toast-container';
@@ -679,45 +741,72 @@ Object.assign(ProfVM, {
                 riskBadgeEl.style.borderColor = 'rgba(34,197,94,0.3)';
             }
         }
-
         if (processTableEl) {
             if (!procs.length) {
-                processTableEl.innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,.25);">Aucun processus détecté</div>`;
+                processTableEl.innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,.25);">Aucun processus detecte</div>`;
             } else {
-                processTableEl.innerHTML = procs.slice(0, 80).map((p) => {
-                    const name = esc(p.Name || p.ProcessName || '—');
-                    const pid = esc(p.Id || p.PID || '—');
-                    const mem = esc((p.Memory !== undefined && p.Memory !== null) ? `${p.Memory} MB` : (p.WorkingSet || '—'));
+                const riskWeight = (r) => r === 'HIGH' ? 2 : (r === 'MEDIUM' ? 1 : 0);
+                const sortedProcs = [...procs].sort((a, b) => {
+                    const ra = this._getRisk(a);
+                    const rb = this._getRisk(b);
+                    const rw = riskWeight(rb) - riskWeight(ra);
+                    if (rw !== 0) return rw;
+                    const ma = Number(a?.Memory || 0);
+                    const mb = Number(b?.Memory || 0);
+                    return mb - ma;
+                });
+
+                processTableEl.innerHTML = sortedProcs.slice(0, 120).map((p) => {
+                    const name = esc(p.Name || p.ProcessName || '-');
+                    const pid = esc(p.Id || p.PID || '-');
+                    const mem = esc((p.Memory !== undefined && p.Memory !== null) ? `${p.Memory} MB` : (p.WorkingSet || '-'));
                     const title = esc(p.WindowTitle || p.MainWindowTitle || '');
                     const r = this._getRisk(p);
                     const color = r === 'HIGH' ? '#ef4444' : (r === 'MEDIUM' ? '#f59e0b' : '#22c55e');
-                    return `<div style="display:grid;grid-template-columns:2fr 60px 70px 2fr 90px;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center;">
+                    const rowBg = r === 'HIGH'
+                        ? 'background:rgba(239,68,68,0.09);'
+                        : (r === 'MEDIUM' ? 'background:rgba(245,158,11,0.08);' : '');
+                    return `<div style="display:grid;grid-template-columns:2fr 60px 70px 2fr 90px;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center;${rowBg}">
                         <span style="color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span>
                         <span style="color:rgba(255,255,255,.65);">${pid}</span>
                         <span style="color:rgba(255,255,255,.65);">${mem}</span>
-                        <span style="color:rgba(255,255,255,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title || '—'}</span>
+                        <span style="color:rgba(255,255,255,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title || '-'}</span>
                         <span style="font-weight:700;color:${color};">${r}</span>
                     </div>`;
                 }).join('');
             }
         }
-
         if (alertListEl) {
             const alerts = Array.isArray(data.alerts) ? data.alerts.slice(-20) : [];
             if (!alerts.length) {
                 alertListEl.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte</div>`;
             } else {
-                alertListEl.innerHTML = alerts.reverse().map(a => `<div style="padding:8px 10px;margin-bottom:6px;border:1px solid rgba(245,158,11,.25);background:rgba(245,158,11,.08);border-radius:8px;font-size:11px;color:#fcd34d;">${esc(a)}</div>`).join('');
+                alertListEl.innerHTML = alerts.reverse().map(a => {
+                    const txt = String(a || '');
+                    const isHigh = /application suspecte|high|suspecte/i.test(txt);
+                    const border = isHigh ? 'rgba(239,68,68,.35)' : 'rgba(245,158,11,.25)';
+                    const bg = isHigh ? 'rgba(239,68,68,.10)' : 'rgba(245,158,11,.08)';
+                    const color = isHigh ? '#fecaca' : '#fcd34d';
+                    return `<div style="padding:8px 10px;margin-bottom:6px;border:1px solid ${border};background:${bg};border-radius:8px;font-size:11px;color:${color};">${esc(txt)}</div>`;
+                }).join('');
             }
         }
     },
 
+    _extractProcessLabel(p) {
+        const raw = String(p?.Name || p?.ProcessName || p?.WindowTitle || p?.MainWindowTitle || 'process').toLowerCase().trim();
+        const cleaned = raw.replace(/\.exe$/i, '').replace(/_crashpad(_handler|_reporter)?$/i, '').replace(/-crashpad(_handler|_reporter)?$/i, '');
+        return cleaned || 'process';
+    },
+
     _getRisk(p) {
         const name = (p.Name || p.ProcessName || '').toLowerCase();
+        const title = (p.WindowTitle || p.MainWindowTitle || '').toLowerCase();
+        const haystack = `${name} ${title}`;
         const suspicious = ['chrome', 'firefox', 'msedge', 'opera', 'brave', 'anydesk', 'teamviewer', 'discord', 'skype', 'whatsapp', 'telegram'];
-        if (suspicious.some(s => name.includes(s))) return 'HIGH';
+        if (suspicious.some(s => haystack.includes(s))) return 'HIGH';
         const medium = ['cmd', 'powershell', 'terminal', 'code', 'visual studio', 'calculator'];
-        if (medium.some(s => name.includes(s))) return 'MEDIUM';
+        if (medium.some(s => haystack.includes(s))) return 'MEDIUM';
         return 'LOW';
     },
     openMessageModal(sid, name) {
