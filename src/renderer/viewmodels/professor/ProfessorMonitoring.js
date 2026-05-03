@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ViewModel : ProfessorVM (Monitoring, Real-time Alerts, Access Control, Reports)
  */
 Object.assign(ProfVM, {
@@ -14,7 +14,7 @@ Object.assign(ProfVM, {
         const alertsBox = document.getElementById('pm-global-alerts');
         const countBadge = document.getElementById('pm-alerts-count');
         if (countBadge) { countBadge.style.display = 'none'; countBadge.textContent = '0'; }
-        if (alertsBox) alertsBox.innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte détectée</div>';
+        if (alertsBox) alertsBox.innerHTML = '<div style="text-align:center; padding:20px; color:rgba(255,255,255,.2); font-size:11px;">Aucune alerte dÃ©tectÃ©e</div>';
         try {
             const savedAlerts = localStorage.getItem('alerts_' + id);
             // PERF FIX: Avoid parsing massive strings that could hang the UI
@@ -35,10 +35,10 @@ Object.assign(ProfVM, {
                     alertsBox.innerHTML = '';
                     this._reportLog.slice(-50).reverse().forEach(entry => {
                         const alertClass = entry.level === 'high' ? '' : 'medium';
-                        const icon = entry.level === 'high' ? '🔴' : '🟡';
+                        const icon = entry.level === 'high' ? 'ðŸ”´' : 'ðŸŸ¡';
                         const alertEl = document.createElement('div');
                         alertEl.className = `pm-alert-item ${alertClass}`;
-                        alertEl.innerHTML = `<span>${icon}</span><div><strong>${entry.studentName}</strong> — ${entry.message}<br><span style="font-size:9px;opacity:.6;">${entry.time}</span></div>`;
+                        alertEl.innerHTML = `<span>${icon}</span><div><strong>${entry.studentName}</strong> â€” ${entry.message}<br><span style="font-size:9px;opacity:.6;">${entry.time}</span></div>`;
                         alertsBox.appendChild(alertEl);
                         const sid = entry.studentId?.toString() || '';
                         if (sid) {
@@ -118,7 +118,7 @@ Object.assign(ProfVM, {
         if (!isSilent) {
             participantsList.innerHTML = `<div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:120px;gap:10px;"><div class="spin-ring" style="width:24px;height:24px;"></div></div>`;
             controls.style.display = 'none';
-            subheader.textContent = 'Récupération des données...';
+            subheader.textContent = 'RÃ©cupÃ©ration des donnÃ©es...';
         }
         try {
             const token = sessionStorage.getItem('accessToken');
@@ -133,19 +133,19 @@ Object.assign(ProfVM, {
             
             this._pmLastRefresh = Date.now();
             ProfData.currentSessionDetails = data;
-            subheader.textContent = `Session ${data.sessionCode} ${data.classe?.nom ? '· ' + data.classe.nom : ''}`;
+            subheader.textContent = `Session ${data.sessionCode} ${data.classe?.nom ? 'Â· ' + data.classe.nom : ''}`;
             if (data.isActive !== false && !data.endedAt) {
                 controls.style.display = 'block';
-                const pauseLabel = data.isPaused ? '▶️ Reprendre' : '⏸️ Mettre en pause';
+                const pauseLabel = data.isPaused ? 'â–¶ï¸ Reprendre' : 'â¸ï¸ Mettre en pause';
                 controls.innerHTML = `<div class="control-panel">
                     <button class="cp-btn ${data.isPaused ? 'resume' : 'pause'}" onclick="ProfVM.togglePause('${id}', ${data.isPaused})">${pauseLabel}</button>
-                    <button class="cp-btn end" onclick="ProfVM.endSession('${id}')">⏹️ Terminer</button>
-                    <button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">📄 Rapport</button>
-                    <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 10)">➕ 10 min</button>
+                    <button class="cp-btn end" onclick="ProfVM.endSession('${id}')">â¹ï¸ Terminer</button>
+                    <button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">ðŸ“„ Rapport</button>
+                    <button class="cp-btn extend" onclick="ProfVM.extendSession('${id}', 10)">âž• 10 min</button>
                 </div>`;
             } else {
                 controls.style.display = 'block';
-                controls.innerHTML = `<div class="control-panel" style="justify-content:flex-end;"><button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">📄 Rapport</button></div>`;
+                controls.innerHTML = `<div class="control-panel" style="justify-content:flex-end;"><button class="cp-btn extend" onclick="ProfVM.generatePDFReport()" style="background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.4);color:#818cf8;">ðŸ“„ Rapport</button></div>`;
             }
             const students = data.classe?.students || [];
             const participants = data.participants || [];
@@ -175,7 +175,7 @@ Object.assign(ProfVM, {
 
             let countActif = 0, countInactif = 0;
             if (students.length === 0) {
-                participantsList.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);">📭 Aucun étudiant inscrit.</div>`;
+                participantsList.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);">ðŸ“­ Aucun Ã©tudiant inscrit.</div>`;
             } else {
                 let html = '';
                 const matchedStudentIds = new Set();
@@ -190,7 +190,10 @@ Object.assign(ProfVM, {
                     const sRef = (pObj && pObj.student) ? pObj.student : (typeof st === 'object' ? st : {});
                     const prenom = sRef.prenom || '';
                     const nom = sRef.nom || '';
-                    const displayName = (prenom || nom) ? `${prenom} ${nom}`.trim() : `Étudiant (${sidStr.substring(sidStr.length - 4)})`;
+                    const waitingEntryById = waitingEntries.find(e => (e?.studentId || '').toString() === sidStr);
+                    const displayName = (prenom || nom)
+                        ? `${prenom} ${nom}`.trim()
+                        : ((waitingEntryById?.studentName || '').toString().trim() || `Étudiant (${sidStr.substring(sidStr.length - 4)})`);
                     const initials = (prenom && nom) ? (prenom[0] + nom[0]).toUpperCase() : (prenom ? prenom[0] : (nom ? nom[0] : '?')).toUpperCase();
                     const nc = sRef.studentCardNumber || 'N/A';
 
@@ -222,9 +225,9 @@ Object.assign(ProfVM, {
                         <div class="pm-student-avatar" style="${avatarBg}">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
                         <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: ${nc}</div></div>
                         <div class="pm-student-actions">
-                            ${isWaiting ? `<button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${waitingControlId}')">✔️</button><button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${waitingControlId}')">❌</button>` : ''}
-                            ${isActif ? `<button class="pm-action-btn" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">📺</button><button class="pm-action-btn" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">🔍</button><button class="pm-action-btn" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">💬</button>` : ''}
-                            ${pObj?.quizResult ? `<span class="pm-student-badge actif">✓ ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>` : ''}
+                            ${isWaiting ? `<button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${waitingControlId}')">âœ”ï¸</button><button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${waitingControlId}')">âŒ</button>` : ''}
+                            ${isActif ? `<button class="pm-action-btn" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">ðŸ“º</button><button class="pm-action-btn" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">ðŸ”</button><button class="pm-action-btn" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">ðŸ’¬</button>` : ''}
+                            ${pObj?.quizResult ? `<span class="pm-student-badge actif">âœ“ ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>` : ''}
                             <span class="pm-student-badge ${isActif ? 'actif' : (isWaiting ? 'waiting' : '')}">${isActif ? 'Actif' : (isWaiting ? 'En attente' : 'Inscrit')}</span>
                         </div>
                     </div>`;
@@ -240,12 +243,13 @@ Object.assign(ProfVM, {
                     const hasDenied = localStorage.getItem('_accessDenied_' + sidStr) === '1';
                     const isWaiting = (pObj?.status === 'waiting' || this._waitingStudentsSet.has(sidStr)) && !hasGranted && !hasDenied;
                     const isActif = !isWaiting && !hasDenied && (hasGranted || pObj?.status === 'actif');
+                    if (!isWaiting && !isActif) return; // hide ghost "inscrit" rows not in class
                     if (isWaiting) matchedWaitingIds.add(sidStr);
 
                     if (isActif) countActif++; else countInactif++;
 
                     const fromWaiting = waitingEntries.find(e => (e?.studentId || '').toString() === sidStr);
-                    const displayName = (fromWaiting?.studentName || '').toString().trim() || `Étudiant (${sidStr.slice(-4)})`;
+                    const displayName = (fromWaiting?.studentName || '').toString().trim() || `Ã‰tudiant (${sidStr.slice(-4)})`;
                     const initials = displayName.split(' ').filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase() || '?';
                     const riskLevel = isActif ? (this._studentRiskMap[sidStr] || 'low') : 'inactive';
                     const avatarBg = isActif ? 'background:linear-gradient(135deg,#10b981,#059669);' : (isWaiting ? 'background:linear-gradient(135deg,#f59e0b,#d97706);' : '');
@@ -254,8 +258,8 @@ Object.assign(ProfVM, {
                         <div class="pm-student-avatar" style="${avatarBg}">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
                         <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: N/A</div></div>
                         <div class="pm-student-actions">
-                            ${isWaiting ? `<button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${sidStr}')">✔️</button><button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${sidStr}')">❌</button>` : ''}
-                            ${isActif ? `<button class="pm-action-btn" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">📺</button><button class="pm-action-btn" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">🔍</button><button class="pm-action-btn" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">💬</button>` : ''}
+                            ${isWaiting ? `<button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${sidStr}')">âœ”ï¸</button><button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${sidStr}')">âŒ</button>` : ''}
+                            ${isActif ? `<button class="pm-action-btn" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">ðŸ“º</button><button class="pm-action-btn" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">ðŸ”</button><button class="pm-action-btn" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">ðŸ’¬</button>` : ''}
                             <span class="pm-student-badge ${isActif ? 'actif' : (isWaiting ? 'waiting' : '')}">${isActif ? 'Actif' : (isWaiting ? 'En attente' : 'Inscrit')}</span>
                         </div>
                     </div>`;
@@ -272,7 +276,7 @@ Object.assign(ProfVM, {
                     const isWaiting = this._waitingStudentsSet.has(waitingId) && !hasGranted && !hasDenied;
                     if (!isWaiting) return;
 
-                    const displayName = (entry?.studentName || '').toString().trim() || `Étudiant (${waitingId.slice(-4)})`;
+                    const displayName = (entry?.studentName || '').toString().trim() || `Ã‰tudiant (${waitingId.slice(-4)})`;
                     const initials = displayName.split(' ').filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase() || '?';
                     const riskLevel = 'inactive';
                     countInactif++;
@@ -281,8 +285,8 @@ Object.assign(ProfVM, {
                         <div class="pm-student-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
                         <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: N/A</div></div>
                         <div class="pm-student-actions">
-                            <button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${waitingId}')">✔️</button>
-                            <button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${waitingId}')">❌</button>
+                            <button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${waitingId}')">âœ”ï¸</button>
+                            <button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${waitingId}')">âŒ</button>
                             <span class="pm-student-badge waiting">En attente</span>
                         </div>
                     </div>`;
@@ -294,7 +298,7 @@ Object.assign(ProfVM, {
         } catch (e) {
             if (_retryCount < 2) setTimeout(() => this.refreshSessionDetails(id, isSilent, _retryCount + 1), 2000);
             else if (!isSilent) {
-                participantsList.innerHTML = `<div style="text-align:center;padding:40px;color:#ed4245;">⚠️ ${e.message}<br><button onclick="ProfVM.refreshSessionDetails('${id}')" style="margin-top:12px;">🔄 Réessayer</button></div>`;
+                participantsList.innerHTML = `<div style="text-align:center;padding:40px;color:#ed4245;">âš ï¸ ${e.message}<br><button onclick="ProfVM.refreshSessionDetails('${id}')" style="margin-top:12px;">ðŸ”„ RÃ©essayer</button></div>`;
                 subheader.textContent = 'Erreur';
             }
         } finally {
@@ -380,7 +384,7 @@ Object.assign(ProfVM, {
         if (!container) return;
         const isFS = container.classList.toggle('pm-screen-fullscreen');
         const btn = document.getElementById('pm-btn-fullscreen');
-        if (btn) btn.innerHTML = isFS ? '✖' : '⛶';
+        if (btn) btn.innerHTML = isFS ? 'âœ–' : 'â›¶';
     },
 
     _processIncomingAlert(data) {
@@ -399,8 +403,8 @@ Object.assign(ProfVM, {
         let globalRisk = 'low';
         procs.forEach(p => {
             const risk = this._getRisk(p);
-            if (risk === 'HIGH') { globalRisk = 'high'; this.addGlobalAlert(data.studentName || 'Étudiant', data.studentId, `Application suspecte : ${p.Name}`, 'high'); }
-            else if (risk === 'MEDIUM' && globalRisk !== 'high') { globalRisk = 'medium'; this.addGlobalAlert(data.studentName || 'Étudiant', data.studentId, `Risque moyen : ${p.Name}`, 'medium'); }
+            if (risk === 'HIGH') { globalRisk = 'high'; this.addGlobalAlert(data.studentName || 'Ã‰tudiant', data.studentId, `Application suspecte : ${p.Name}`, 'high'); }
+            else if (risk === 'MEDIUM' && globalRisk !== 'high') { globalRisk = 'medium'; this.addGlobalAlert(data.studentName || 'Ã‰tudiant', data.studentId, `Risque moyen : ${p.Name}`, 'medium'); }
         });
     },
 
@@ -413,7 +417,7 @@ Object.assign(ProfVM, {
             this._reportLog = this._reportLog.slice(-450);
         }
 
-        this._reportLog.push({ time, studentName: studentName || 'Étudiant', studentId: studentId || '', message, level });
+        this._reportLog.push({ time, studentName: studentName || 'Ã‰tudiant', studentId: studentId || '', message, level });
         
         // PERF FIX: Debounced save to localStorage
         if (ProfData.currentSessionDetails?._id) {
@@ -443,7 +447,7 @@ Object.assign(ProfVM, {
         const alertsBox = document.getElementById('pm-global-alerts');
         if (alertsBox) {
             const alertEl = document.createElement('div'); alertEl.className = `pm-alert-item ${level === 'high' ? '' : 'medium'}`;
-            alertEl.innerHTML = `<span>${level === 'high' ? '🔴' : '🟡'}</span><div><strong>${studentName}</strong> — ${message}<br><span style="font-size:9px;opacity:.6;">${new Date().toLocaleTimeString()}</span></div>`;
+            alertEl.innerHTML = `<span>${level === 'high' ? 'ðŸ”´' : 'ðŸŸ¡'}</span><div><strong>${studentName}</strong> â€” ${message}<br><span style="font-size:9px;opacity:.6;">${new Date().toLocaleTimeString()}</span></div>`;
             const ph = alertsBox.querySelector('[style*="Aucune alerte"]'); if (ph) ph.remove();
             alertsBox.insertBefore(alertEl, alertsBox.firstChild);
             if (alertsBox.children.length > 50) alertsBox.lastChild.remove();
@@ -465,7 +469,7 @@ Object.assign(ProfVM, {
 
         const toast = document.createElement('div'); const isHigh = level === 'high';
         toast.style.cssText = `background:${isHigh ? 'linear-gradient(135deg, #7f1d1d, #b91c1c)' : 'linear-gradient(135deg, #78350f, #d97706)'}; color:white; padding:16px 20px; border-radius:16px; min-width:320px; box-shadow:0 20px 40px rgba(0,0,0,0.4); display:flex; gap:14px; animation:slideInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; pointer-events:auto; cursor:pointer; backdrop-filter:blur(10px);`;
-        toast.innerHTML = `<div style="font-size:24px;">${isHigh ? '🚨' : '⚠️'}</div><div><div style="font-size:10px; font-weight:800; opacity:0.7;">Alerte de sécurité</div><div style="font-size:14px; font-weight:700;"><span style="color:${isHigh ? '#fca5a5' : '#fcd34d'}">${studentName}</span></div><div style="font-size:13px; opacity:0.9;">${message}</div></div>`;
+        toast.innerHTML = `<div style="font-size:24px;">${isHigh ? 'ðŸš¨' : 'âš ï¸'}</div><div><div style="font-size:10px; font-weight:800; opacity:0.7;">Alerte de sÃ©curitÃ©</div><div style="font-size:14px; font-weight:700;"><span style="color:${isHigh ? '#fca5a5' : '#fcd34d'}">${studentName}</span></div><div style="font-size:13px; opacity:0.9;">${message}</div></div>`;
         toast.onclick = () => { toast.style.animation = 'fadeOut 0.3s ease forwards'; setTimeout(() => toast.remove(), 300); };
         container.appendChild(toast);
         setTimeout(() => { if (toast.parentNode) { toast.style.animation = 'fadeOut 0.5s ease forwards'; setTimeout(() => toast.remove(), 500); } }, 7000);
@@ -483,7 +487,7 @@ Object.assign(ProfVM, {
         ProfData.monitoringStudentId = sid;
         const modal = document.getElementById('monitorModal'); if (!modal) return;
         modal.classList.add('open');
-        document.getElementById('monitorTitle').textContent = `Activités : ${name}`;
+        document.getElementById('monitorTitle').textContent = `ActivitÃ©s : ${name}`;
         this.fetchStudentMonitoring(sid);
     },
 
@@ -498,7 +502,7 @@ Object.assign(ProfVM, {
             if (!resp.ok) throw new Error();
             const data = await resp.json();
             const procs = Array.isArray(data.processes) ? data.processes : [];
-            if (!procs.length) list.innerHTML = `<div style="text-align:center;padding:20px;opacity:0.5;">Aucun processus détecté.</div>`;
+            if (!procs.length) list.innerHTML = `<div style="text-align:center;padding:20px;opacity:0.5;">Aucun processus dÃ©tectÃ©.</div>`;
             else {
                 list.innerHTML = `<table style="width:100%; border-collapse:collapse; font-size:12px;">
                     <thead><tr style="text-align:left; opacity:0.5; border-bottom:1px solid rgba(255,255,255,0.1);"><th style="padding:8px;">Processus</th><th>Statut</th><th>Risque</th></tr></thead>
@@ -507,7 +511,7 @@ Object.assign(ProfVM, {
                         return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:8px;">${p.Name}</td><td>En cours</td><td><span class="risk-badge ${risk.toLowerCase()}">${risk}</span></td></tr>`;
                     }).join('')}</tbody></table>`;
             }
-        } catch(e) { list.innerHTML = `<div style="color:#ed4245;padding:20px;">Erreur réseau</div>`; }
+        } catch(e) { list.innerHTML = `<div style="color:#ed4245;padding:20px;">Erreur rÃ©seau</div>`; }
     },
 
     _getRisk(p) {
@@ -523,7 +527,7 @@ Object.assign(ProfVM, {
         ProfData.messageStudentId = sid;
         const modal = document.getElementById('messageModal'); if (!modal) return;
         modal.classList.add('open');
-        document.getElementById('messageTitle').textContent = `Message à ${name}`;
+        document.getElementById('messageTitle').textContent = `Message Ã  ${name}`;
         const input = document.getElementById('messageInput'); if (input) input.value = '';
     },
 
@@ -538,9 +542,9 @@ Object.assign(ProfVM, {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ studentId: ProfData.messageStudentId, message: text, testId: ProfData.currentSessionDetails?._id })
             });
-            if (resp.ok) { this.closeMessageModal(); alert("Message envoyé."); }
+            if (resp.ok) { this.closeMessageModal(); alert("Message envoyÃ©."); }
             else alert("Erreur envoi.");
-        } catch(e) { alert("Erreur réseau"); }
+        } catch(e) { alert("Erreur rÃ©seau"); }
     },
 
     async togglePause(id, isPaused) {
@@ -549,7 +553,7 @@ Object.assign(ProfVM, {
             const resp = await fetch(`${API_BASE}/practical-tests/${id}/${isPaused ? 'resume' : 'pause'}`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
             if (resp.ok) this.refreshSessionDetails(id, true);
             else alert("Erreur serveur lors de la mise en pause.");
-        } catch(e) { alert("Erreur réseau : " + e.message); }
+        } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
     },
 
     async endSession(id) {
@@ -558,8 +562,8 @@ Object.assign(ProfVM, {
             const token = sessionStorage.getItem('accessToken');
             const resp = await fetch(`${API_BASE}/practical-tests/${id}/end`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
             if (resp.ok) this.refreshSessionDetails(id, true);
-            else alert("Erreur serveur lors de la clôture.");
-        } catch(e) { alert("Erreur réseau : " + e.message); }
+            else alert("Erreur serveur lors de la clÃ´ture.");
+        } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
     },
 
     async extendSession(id, mins) {
@@ -571,7 +575,7 @@ Object.assign(ProfVM, {
             });
             if (resp.ok) this.refreshSessionDetails(id, true);
             else alert("Erreur serveur lors de la prolongation.");
-        } catch(e) { alert("Erreur réseau : " + e.message); }
+        } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
     },
 
     async generatePDFReport() {
@@ -581,7 +585,7 @@ Object.assign(ProfVM, {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         doc.setFontSize(22); doc.setTextColor(40, 44, 52); doc.text("Rapport d'Anomalies de Session", 20, 20);
-        doc.setFontSize(10); doc.setTextColor(100); doc.text(`Généré le : ${new Date().toLocaleString()}`, 20, 28);
+        doc.setFontSize(10); doc.setTextColor(100); doc.text(`GÃ©nÃ©rÃ© le : ${new Date().toLocaleString()}`, 20, 28);
         doc.setDrawColor(200); doc.line(20, 32, 190, 32);
         doc.setFontSize(12); doc.setTextColor(0); doc.text("Informations Session", 20, 42);
         doc.setFontSize(10);
@@ -589,8 +593,9 @@ Object.assign(ProfVM, {
         doc.text(`Classe: ${s.classe?.nom || 'N/A'}`, 25, 56);
         doc.text(`Code: ${s.sessionCode || 'N/A'}`, 25, 62);
         doc.text(`Date: ${new Date(s.startedAt).toLocaleDateString()}`, 25, 68);
-        const tableData = logs.map(l => [l.time, l.studentName, l.level === 'high' ? 'Élevé' : 'Moyen', l.message]);
-        doc.autoTable({ startY: 80, head: [['Heure', 'Étudiant', 'Risque', 'Description']], body: tableData, headStyles: { fillColor: [88, 101, 242] }, alternateRowStyles: { fillColor: [245, 245, 255] } });
+        const tableData = logs.map(l => [l.time, l.studentName, l.level === 'high' ? 'Ã‰levÃ©' : 'Moyen', l.message]);
+        doc.autoTable({ startY: 80, head: [['Heure', 'Ã‰tudiant', 'Risque', 'Description']], body: tableData, headStyles: { fillColor: [88, 101, 242] }, alternateRowStyles: { fillColor: [245, 245, 255] } });
         doc.save(`Rapport_${s.sessionCode}.pdf`);
     }
 });
+
