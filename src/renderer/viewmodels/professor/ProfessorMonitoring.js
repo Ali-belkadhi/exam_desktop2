@@ -599,9 +599,10 @@ Object.assign(ProfVM, {
     async togglePause(id, isPaused) {
         try {
             const token = sessionStorage.getItem('accessToken');
-            const resp = await fetch(`${API_BASE}/practical-tests/${id}/${isPaused ? 'resume' : 'pause'}`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
+            // Backend uses one POST endpoint that toggles pause/resume state.
+            const resp = await fetch(`${API_BASE}/practical-tests/${id}/pause`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
             if (resp.ok) this.refreshSessionDetails(id, true);
-            else alert("Erreur serveur lors de la mise en pause.");
+            else alert(`Erreur serveur lors de la ${isPaused ? 'reprise' : 'mise en pause'}.`);
         } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
     },
 
@@ -609,7 +610,7 @@ Object.assign(ProfVM, {
         if (!confirm("Terminer cette session ?")) return;
         try {
             const token = sessionStorage.getItem('accessToken');
-            const resp = await fetch(`${API_BASE}/practical-tests/${id}/end`, { method: 'PATCH', headers: { 'Authorization': `Bearer ${token}` } });
+            const resp = await fetch(`${API_BASE}/practical-tests/${id}/end`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
             if (resp.ok) this.refreshSessionDetails(id, true);
             else alert("Erreur serveur lors de la clÃ´ture.");
         } catch(e) { alert("Erreur rÃ©seau : " + e.message); }
@@ -619,7 +620,7 @@ Object.assign(ProfVM, {
         try {
             const token = sessionStorage.getItem('accessToken');
             const resp = await fetch(`${API_BASE}/practical-tests/${id}/extend`, {
-                method: 'PATCH', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ minutes: mins })
             });
             if (resp.ok) this.refreshSessionDetails(id, true);
