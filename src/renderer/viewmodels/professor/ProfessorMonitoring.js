@@ -177,13 +177,14 @@ Object.assign(ProfVM, {
                     // Online status from backend (pObj exists if they are in the participants list)
                     const isOnline = !!pObj;
                     
-                    // A student is waiting ONLY if they are online AND have 'waiting' status AND haven't been granted/denied yet
-                    const isWaiting = isOnline && (pObj.status === 'waiting' || this._waitingStudentsSet.has(sidStr)) && !hasGranted && !hasDenied;
+                    // A student is waiting if they have 'waiting' status in DB OR if we received a WebSocket signal
+                    // We don't strictly require isOnline here to be more resilient to heartbeat lag
+                    const isWaiting = (pObj?.status === 'waiting' || this._waitingStudentsSet.has(sidStr)) && !hasGranted && !hasDenied;
                     
                     // A student is actif ONLY if they are online AND (have 'actif' status OR have been granted access)
                     const isActif = isOnline && !isWaiting && !hasDenied && (hasGranted || pObj.status === 'actif');
 
-                    if (isActif) countActif++; else if (isOnline || !isWaiting) countInactif++; // Simple count logic
+                    if (isActif) countActif++; else countInactif++; // Simplified counting
                     const riskLevel = isActif ? (this._studentRiskMap[sidStr] || 'low') : 'inactive';
                     const avatarBg = isActif ? 'background:linear-gradient(135deg,#10b981,#059669);' : (isWaiting ? 'background:linear-gradient(135deg,#f59e0b,#d97706);' : '');
                     html += `<div class="pm-student-item" id="pm-student-${sidStr}">

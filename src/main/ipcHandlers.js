@@ -416,10 +416,27 @@ module.exports = (ipcMain, mainWindow) => {
                 Write-Output "MONITOR_DATA_START$final"
             `;
 
-            const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', psScript]);
+            let child;
+            try {
+                // Essayer d'abord le chemin standard
+                child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', psScript]);
+            } catch (e) {
+                try {
+                    // Fallback sur le chemin absolu Windows standard si spawn direct échoue (ENOENT)
+                    const absolutePS = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
+                    child = spawn(absolutePS, ['-NoProfile', '-NonInteractive', '-Command', psScript]);
+                } catch (e2) {
+                    console.error('PowerShell spawn failed:', e2);
+                    return resolve({ processes: [], activeWindow: 'Error: PowerShell introuvable' });
+                }
+            }
             
             let stdout = '';
-            child.stdout.on('data', (d) => { stdout += d.toString(); });
+            child.on('error', (err) => {
+                console.error('Child process error:', err);
+                resolve({ processes: [], activeWindow: 'Error: ' + err.message });
+            });
+            child.stdout?.on('data', (d) => { stdout += d.toString(); });
             
             const timer = setTimeout(() => {
                 child.kill();
