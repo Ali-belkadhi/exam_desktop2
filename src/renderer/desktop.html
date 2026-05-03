@@ -417,6 +417,7 @@
                 const _deniedTestId = sessionStorage.getItem('activeTestId');
                 const _deniedStudentId = sessionStorage.getItem('studentId');
                 sessionStorage.removeItem('studentWaiting');
+                sessionStorage.setItem('accessApproved', 'false');
                 sessionStorage.removeItem('activeTestId');
                 sessionStorage.removeItem('activeSessionCode');
                 sessionStorage.removeItem('sessionCourse');
@@ -564,6 +565,7 @@
 
             // Supprimer le flag d'attente et émettre joinSession normal
             sessionStorage.removeItem('studentWaiting');
+            sessionStorage.setItem('accessApproved', 'true');
             const testId = sessionStorage.getItem('activeTestId');
             const studentId = sessionStorage.getItem('studentId');
             // Nettoyer le localStorage partagé (supprime l'entrée dans la liste d'attente)
@@ -643,7 +645,7 @@
                     window.sessionVM.socket = window.io(API_BASE);
 
                     window.sessionVM.socket.on('connect', () => {
-                        const isWaiting = sessionStorage.getItem('studentWaiting') === 'true';
+                        const isWaiting = sessionStorage.getItem('studentWaiting') === 'true' || sessionStorage.getItem('accessApproved') !== 'true';
                         const prenom = sessionStorage.getItem('studentPrenom') || '';
                         const nom = sessionStorage.getItem('studentNom') || '';
                         const studentName = [prenom, nom].filter(Boolean).join(' ');
@@ -669,6 +671,12 @@
                             window.sessionVM.socket.emit('joinSession', { testId, studentId });
                             console.log('[WebSocket] Connecté au serveur en tant qu\'étudiant');
                         }
+                    });
+
+                    // If the student disconnects, next reconnect must go through waiting room again.
+                    window.sessionVM.socket.on('disconnect', () => {
+                        sessionStorage.setItem('studentWaiting', 'true');
+                        sessionStorage.setItem('accessApproved', 'false');
                     });
 
                     // ── Salle d'attente: écouter l'autorisation du professeur ──

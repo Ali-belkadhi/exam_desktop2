@@ -190,6 +190,8 @@ Object.assign(ProfVM, {
             const matchedWaitingIds = new Set();
 
             let countActif = 0, countInactif = 0;
+            const nowTs = Date.now();
+            const onlineWindowMs = 8000;
             if (students.length === 0) {
                 participantsList.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);">Aucun étudiant inscrit.</div>`;
             } else {
@@ -226,8 +228,10 @@ Object.assign(ProfVM, {
                         localStorage.getItem('_accessDenied_' + waitingControlId) === '1'
                     );
 
-                    // A participant entry can exist with status "inscrit" even when offline.
-                    const isOnline = !!pObj && pObj.status !== 'inscrit';
+                    const pLastSeenTs = pObj?.lastSeen ? new Date(pObj.lastSeen).getTime() : 0;
+                    const isFresh = Number.isFinite(pLastSeenTs) && pLastSeenTs > 0 && (nowTs - pLastSeenTs) <= onlineWindowMs;
+                    // Do not trust status alone; require fresh lastSeen.
+                    const isOnline = !!pObj && pObj.status !== 'inscrit' && isFresh;
                     
                     // A student is waiting if they have 'waiting' status in DB OR if we received a WebSocket signal
                     // We don't strictly require isOnline here to be more resilient to heartbeat lag
@@ -269,8 +273,10 @@ Object.assign(ProfVM, {
                         localStorage.getItem(`_accessDenied_${id}_${sidStr}`) === '1' ||
                         localStorage.getItem('_accessDenied_' + sidStr) === '1'
                     );
+                    const pLastSeenTs = pObj?.lastSeen ? new Date(pObj.lastSeen).getTime() : 0;
+                    const isFresh = Number.isFinite(pLastSeenTs) && pLastSeenTs > 0 && (nowTs - pLastSeenTs) <= onlineWindowMs;
                     const isWaiting = (pObj?.status === 'waiting' || this._waitingStudentsSet.has(sidStr)) && !hasGranted && !hasDenied;
-                    const isActif = !isWaiting && !hasDenied && (pObj?.status === 'actif' || (hasGranted && pObj?.status !== 'inscrit'));
+                    const isActif = isFresh && !isWaiting && !hasDenied && (pObj?.status === 'actif' || (hasGranted && pObj?.status !== 'inscrit'));
                     if (!isWaiting && !isActif) return; // hide ghost "inscrit" rows not in class
                     if (isWaiting) matchedWaitingIds.add(sidStr);
 

@@ -69,6 +69,7 @@ window.SessionVM = class SessionVM {
                 // Marquer l'étudiant comme "en attente" dans sessionStorage
                 // desktop.html lira ce flag pour afficher l'overlay de salle d'attente
                 sessionStorage.setItem('studentWaiting', 'true');
+                sessionStorage.setItem('accessApproved', 'false');
 
                 // —— Partager l'état d'attente via localStorage (même app Electron) ——
                 // Le professeur lira cette clé pour détecter les étudiants en attente
@@ -280,6 +281,8 @@ window.SessionVM = class SessionVM {
         const testId = sessionStorage.getItem('activeTestId');
         const studentId = sessionStorage.getItem('studentId');
         const API_BASE = this.API_BASE;
+        sessionStorage.setItem('accessApproved', 'false');
+        sessionStorage.setItem('studentWaiting', 'true');
 
         if (testId && studentId) {
             try {
