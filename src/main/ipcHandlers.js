@@ -438,6 +438,11 @@ module.exports = (ipcMain, mainWindow) => {
             return new Promise((resolve) => {
                 const psScript = `
                     $ErrorActionPreference = 'SilentlyContinue'
+                    $sanitize = {
+                        param([string]$s)
+                        if ($null -eq $s) { return "" }
+                        return ([regex]::Replace($s, '[\\x00-\\x1F]', ' ')).Trim()
+                    }
                     $active = "N/A"
                     try {
                         $signature = '[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int count);'
@@ -445,19 +450,28 @@ module.exports = (ipcMain, mainWindow) => {
                         $hwnd = $type::GetForegroundWindow()
                         $sb = New-Object System.Text.StringBuilder 256
                         $null = $type::GetWindowText($hwnd, $sb, 256)
-                        $active = $sb.ToString()
+                        $active = & $sanitize $sb.ToString()
                     } catch {
                         $active = "Unknown"
                     }
 
                 try {
-                    $procs = Get-Process | Where-Object { $_.Id -gt 0 } | Select-Object Name, Id, @{N='Memory';E={[math]::Round($_.WorkingSet64/1MB,1)}}, @{N='WindowTitle';E={$_.MainWindowTitle}}
+                    $procs = Get-Process | Where-Object { $_.Id -gt 0 } | ForEach-Object {
+                        [PSCustomObject]@{
+                            Name = & $sanitize ([string]$_.Name)
+                            Id = $_.Id
+                            Memory = [math]::Round($_.WorkingSet64/1MB,1)
+                            WindowTitle = & $sanitize ([string]$_.MainWindowTitle)
+                        }
+                    }
                 } catch {
                     $procs = @()
                 }
 
                 $final = @{ processes = @($procs); activeWindow = $active } | ConvertTo-Json -Compress -Depth 4
-                Write-Output "MONITOR_DATA_START$final"
+                $finalBytes = [System.Text.Encoding]::UTF8.GetBytes($final)
+                $finalBase64 = [Convert]::ToBase64String($finalBytes)
+                Write-Output "MONITOR_DATA_START$finalBase64"
             `;
 
                 let child;
@@ -488,7 +502,23 @@ module.exports = (ipcMain, mainWindow) => {
                         const marker = "MONITOR_DATA_START";
                         const idx = stdout.indexOf(marker);
                         if (idx === -1) throw new Error("Marker not found");
-                        const data = JSON.parse(stdout.substring(idx + marker.length).trim());
+                        const payload = stdout.substring(idx + marker.length).trim();
+                        if (!payload) throw new Error("Empty monitor payload");
+
+                        let jsonText = '';
+                        try {
+                            jsonText = Buffer.from(payload, 'base64').toString('utf8');
+                        } catch (_) {
+                            jsonText = payload;
+                        }
+
+                        let data;
+                        try {
+                            data = JSON.parse(jsonText);
+                        } catch (_) {
+                            const cleaned = jsonText.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+                            data = JSON.parse(cleaned);
+                        }
                         let procs = [];
                         if (data.processes) {
                             const raw = data.processes;
