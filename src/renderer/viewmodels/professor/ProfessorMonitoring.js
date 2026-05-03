@@ -76,6 +76,7 @@ Object.assign(ProfVM, {
             }, 10000); // 10s is enough for local fallback
             this.socket.on('studentPresenceChanged', () => this.refreshSessionDetails(id, true));
             this.socket.on('student-waiting', (data) => {
+                if (data?.testId && data.testId.toString() !== id.toString()) return;
                 if (data.studentId) this._waitingStudentsSet.add(data.studentId.toString());
                 try {
                     const key = `_waiting_${id}`;
@@ -90,7 +91,7 @@ Object.assign(ProfVM, {
             });
         }
         if (ProfData.detailsInterval) clearInterval(ProfData.detailsInterval);
-        ProfData.detailsInterval = setInterval(() => this.refreshSessionDetails(id, true), 30000);
+        ProfData.detailsInterval = setInterval(() => this.refreshSessionDetails(id, true), 5000);
     },
 
     _rerenderParticipantsFromCache(id) {
@@ -177,10 +178,12 @@ Object.assign(ProfVM, {
                 participantsList.innerHTML = `<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);">📭 Aucun étudiant inscrit.</div>`;
             } else {
                 let html = '';
+                const matchedStudentIds = new Set();
                 students.forEach(st => {
                     // st can be a string ID or a populated object
                     const sRaw = st._id || st.id || st;
                     const sidStr = sRaw ? (typeof sRaw === 'object' && sRaw.$oid ? sRaw.$oid : sRaw.toString()) : '';
+                    if (sidStr) matchedStudentIds.add(sidStr);
                     const pObj = participantMap.get(sidStr);
                     
                     // Robust student data: try to get names from pObj or st
@@ -222,6 +225,37 @@ Object.assign(ProfVM, {
                             ${isWaiting ? `<button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${waitingControlId}')">✔️</button><button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${waitingControlId}')">❌</button>` : ''}
                             ${isActif ? `<button class="pm-action-btn" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">📺</button><button class="pm-action-btn" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">🔍</button><button class="pm-action-btn" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">💬</button>` : ''}
                             ${pObj?.quizResult ? `<span class="pm-student-badge actif">✓ ${pObj.quizResult.score}/${pObj.quizResult.maxScore}</span>` : ''}
+                            <span class="pm-student-badge ${isActif ? 'actif' : (isWaiting ? 'waiting' : '')}">${isActif ? 'Actif' : (isWaiting ? 'En attente' : 'Inscrit')}</span>
+                        </div>
+                    </div>`;
+                });
+
+                // Add participant rows that are not in classe.students (ID mismatch / external join)
+                participants.forEach((pObj) => {
+                    const sRaw = pObj?.student?._id || pObj?.student?.id || pObj?.student;
+                    const sidStr = sRaw ? (typeof sRaw === 'object' && sRaw.$oid ? sRaw.$oid : sRaw.toString()) : '';
+                    if (!sidStr || matchedStudentIds.has(sidStr)) return;
+
+                    const hasGranted = localStorage.getItem('_accessGranted_' + sidStr) === '1';
+                    const hasDenied = localStorage.getItem('_accessDenied_' + sidStr) === '1';
+                    const isWaiting = (pObj?.status === 'waiting' || this._waitingStudentsSet.has(sidStr)) && !hasGranted && !hasDenied;
+                    const isActif = !isWaiting && !hasDenied && (hasGranted || pObj?.status === 'actif');
+                    if (isWaiting) matchedWaitingIds.add(sidStr);
+
+                    if (isActif) countActif++; else countInactif++;
+
+                    const fromWaiting = waitingEntries.find(e => (e?.studentId || '').toString() === sidStr);
+                    const displayName = (fromWaiting?.studentName || '').toString().trim() || `Étudiant (${sidStr.slice(-4)})`;
+                    const initials = displayName.split(' ').filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase() || '?';
+                    const riskLevel = isActif ? (this._studentRiskMap[sidStr] || 'low') : 'inactive';
+                    const avatarBg = isActif ? 'background:linear-gradient(135deg,#10b981,#059669);' : (isWaiting ? 'background:linear-gradient(135deg,#f59e0b,#d97706);' : '');
+
+                    html += `<div class="pm-student-item" id="pm-student-${sidStr}">
+                        <div class="pm-student-avatar" style="${avatarBg}">${initials}<div class="pm-risk-dot ${riskLevel}"></div></div>
+                        <div class="pm-student-info"><div class="pm-student-name">${displayName}</div><div class="pm-student-nc">NC: N/A</div></div>
+                        <div class="pm-student-actions">
+                            ${isWaiting ? `<button class="pm-action-btn" onclick="ProfVM.grantAccess('${id}', '${sidStr}')">✔️</button><button class="pm-action-btn" onclick="ProfVM.denyAccess('${id}', '${sidStr}')">❌</button>` : ''}
+                            ${isActif ? `<button class="pm-action-btn" onclick="ProfVM.viewStudentScreenInPanel('${sidStr}','${displayName}')">📺</button><button class="pm-action-btn" onclick="ProfVM.openMonitorModal('${sidStr}','${displayName}')">🔍</button><button class="pm-action-btn" onclick="ProfVM.openMessageModal('${sidStr}','${displayName}')">💬</button>` : ''}
                             <span class="pm-student-badge ${isActif ? 'actif' : (isWaiting ? 'waiting' : '')}">${isActif ? 'Actif' : (isWaiting ? 'En attente' : 'Inscrit')}</span>
                         </div>
                     </div>`;
