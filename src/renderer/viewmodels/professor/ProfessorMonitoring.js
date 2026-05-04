@@ -471,6 +471,7 @@ Object.assign(ProfVM, {
         const risky = [];
         const seen = new Set();
         for (const p of procs) {
+            if (sid && this._isIgnoredProcessForStudent(sid, p)) continue;
             const risk = this._getRisk(p);
             if (risk === 'LOW') continue;
             const label = this._extractProcessLabel(p);
@@ -717,7 +718,7 @@ Object.assign(ProfVM, {
 
         let risk = 'LOW';
         for (const p of procs) {
-            const r = this._getRisk(p);
+            const r = this._getRiskForStudent(p, sid);
             if (r === 'HIGH') { risk = 'HIGH'; break; }
             if (r === 'MEDIUM' && risk !== 'HIGH') risk = 'MEDIUM';
         }
@@ -747,8 +748,8 @@ Object.assign(ProfVM, {
             } else {
                 const riskWeight = (r) => r === 'HIGH' ? 2 : (r === 'MEDIUM' ? 1 : 0);
                 const sortedProcs = [...procs].sort((a, b) => {
-                    const ra = this._getRisk(a);
-                    const rb = this._getRisk(b);
+                    const ra = this._getRiskForStudent(a, sid);
+                    const rb = this._getRiskForStudent(b, sid);
                     const rw = riskWeight(rb) - riskWeight(ra);
                     if (rw !== 0) return rw;
                     const ma = Number(a?.Memory || 0);
@@ -761,17 +762,24 @@ Object.assign(ProfVM, {
                     const pid = esc(p.Id || p.PID || '-');
                     const mem = esc((p.Memory !== undefined && p.Memory !== null) ? `${p.Memory} MB` : (p.WorkingSet || '-'));
                     const title = esc(p.WindowTitle || p.MainWindowTitle || '');
-                    const r = this._getRisk(p);
+                    const r = this._getRiskForStudent(p, sid);
                     const color = r === 'HIGH' ? '#ef4444' : (r === 'MEDIUM' ? '#f59e0b' : '#22c55e');
                     const rowBg = r === 'HIGH'
                         ? 'background:rgba(239,68,68,0.09);'
                         : (r === 'MEDIUM' ? 'background:rgba(245,158,11,0.08);' : '');
-                    return `<div style="display:grid;grid-template-columns:2fr 60px 70px 2fr 90px;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center;${rowBg}">
+                    const label = this._extractProcessLabel(p);
+                    const jsLabel = label.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    const ignored = this._isIgnoredProcessForStudent(sid, p);
+                    const btnBg = ignored ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.08)';
+                    const btnBorder = ignored ? 'rgba(16,185,129,0.45)' : 'rgba(255,255,255,0.15)';
+                    const btnColor = ignored ? '#34d399' : 'rgba(255,255,255,0.8)';
+                    return `<div style="display:grid;grid-template-columns:2fr 60px 70px 2fr 90px 88px;padding:6px 12px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center;${rowBg}">
                         <span style="color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span>
                         <span style="color:rgba(255,255,255,.65);">${pid}</span>
                         <span style="color:rgba(255,255,255,.65);">${mem}</span>
                         <span style="color:rgba(255,255,255,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${title || '-'}</span>
                         <span style="font-weight:700;color:${color};">${r}</span>
+                        <button title="${ignored ? 'Retirer ignore' : 'Ignorer cette application'}" onclick="ProfVM.toggleIgnoreProcess('${sid}', '${jsLabel}')" style="height:24px;border-radius:6px;border:1px solid ${btnBorder};background:${btnBg};color:${btnColor};font-size:10px;font-weight:700;cursor:pointer;">${ignored ? 'Ignore' : 'Ignorer'}</button>
                     </div>`;
                 }).join('');
             }
@@ -797,6 +805,55 @@ Object.assign(ProfVM, {
         const raw = String(p?.Name || p?.ProcessName || p?.WindowTitle || p?.MainWindowTitle || 'process').toLowerCase().trim();
         const cleaned = raw.replace(/\.exe$/i, '').replace(/_crashpad(_handler|_reporter)?$/i, '').replace(/-crashpad(_handler|_reporter)?$/i, '');
         return cleaned || 'process';
+    },
+
+    _getIgnoreStorageKey(studentId) {
+        const testId = (ProfData.currentSessionDetails?._id || ProfData.currentSessionDetails?.id || 'session').toString();
+        const sid = (studentId || '').toString();
+        return `_monitor_ignored_${testId}_${sid}`;
+    },
+
+    _getIgnoredAppsForStudent(studentId) {
+        const sid = (studentId || '').toString();
+        if (!sid) return new Set();
+        if (!this._ignoredAppsByStudent) this._ignoredAppsByStudent = {};
+        if (this._ignoredAppsByStudent[sid]) return this._ignoredAppsByStudent[sid];
+        const key = this._getIgnoreStorageKey(sid);
+        let arr = [];
+        try { arr = JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) { arr = []; }
+        const set = new Set((arr || []).map(v => String(v || '').toLowerCase()).filter(Boolean));
+        this._ignoredAppsByStudent[sid] = set;
+        return set;
+    },
+
+    _isIgnoredProcessForStudent(studentId, p) {
+        const sid = (studentId || '').toString();
+        if (!sid) return false;
+        const label = this._extractProcessLabel(p);
+        return this._getIgnoredAppsForStudent(sid).has(label);
+    },
+
+    _getRiskForStudent(p, studentId) {
+        if (this._isIgnoredProcessForStudent(studentId, p)) return 'LOW';
+        return this._getRisk(p);
+    },
+
+    toggleIgnoreProcess(studentId, processLabel) {
+        const sid = (studentId || '').toString();
+        const label = String(processLabel || '').toLowerCase().trim();
+        if (!sid || !label) return;
+        const set = this._getIgnoredAppsForStudent(sid);
+        if (set.has(label)) set.delete(label);
+        else set.add(label);
+
+        try {
+            localStorage.setItem(this._getIgnoreStorageKey(sid), JSON.stringify(Array.from(set)));
+        } catch (_) { }
+
+        if (ProfData.monitoringStudentId && ProfData.monitoringStudentId.toString() === sid) {
+            const payload = this._monitorLiveData?.[sid];
+            if (payload) this._renderMonitorData(payload);
+        }
     },
 
     _getRisk(p) {
