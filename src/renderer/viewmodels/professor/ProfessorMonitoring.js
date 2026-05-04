@@ -577,13 +577,12 @@ Object.assign(ProfVM, {
         if (alertsBox) {
             const alertEl = document.createElement('div');
             alertEl.className = `pm-alert-item ${level === 'high' ? '' : 'medium'}`;
-            alertEl.innerHTML = `<span>${level === 'high' ? 'ALERTE' : 'WARN'}</span><div><strong>${studentName}</strong> - ${message}<br><span style="font-size:9px;opacity:.6;">${new Date().toLocaleTimeString()}</span></div>`;
+            alertEl.innerHTML = `<span class="pm-alert-icon">${level === 'high' ? '🚨' : '⚠️'}</span><div><strong>${studentName}</strong> - ${message}<br><span style="font-size:9px;opacity:.6;">${new Date().toLocaleTimeString()}</span></div>`;
             const ph = alertsBox.querySelector('[style*="Aucune alerte"]');
             if (ph) ph.remove();
             alertsBox.insertBefore(alertEl, alertsBox.firstChild);
             if (alertsBox.children.length > 50) alertsBox.lastChild.remove();
         }
-
         const badge = document.getElementById('pm-alerts-count');
         if (badge) {
             badge.style.display = 'inline';
@@ -596,20 +595,15 @@ Object.assign(ProfVM, {
             c.style.cssText = 'position:fixed; top:20px; right:20px; z-index:100000; display:flex; flex-direction:column; gap:12px; pointer-events:none;';
             document.body.appendChild(c); return c;
         })();
-
-        // PERF FIX: Limit number of concurrent toasts to avoid DOM bloat
-        if (container.children.length >= 3) {
-            container.removeChild(container.firstChild);
-        }
-
-        const toast = document.createElement('div'); const isHigh = level === 'high';
+        if (container.children.length >= 3) container.removeChild(container.firstChild);
+        const toast = document.createElement('div');
+        const isHigh = level === 'high';
         toast.style.cssText = `background:${isHigh ? 'linear-gradient(135deg, #7f1d1d, #b91c1c)' : 'linear-gradient(135deg, #78350f, #d97706)'}; color:white; padding:16px 20px; border-radius:16px; min-width:320px; box-shadow:0 20px 40px rgba(0,0,0,0.4); display:flex; gap:14px; animation:slideInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; pointer-events:auto; cursor:pointer; backdrop-filter:blur(10px);`;
-        toast.innerHTML = `<div style="font-size:24px;">${isHigh ? 'ðŸš¨' : 'âš ï¸'}</div><div><div style="font-size:10px; font-weight:800; opacity:0.7;">Alerte de sÃ©curitÃ©</div><div style="font-size:14px; font-weight:700;"><span style="color:${isHigh ? '#fca5a5' : '#fcd34d'}">${studentName}</span></div><div style="font-size:13px; opacity:0.9;">${message}</div></div>`;
+        toast.innerHTML = `<div style="font-size:24px;">${isHigh ? '🚨' : '⚠️'}</div><div><div style="font-size:10px; font-weight:800; opacity:0.7;">Alerte de sécurité</div><div style="font-size:14px; font-weight:700;"><span style="color:${isHigh ? '#fca5a5' : '#fcd34d'}">${studentName}</span></div><div style="font-size:13px; opacity:0.9;">${message}</div></div>`;
         toast.onclick = () => { toast.style.animation = 'fadeOut 0.3s ease forwards'; setTimeout(() => toast.remove(), 300); };
         container.appendChild(toast);
         setTimeout(() => { if (toast.parentNode) { toast.style.animation = 'fadeOut 0.5s ease forwards'; setTimeout(() => toast.remove(), 500); } }, 7000);
     },
-
     closeDetailsModal() {
         if (ProfData.detailsInterval) clearInterval(ProfData.detailsInterval);
         if (this._waitingPollInterval) clearInterval(this._waitingPollInterval);
@@ -617,7 +611,6 @@ Object.assign(ProfVM, {
         const badge = document.getElementById('pm-alerts-count'); if (badge) { badge.style.display = 'none'; badge.textContent = '0'; }
         const modal = document.getElementById('detailsModal'); if (modal) modal.classList.remove('open');
     },
-
     openMonitorModal(sid, name) {
         ProfData.monitoringStudentId = sid ? sid.toString() : '';
         const modal = document.getElementById('monitorModal'); if (!modal) return;
@@ -795,7 +788,10 @@ Object.assign(ProfVM, {
                     const border = isHigh ? 'rgba(239,68,68,.35)' : 'rgba(245,158,11,.25)';
                     const bg = isHigh ? 'rgba(239,68,68,.10)' : 'rgba(245,158,11,.08)';
                     const color = isHigh ? '#fecaca' : '#fcd34d';
-                    return `<div style="padding:8px 10px;margin-bottom:6px;border:1px solid ${border};background:${bg};border-radius:8px;font-size:11px;color:${color};">${esc(txt)}</div>`;
+                    return `<div style="padding:8px 10px;margin-bottom:6px;border:1px solid ${border};background:${bg};border-radius:8px;font-size:11px;color:${color};display:flex;gap:8px;align-items:center;">
+                        <span style="font-size:14px;">${isHigh ? '🚨' : '⚠️'}</span>
+                        <span>${esc(txt)}</span>
+                    </div>`;
                 }).join('');
             }
         }
