@@ -6,6 +6,7 @@ window.SessionVM = class SessionVM {
         this.updateView = updateViewCallback;
         this.API_BASE = window.APP_CONFIG.API_BASE;
         this.heartbeatInterval = null;
+        this._heartbeatInFlight = false;
 
         // Auto-resume heartbeat if already in a session (for desktop.html)
         if (sessionStorage.getItem('activeTestId') && sessionStorage.getItem('studentId')) {
@@ -193,16 +194,18 @@ window.SessionVM = class SessionVM {
             }
         }
     }
-
     async _sendPing() {
+        if (this._heartbeatInFlight) return;
+        this._heartbeatInFlight = true;
+
         const testId = sessionStorage.getItem('activeTestId');
         const studentId = sessionStorage.getItem('studentId');
         const code = sessionStorage.getItem('activeSessionCode');
         const API_BASE = this.API_BASE;
 
-        // Un ping est possible si on a soit le TestId (préféré) soit le Code
         if (!testId && !code) {
             sessionStorage.setItem('heartbeatError', 'IDs manquants (T/C)');
+            this._heartbeatInFlight = false;
             return;
         }
 
@@ -213,57 +216,101 @@ window.SessionVM = class SessionVM {
             const headers = { 'Content-Type': 'application/json' };
             if (token) headers['Authorization'] = `Bearer ${token}`;
 
-            // Si on a un studentId, on utilise l'endpoint /join (comportement étudiant standard)
-            // Sinon, on fait un simple fetch de statut (comportement professeur/moniteur)
             let url;
             let method = 'GET';
             let body = null;
 
             if (studentId && testId) {
-                url = `${API_BASE}/practical-tests/${testId}/join`;
+                // Use lightweight heartbeat endpoint to avoid heavy populate payload on every pulse
+                url = `${API_BASE}/practical-tests/${testId}/heartbeat`;
                 method = 'POST';
                 const isWaiting = sessionStorage.getItem('studentWaiting') === 'true';
                 body = JSON.stringify({ studentId, status: isWaiting ? 'waiting' : 'actif' });
             } else {
-                // Mode moniteur (Professeur)
                 url = testId
                     ? `${API_BASE}/practical-tests/${testId}`
                     : `${API_BASE}/practical-tests/code/${code}`;
             }
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000);
+            const baseTimeoutMs =
+                window.APP_CONFIG?.HEARTBEAT_FETCH_TIMEOUT_MS ||
+                window.APP_CONFIG?.FETCH_TIMEOUT_MS ||
+                12000;
+            const maxAttempts = 2;
+            let resp = null;
+            let lastErr = null;
 
-            const resp = await fetch(url, {
-                method: method,
-                headers: headers,
-                body: body,
-                signal: controller.signal,
-                keepalive: true
-            });
-            clearTimeout(timeoutId);
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                const timeoutMs = baseTimeoutMs + (attempt * 4000);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                try {
+                    resp = await fetch(url, {
+                        method: method,
+                        headers: headers,
+                        body: body,
+                        signal: controller.signal,
+                        keepalive: true
+                    });
+                    clearTimeout(timeoutId);
+                    if (resp.ok) break;
+                    if (attempt < maxAttempts - 1 && resp.status >= 500) {
+                        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                        continue;
+                    }
+                    break;
+                } catch (e) {
+                    clearTimeout(timeoutId);
+                    lastErr = e;
+                    const retriable = e?.name === 'AbortError' || e?.name === 'TypeError';
+                    if (attempt < maxAttempts - 1 && retriable) {
+                        await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+                        continue;
+                    }
+                    throw e;
+                }
+            }
+
+            if (!resp) throw (lastErr || new Error('No heartbeat response'));
 
             if (resp.ok) {
                 const freshData = await resp.json();
-
-                // Extraction du header "Date" pour calibration automatique
                 const serverDateHeader = resp.headers.get('Date');
                 this._updateLocalSessionState(freshData, serverDateHeader);
 
                 sessionStorage.removeItem('heartbeatError');
+                sessionStorage.removeItem('heartbeatWarn');
+                sessionStorage.setItem('heartbeatFailCount', '0');
                 this.isPaused = sessionStorage.getItem('sessionIsPaused') === 'true';
                 window.dispatchEvent(new CustomEvent('session-updated'));
             } else {
                 const errorData = await resp.json().catch(() => ({}));
-                const msg = errorData.message || `Défaut Srv (${resp.status})`;
-                sessionStorage.setItem('heartbeatError', msg);
+                const msg = errorData.message || `Defaut Srv (${resp.status})`;
+                const fails = parseInt(sessionStorage.getItem('heartbeatFailCount') || '0', 10) + 1;
+                sessionStorage.setItem('heartbeatFailCount', String(fails));
+                if (fails >= 3) {
+                    sessionStorage.setItem('heartbeatError', msg);
+                    sessionStorage.removeItem('heartbeatWarn');
+                } else {
+                    sessionStorage.setItem('heartbeatWarn', 'Reseau lent, resynchronisation...');
+                    sessionStorage.removeItem('heartbeatError');
+                }
             }
         } catch (e) {
-            const msg = e.name === 'AbortError' ? 'Erreur: Timeout Réseau' : `Erreur: ${e.message}`;
-            sessionStorage.setItem('heartbeatError', msg);
+            const fails = parseInt(sessionStorage.getItem('heartbeatFailCount') || '0', 10) + 1;
+            sessionStorage.setItem('heartbeatFailCount', String(fails));
+            const msg = e.name === 'AbortError' ? 'Erreur: Timeout Reseau' : `Erreur: ${e.message}`;
+            if (fails >= 3) {
+                sessionStorage.setItem('heartbeatError', msg);
+                sessionStorage.removeItem('heartbeatWarn');
+            } else {
+                sessionStorage.setItem('heartbeatWarn', 'Reseau lent, tentative de reprise...');
+                sessionStorage.removeItem('heartbeatError');
+            }
+        } finally {
+            this._heartbeatInFlight = false;
         }
     }
-
     startHeartbeat() {
         if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
         const heartbeatMs = window.APP_CONFIG?.HEARTBEAT_INTERVAL_MS || 4000;
