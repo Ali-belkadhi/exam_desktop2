@@ -1720,8 +1720,9 @@ let API_BASE = window.APP_CONFIG.API_BASE;
                 });
 
                 el.innerHTML = demo + list.map(e => {
-                    const title = _resolveStr(e.matiere, 'nom', 'code', 'name')
+                    let title = _resolveStr(e.matiere, 'nom', 'code', 'name')
                         || _resolveStr(e.title) || _resolveStr(e.nom) || '—';
+                    if (e.groupName) title += ` - ${e.groupName}`;
                     const classe = _getClasse(e);
                     const dateRaw = e.date || e.examDate || e.scheduledAt || '';
                     const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString('fr-FR') : '—';
