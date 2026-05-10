@@ -22,6 +22,8 @@ window.APP_CONFIG = Object.freeze({
     HEARTBEAT_INTERVAL_MS: 4000,
     /** Timeout réseau pour les requêtes fetch (ms) */
     FETCH_TIMEOUT_MS: 8000,
+    HEARTBEAT_FETCH_TIMEOUT_MS: 15000,
+    HEARTBEAT_STALE_MS: 25000,
 
     // ── Application ──────────────────────────────────────────────
     APP_NAME:    'SafeExam',

@@ -416,7 +416,7 @@ Object.assign(ProfVM, {
 
         this.refreshSessionDetails(testId, true, 0, true);
     },
-
+    // student screen monitoring
     viewStudentScreenInPanel(studentId, studentName) {
         const container = document.getElementById('pm-screen-container');
         const nameLabel = document.getElementById('pm-screen-student-name');
@@ -447,7 +447,8 @@ Object.assign(ProfVM, {
         const isFS = container.classList.toggle('pm-screen-fullscreen');
         const btn = document.getElementById('pm-btn-fullscreen');
         if (btn) btn.innerHTML = isFS ? '✖' : '⛶';
-    },
+    },
+
     _processIncomingAlert(data) {
         const sid = data.studentId?.toString();
         const now = Date.now();

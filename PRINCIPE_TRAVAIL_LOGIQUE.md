@@ -1,175 +1,602 @@
-# 🧠 Principes de Fonctionnement et Logique du Projet (Pim_App_Safe)
+﻿# PRINCIPE DE TRAVAIL LOGIQUE - Pim_App_Safe
 
-Ce document détaille l'architecture logicielle, les flux de données et la logique métier de l'application **Apex Edu**.
+## 1) Perimetre reel du projet
 
----
+Ce document decrit le projet **Pim_App_Safe** (application desktop Electron) present dans:
+`C:\Users\Mega-Pc\Desktop\PIM_Desktop_2\Pim_App_Safe`
 
-## 🏗️ 1. Architecture Globale (Electron)
+Le workspace contient aussi un backend separe (`safe_exam_DB`), mais ce dossier n'est pas package avec l'app desktop. L'app desktop consomme une API distante configuree dans `src/renderer/config.js`.
 
-L'application repose sur le framework **Electron**, qui sépare l'exécution en deux types de processus pour garantir la sécurité et la performance.
+### Dossiers generes/exterieurs (non documentes fichier par fichier)
+- `node_modules/`: dependances npm installees automatiquement.
+- `dist/`: artefacts de build Electron (sortie d'installation).
 
-### **A. Le Processus Principal (Main Process)**
-*   **Fichier** : `src/main/main.js`
-*   **Rôle** : C'est le chef d'orchestre. Il crée la fenêtre principale (`BrowserWindow`), gère le cycle de vie de l'application et configure les permissions de sécurité (ex: activation du `webviewTag` pour le navigateur intégré).
-*   **IPC (Inter-Process Communication)** : Il écoute les messages envoyés par l'interface via `ipcHandlers.js` (ex: redimensionnement, fermeture de fenêtres).
+## 2) Vue technique globale
 
-### **B. Le Script de Préchargement (Preload Script)**
-*   **Fichier** : `src/preload/preload.js`
-*   **Rôle** : Fait office de pont sécurisé. Il expose uniquement les fonctions nécessaires à l'interface (Renderer) via `contextBridge`, évitant ainsi d'exposer directement les API Node.js à la page web pour des raisons de sécurité.
+### Technologies
+- **Electron 29**: runtime desktop (main process + renderer process + preload).
+- **JavaScript vanilla (ES6+)**: logique UI et metier.
+- **HTML/CSS**: ecrans login, session, professeur, desktop.
+- **Monaco Editor**: simulation d'editeur code (via `VsCodeView.js`, aujourd'hui sans page `vscode.html`).
+- **Socket.IO client**: temps reel professeur/etudiant.
+- **Fetch API**: appels REST vers backend.
+- **jsPDF** (CDN): export PDF des alertes en monitoring professeur.
 
-### **C. Le Processus de Rendu (Renderer Process)**
-*   **Dossier** : `src/renderer/`
-*   **Rôle** : L'interface utilisateur. C'est ici que s'exécute le code HTML/CSS/JS que l'utilisateur voit et manipule.
+### Architecture
+- **Main process**: `src/main/main.js` + `src/main/ipcHandlers.js`
+- **Preload bridge**: `src/preload/preload.js`
+- **Renderer (UI)**: `src/renderer/*` organise en style MVVM
+  - `models/`
+  - `viewmodels/`
+  - `views/`
+  - pages HTML
 
----
+### Frontend / Backend / Base de donnees
+- **Frontend**: Electron renderer (ce repo).
+- **Backend**: API REST + WebSocket (NestJS, hors dossier `Pim_App_Safe`).
+- **Base de donnees**: MongoDB (deduction par IDs ObjectId, endpoints practical-tests, classes, students, etc.).
 
-## 🏛️ 2. Structure Logique (Architecture MVVM)
+### Flux de donnees principal
+1. Login utilisateur (`login.html` + `LoginVM.js`).
+2. Si professeur: acces dashboard professeur (`professor.html`, modules `Professor*`).
+3. Si etudiant: saisie code session (`session.html` + `SessionVM.join()`).
+4. Ouverture desktop (`desktop.html`):
+   - heartbeat periodique vers backend
+   - synchronisation etat session (active/pause/fin)
+   - attente d'approbation professeur
+   - reception des commandes WebSocket (lock/unlock, message prive, partage ecran)
+5. Monitoring professeur:
+   - collecte processus et ecran cote etudiant via IPC Electron
+   - emission WebSocket vers professeur
+   - actions professeur (pause, fin, prolonger, accepter/refuser etudiant, verrouiller)
 
-Le code frontend est organisé selon le pattern **MVVM** (Model-View-ViewModel) pour une séparation claire des responsabilités :
+## 3) Arborescence logique des dossiers
 
-1.  **View (HTML)** : Définit la structure visuelle (`professor.html`, `desktop.html`).
-2.  **ViewModel (JS)** : Contient la logique d'état et de présentation (`ProfessorVM.js`, `SessionVM.js`). Il manipule le DOM pour refléter les données.
-3.  **Model (JS)** : Les objets de données (ex: `User`, `ProfData`).
+- **Racine**: config du projet npm/Electron + CI + docs.
+- **scripts/**: scripts qualite (tests et verification architecture).
+- **src/main/**: logique privilegiee Electron (fenetre, OS, IPC, code-server, kiosk).
+- **src/preload/**: API securisee exposee au renderer.
+- **src/renderer/**: UI complete (HTML/CSS/JS, VM, modeles, vues).
+  - **assets/css/**: design system et styles ecrans.
+  - **assets/images/**: images interface.
+  - **models/**: classes de donnees.
+  - **viewmodels/**: logique metier et orchestration API.
+  - **views/**: logique DOM locale.
 
----
+## 4) Fichier par fichier (role, contenu, liens, code important)
 
-## 🔄 3. Logique des Flux de Travail (Workflows)
+## 4.1 Racine du projet
 
-### **A. Authentification et Routage**
-*   **Entrée** : `login.html`
-*   **Mécanisme** : Le `LoginVM` vérifie les identifiants. 
-    *   Si prof (`ali123`) → redirection vers `professor.html`.
-    *   Si étudiant → redirection vers `session.html`.
-*   **Persistance** : Les informations (token, nom, rôle) sont stockées dans le `sessionStorage` du navigateur pour être partagées entre les pages.
+### `.eslintrc.json`
+- **Role**: regles lint JS.
+- **Pourquoi**: garantir un style code minimum et eviter erreurs classiques.
+- **Contient**: env, parser ES2021, regles (`eqeqeq`, `no-var`, etc.), globals UI (`LoginVM`, `SessionVM`, etc.).
+- **Liens**: utilise par `npm run lint:js`.
+- **Code important**: whitelist des globals pour eviter faux positifs dans architecture script-tag globale.
 
-### **B. Création de Session (Côté Professeur)**
-1.  **Récupération des données** : Le professeur peut charger des examens depuis l'API NestJS (`GET /exams`).
-2.  **Configuration** : Le `ProfessorVM` construit un objet (Payload) contenant :
-    *   La classe cible.
-    *   La durée.
-    *   Les outils autorisés (IDEs, URLs).
-3.  **Appel API** : Envoi au backend via `POST /practical-tests`. Le serveur retourne un code de session unique à 6 chiffres.
+### `.gitignore`
+- **Role**: exclure fichiers temporaires/build/dependances.
+- **Pourquoi**: garder le depot propre.
+- **Contient**: `node_modules`, `dist`, logs, caches lint, env files.
+- **Liens**: impacte git et CI.
 
-### **C. Rejoindre une Session (Côté Étudiant)**
-1.  **Saisie du code** : Le `SessionVM` gère la saisie intuitive du code à 6 chiffres.
-2.  **Validation** : L'application vérifie auprès du backend si le code est actif et valide.
-3.  **Lancement** : Redirection vers `desktop.html` qui charge l'environnement de travail.
+### `.stylelintrc.json`
+- **Role**: regles lint CSS.
+- **Pourquoi**: coherence des styles.
+- **Contient**: extension `stylelint-config-standard` + overrides.
+- **Liens**: `npm run lint:css`.
 
-### **D. L'Espace Desktop (Environnement de Travail)**
-*   **Gestionnaire de fenêtres** : `ClassroomDesktopView.js` gère l'ouverture, la fermeture et le focus (z-index) des applications simulées (PDF, Browser, VS Code).
-*   **VsCodeView** : Utilise **Monaco Editor** pour simuler un vrai IDE. Il gère l'arborescence des fichiers, l'édition de texte et simule un terminal pour l'exécution du code.
-*   **BrowserView** : Utilise le tag `<webview>` d'Electron pour charger Chromium. Il inclut une barre de navigation complète et des filtres de sécurité.
+### `Jenkinsfile`
+- **Role**: pipeline CI.
+- **Pourquoi**: automatiser install, checks structure, lint, tests, audit, build, archive.
+- **Contient**: stages Checkout/Install/Structure/Lint/Test/SonarQube/Security/Build/Archive.
+- **Liens**: appelle `scripts/check-structure.js` et `scripts/run-tests.js`.
+- **Code important**:
+  - parametre `SKIP_BUILD` pour ignorer build Electron.
+  - scans SonarQube sur `src`.
 
----
+### `package.json`
+- **Role**: manifesto npm + config electron-builder.
+- **Pourquoi**: scripts, dependances, metadonnees app.
+- **Contient**:
+  - scripts: `start`, `lint`, `test`, `build`, etc.
+  - deps: `monaco-editor`, `socket.io-client`
+  - devDeps: `electron`, `electron-builder`, `eslint`, `stylelint`
+  - section `build` (appId/productName/files)
+- **Liens**: point d'entree `src/main/main.js`.
 
-## 📡 4. Communication avec le Backend
+### `package-lock.json`
+- **Role**: verrouillage exact versions npm.
+- **Pourquoi**: reproductibilite installation.
+- **Contient**: graphe complet de dependances.
 
-L'application communique avec l'API **NestJS** (`safe_exam_DB`) via des requêtes HTTP (fetch) :
-*   **Base URL** : `https://safe-exam-db-ll3f.onrender.com` (ou `localhost:3000` en mode dev).
-*   **Authentification** : Utilisation de **Bearer Tokens (JWT)** dans les headers de chaque requête.
-*   **Synchronisation** : Les sessions sont synchronisées toutes les quelques secondes pour vérifier l'état (Active, Pausée, Terminée).
+### `README.md`
+- **Role**: doc rapide du projet.
+- **Pourquoi**: onboarding.
+- **Contient**: lancement, architecture de principe, pages.
+- **Liens**: parfois en decalage avec code reel (ex. references historiques).
 
----
+### `PRINCIPE_TRAVAIL_LOGIQUE.md`
+- **Role**: documentation technique detaillee.
+- **Pourquoi**: expliquer logique complete, architecture, flux.
+- **Contient**: ce document.
 
-## 🎨 5. Principes de Design (Design System)
+## 4.2 Scripts qualite
 
-*   **Glassmorphism** : Utilisation massive de `backdrop-filter: blur(20px)` et de transparences (`rgba`) pour un aspect moderne.
-*   **Système de Grille** : Utilisation de CSS Grid et Flexbox pour une interface responsive qui s'adapte à toutes les tailles de fenêtres Electron.
-*   **Animations** : Transitions CSS3 fluides pour l'ouverture des fenêtres et les survols (hovers).
+### `scripts/check-structure.js`
+- **Role**: verifier contraintes structurelles MVVM.
+- **Pourquoi**: bloquer regressions d'architecture dans CI.
+- **Contient**:
+  - presence fichiers requis
+  - verification `<style>` inline HTML
+  - verification scripts inline (strict pour `professor.html`)
+  - recherche URL hardcodees dans VMs
+- **Liens**: stage Jenkins "Architecture Check", script npm `test:structure`.
+- **Code important**:
+  - `required[]`: liste attendue.
+  - regex `hardcodedUrlPattern`.
 
----
+### `scripts/run-tests.js`
+- **Role**: mini suite de tests unitaires JS sans framework.
+- **Pourquoi**: valider modeles et config.
+- **Contient**:
+  - harness `test/assert/assertEquals`
+  - tests APP_CONFIG, Session model, Student model, presence CSS, inline styles.
+- **Liens**: script npm `test`.
+- **Code important**:
+  - simulation d'un pseudo `window` pour executer classes renderer en Node.
 
-## 🚀 6. Cycle de Vie d'une Session
+## 4.3 Main process Electron
 
-1.  **PRO :** Crée la session → Génère code PIN.
-2.  **ETU :** Entre le PIN → Accède au Desktop.
-3.  **PRO :** Surveille via son Dashboard.
-4.  **PRO :** Termine la session → Le backend désactive le code PIN.
-5.  **ETU :** L'application détecte la fin de session et redirige l'étudiant vers l'accueil.
+### `src/main/main.js`
+- **Role**: entree Electron, creation fenetre, regles de securite, blocage VM.
+- **Pourquoi**: centraliser le cycle de vie app.
+- **Contient**:
+  - `runCommand()` helper shell
+  - `isLikelyVirtualMachine()` (Windows/Linux/macOS)
+  - `createWindow()` avec preload, contextIsolation, webviewTag
+  - `app.whenReady()` + gate anti-VM
+- **Liens**:
+  - charge `login.html` au demarrage
+  - appelle `setupIpcHandlers(ipcMain, mainWindow)`
+- **Code important**:
+  - detection hyperviseur par commandes systeme.
+  - options BrowserWindow pour activer `<webview>`.
 
----
+### `src/main/ipcHandlers.js`
+- **Role**: registre des canaux IPC renderer <-> main.
+- **Pourquoi**: exposer actions privilegiees OS de facon controlee.
+- **Contient**:
+  - gestion `code-server` (start/stop/status, ports, WSL fallback)
+  - auth/session mocks (`auth:login`, `session:join`)
+  - lancement VS Code externe, selection exe
+  - capture ecran via `desktopCapturer`
+  - monitoring processus (`monitor:getProcesses`)
+  - mode verrouille (kiosk/fullscreen/alwaysOnTop + shields multi-ecran)
+- **Liens**:
+  - invoque par `window.electronAPI` (preload)
+  - alimente events renderer `codeserver:*`
+- **Code important**:
+  - `startCodeServer()` + strategies native/WSL.
+  - `window:setLocked` pour mode examen.
+  - script PowerShell embarque pour extraction processus+fenetre active.
 
-## 🛠️ 7. Frameworks et Librairies Utilisés
+## 4.4 Preload
 
-L'application exploite plusieurs technologies pour offrir une expérience desktop native et performante :
+### `src/preload/preload.js`
+- **Role**: pont securise `contextBridge`.
+- **Pourquoi**: interdire acces direct Node.js depuis renderer, exposer seulement API utiles.
+- **Contient**: objet `window.electronAPI`.
+- **Liens**:
+  - `main.js` reference ce fichier dans `webPreferences.preload`.
+  - appels vers canaux IPC definis dans `ipcHandlers.js`.
+- **Code important**:
+  - API `codeServer.start/stop/status`.
+  - API `captureScreen`, `getProcessMonitoring`, `setLocked`.
 
-| Technologie | Usage |
-| :--- | :--- |
-| **Electron** | Framework principal pour transformer l'application Web en application Desktop cross-platform. |
-| **Monaco Editor** | Moteur de l'éditeur de code (le même que VS Code), utilisé dans `vscode.html`. |
-| **NestJS** | Framework Node.js côté serveur pour une API robuste et structurée. |
-| **Mongoose** | Modélisation d'objets MongoDB pour la gestion des données (Examens, Classes, Sessions). |
-| **Vanilla JS/CSS** | Utilisation de JavaScript et CSS pur pour garantir légèreté et contrôle total sur le design. |
+## 4.5 Renderer - Config
 
----
+### `src/renderer/config.js`
+- **Role**: source unique de configuration runtime (`window.APP_CONFIG`).
+- **Pourquoi**: eviter duplication API/constantes dans VMs.
+- **Contient**:
+  - `API_BASE`, credentials service, roles autorises, timings heartbeat.
+  - keepalive Render (ping periodique `/auth/config-test`).
+- **Liens**:
+  - charge en tete de chaque page HTML.
+  - utilise par `LoginVM`, `SessionVM`, modules professeur.
+- **Variables importantes**:
+  - `API_BASE`, `HEARTBEAT_INTERVAL_MS`, `HEARTBEAT_STALE_MS`.
 
-## 🔌 8. Protocoles et Communication
+## 4.6 Renderer - Pages HTML
 
-La sécurité et la réactivité reposent sur trois piliers de communication :
+### `src/renderer/login.html`
+- **Role**: ecran d'authentification unifie professeur/etudiant.
+- **Pourquoi**: point d'entree UX.
+- **Contient**:
+  - formulaire identifiant/mot de passe
+  - scripts inline UI (badge role, toggle password, spinner)
+  - initialisation `LoginVM`
+- **Liens**:
+  - charge `models/User.js`, `viewmodels/LoginVM.js`, `config.js`.
+- **Logique importante**:
+  - detection mode via `email.includes('@')`.
+  - submit -> `vm.login()`.
 
-1.  **HTTP / REST** : Protocole standard pour la communication Client-Serveur. Toutes les données (sessions, cours, fichiers) transitent via des requêtes JSON.
-2.  **JWT (JSON Web Token)** : Protocole de sécurité pour l'authentification. Une fois connecté, l'utilisateur reçoit un token stocké en mémoire qui signe chaque requête vers le backend.
-3.  **IPC (Inter-Process Communication)** : Protocole interne à Electron permettant à l'interface (Renderer) de demander des actions privilégiées au système (Main), comme redimensionner la fenêtre ou accéder au système de fichiers.
-4.  **HTTPS / TLS** : Chiffrement de toutes les données en transit pour éviter l'interception des sujets d'examen.
+### `src/renderer/session.html`
+- **Role**: saisie du code session etudiant.
+- **Pourquoi**: transition avant desktop.
+- **Contient**:
+  - 6 champs digit + auto-navigation/paste
+  - bouton rejoindre active quand 6 chiffres
+  - appel `SessionVM.join()`
+- **Liens**: charge `viewmodels/SessionVM.js`.
+- **Logique importante**:
+  - `getCode()`, `updateJoinBtn()`, `vm.setCode(...); vm.join();`
 
----
+### `src/renderer/professor.html`
+- **Role**: dashboard professeur (creation, sessions, monitoring, quiz, travaux).
+- **Pourquoi**: poste de controle principal cote enseignant.
+- **Contient**:
+  - cartes stats/actions
+  - modals creation session/details monitoring/work/AI quiz
+  - script init minimal `ProfVM.init()`
+- **Liens**:
+  - charge `socket.io.min.js`, modeles, `ProfessorCore.js`, `ProfessorSessions.js`, `ProfessorMonitoring.js`, `ProfessorWork.js`, `ProfessorQuiz.js`.
+- **Code important**:
+  - composant details session pilote entierement par `ProfVM` modulaire.
 
-## 🏁 9. Comment faire une session de A à Z ?
+### `src/renderer/desktop.html`
+- **Role**: environnement "OS" etudiant pendant session.
+- **Pourquoi**: encapsuler ressources d'examen (PDF, navigateur, quiz, notes, calculatrice, upload).
+- **Contient**:
+  - fenetres draggable/minimize/maximize
+  - taskbar + launcher
+  - waiting room + overlay pause/lockdown
+  - inline script massif de synchronisation session
+- **Liens**:
+  - charge `SessionVM`, `QuizVM`, `ClassroomDesktopView.js`, `BrowserView.js`.
+- **Fonctions importantes**:
+  - `_showWaitingRoom()`, `_hideWaitingRoom()`
+  - `robustInit()`
+  - `tick()` timer/sync heartbeat
+  - `uploadWorkZip()`
+  - `quitSession()`
+  - calc (`calcInput`, `calcResult`, ...)
+- **Etapes logiques (resume)**:
+  1. Initialiser VM/session/socket.
+  2. Si etudiant en attente -> waiting room + polling fallback localStorage.
+  3. Demarrer heartbeat (SessionVM) + timer local synchronise server clock.
+  4. Ecouter events WebSocket (grant/deny, pause, lock, messages, screen share).
+  5. Mettre a jour UI en temps reel et quitter session si fin/timeout.
 
-Voici le protocole exact suivi par les utilisateurs :
+### `src/renderer/socket.io.min.js`
+- **Role**: client Socket.IO minifie local.
+- **Pourquoi**: real-time sans CDN pour canal WS principal.
+- **Contient**: code vendor minifie.
+- **Liens**: utilise dans `desktop.html` et `professor.html`.
 
-### **Étape 1 : Préparation (Professeur)**
-1.  Se connecter à l'espace professeur.
-2.  Cliquer sur **"Créer une session"**.
-3.  Sélectionner un examen existant (ex: "Architecture POO") ou saisir manuellement les détails.
-4.  Choisir la classe et les outils autorisés (ex: autoriser uniquement **VS Code** et bloquer les autres sites).
-5.  Cliquer sur **"Générer le code"**.
+## 4.7 Renderer - Assets
 
-### **Étape 2 : Lancement**
-1.  Le professeur partage le code de 6 chiffres (ex: `123-456`) avec les étudiants présents.
-2.  Le professeur clique sur **"Lancer la session"** pour que le code devienne actif.
+### `src/renderer/assets/css/theme.css`
+- **Role**: tokens globaux + reset + animations utilitaires.
+- **Pourquoi**: base design partagée.
+- **Contient**: variables `--primary`, `--bg-*`, `--text-*`, keyframes globales.
+- **Liens**: importe en premier dans login/session/professor.
 
-### **Étape 3 : Connexion (Étudiant)**
-1.  L'étudiant lance l'application et entre ses identifiants.
-2.  L'étudiant saisit le code de 6 chiffres fourni.
-3.  Une fois validé, il entre dans la salle virtuelle où ses outils sont déjà configurés.
+### `src/renderer/assets/css/components.css`
+- **Role**: composants UI reutilisables (buttons, modals, badges, rows).
+- **Pourquoi**: eviter duplication CSS.
+- **Contient**: `.btn*`, `.modal-*`, `.session-row`, etc.
+- **Liens**: theme.css requis avant.
 
-### **Étape 4 : Monitoring et Clôture**
-1.  Le professeur peut mettre la session en **Pause** si nécessaire (pause générale).
-2.  À la fin du temps imparti, le professeur clique sur **"Terminer"**.
-3.  Le code expire immédiatement et l'environnement de l'étudiant se ferme pour laisser place à la page de déconnexion.
+### `src/renderer/assets/css/animation_man_boxes.css`
+- **Role**: animation visuelle "man between boxes".
+- **Pourquoi**: feedback d'etat login/session/loading/prof/student.
+- **Contient**: classes `.animation-container`, `.state-prof`, `.state-student`, `.state-loading`.
+- **Liens**: utilise dans `login.html` et `session.html`.
 
----
+### `src/renderer/assets/css/login.css`
+- **Role**: styles ecran login.
+- **Pourquoi**: UX authentification.
+- **Contient**: card glassmorphism, inputs, bouton connexion, logo.
+- **Liens**: depend de `theme.css` + `components.css`.
 
-## 🔒 10. Intégrité et Sécurité du Système
+### `src/renderer/assets/css/session.css`
+- **Role**: styles ecran code session.
+- **Pourquoi**: UX saisie PIN 6 digits.
+- **Contient**: layout, inputs digits, bouton join, erreurs.
 
-Le projet **Apex Edu** accorde une importance capitale à l'intégrité des données et de l'environnement d'examen :
+### `src/renderer/assets/css/professor.css`
+- **Role**: styles dashboard professeur (fichier volumineux).
+- **Pourquoi**: UI complexe (stats, modals, monitoring, work explorer, quiz editor).
+- **Contient**: topbar, cards, modal system, panel monitoring et classes PM.
+- **Liens**: travaille avec `Professor*` VMs.
 
-### **A. Isolation de l'Environnement (Sandbox)**
-*   **Webview Isolation** : Le navigateur intégré utilise des partitions séparées pour éviter que les cookies ou l'historique ne soient partagés entre les sessions ou avec le système hôte.
-*   **Context Isolation** : Electron est configuré pour séparer strictement le contexte JavaScript de l'interface du contexte privilégié de Node.js, empêchant toute injection de script malveillant de prendre le contrôle de la machine.
+### `src/renderer/assets/css/design-system.css`
+- **Role**: tokens OS-like pour desktop etudiant.
+- **Pourquoi**: mode bureau clair/sombre, fenetres, taskbar.
+- **Contient**: variables desktop (`--bg-desktop`, `--window-*`, etc.) + reset.
+- **Liens**: base de `desktop.css`.
 
-### **B. Intégrité des Données**
-*   **Validation côté Serveur** : Chaque action (création de session, saisie de code) est validée par le backend NestJS. Un étudiant ne peut pas "deviner" ou "forcer" l'accès à une session sans un code actif en base de données.
-*   **Syncronisation d'état** : L'application vérifie périodiquement l'intégrité de la session. Si le professeur suspend la session sur le serveur, l'interface de l'étudiant est immédiatement verrouillée par un overlay de sécurité.
+### `src/renderer/assets/css/desktop.css`
+- **Role**: styles fonctionnels du desktop etudiant.
+- **Pourquoi**: fenetres, navigateur, launcher, widgets, upload toast, overlays.
+- **Contient**: `.os-window`, `.os-taskbar`, `.browser-*`, `.pause-overlay`, etc.
 
-### **C. Sécurité des Communications**
-*   **JWT (Stateless Security)** : L'authentification ne repose pas sur des sessions serveur classiques mais sur des jetons signés numériquement. Cela garantit que les informations utilisateur transmises n'ont pas été altérées en cours de route.
+### `src/renderer/assets/css/eprit3.jpg`
+- **Role**: image de fond (dupliquee ailleurs).
+- **Pourquoi**: theme visuel login.
+- **Contient**: asset image.
+- **Liens**: `login.css` pointe `../images/eprit3.jpg` (version images).
 
----
+### `src/renderer/assets/css/esprit2.png`
+- **Role**: logo (copie dans dossier css).
+- **Pourquoi**: historique/duplication.
+- **Contient**: asset image.
 
-## 📖 11. Documentation Technique (Maintenance)
+### `src/renderer/assets/images/eprit3.jpg`
+- **Role**: fond principal login.
+- **Pourquoi**: ressource image utilisee par CSS.
 
-### **Scripts de Démarrage**
-*   `npm start` : Lance le processus principal Electron.
-*   `npm run dev` : (Si configuré) Lance l'application avec les outils de développement ouverts.
+### `src/renderer/assets/images/esprit2.png`
+- **Role**: logo affiche sur login.
+- **Pourquoi**: branding.
 
-### **Structure des Modèles de Données (Backend Sync)**
-*   **PracticalTest** : L'objet central. Il fait le lien entre un `Exam` (le contenu), un `User` (le professeur) et une `Classe` (les bénéficiaires).
-*   **SessionCode** : Indexé et unique en base de données avec une contrainte d'unicité sur les sessions actives pour éviter tout conflit de code.
+## 4.8 Renderer - Models
 
----
+### `src/renderer/models/User.js`
+- **Role**: classe utilisateur simple.
+- **Pourquoi**: formaliser donnees auth.
+- **Contient**: `class User` (`id,name,email,role,token`).
+- **Liens**: chargee au login/professeur.
 
-## 💎 12. Valeur Ajoutée du Projet
+### `src/renderer/models/Student.js`
+- **Role**: entite etudiant.
+- **Pourquoi**: standardiser donnees etudiant backend.
+- **Contient**:
+  - constructeur tolerant (`_id/id`, `studentCardNumber`, `cin`, etc.)
+  - getters `fullName`, `initials`
+- **Liens**: utilise cote professeur et tests.
 
-L'intégrité technique d'**Apex Edu** repose sur sa capacité à transformer un ordinateur standard en une **station d'examen dédiée**, où seuls les outils pédagogiques autorisés par le professeur sont accessibles, garantissant ainsi une équité totale entre tous les étudiants.
+### `src/renderer/models/Session.js`
+- **Role**: entite session pratique.
+- **Pourquoi**: encapsuler statut session (`isActive/isPaused/...`).
+- **Contient**:
+  - mapping champs backend
+  - getter `displayTitle`
+- **Liens**: dashboard professeur + tests.
+
+## 4.9 Renderer - ViewModels (coeur metier)
+
+### `src/renderer/viewmodels/LoginVM.js`
+- **Role**: logique login complet.
+- **Pourquoi**: separer UI login de la logique backend.
+- **Contient**:
+  - `login()` route vers `_loginProfesseur()` ou `_loginEtudiant()`
+  - service account (`_getServiceToken`) pour lookup etudiant
+  - stockage sessionStorage et redirection
+- **Liens**: `login.html`, `config.js`, endpoints `/auth/login`, `/students/by-card/:id`.
+- **Variables importantes**:
+  - `API_BASE`, `SERVICE_EMAIL`, `SERVICE_PASSWORD`.
+- **Etapes login etudiant**:
+  1. Auth service admin.
+  2. Rechercher etudiant par carte.
+  3. Comparer CIN saisi.
+
+### `src/renderer/viewmodels/SessionVM.js`
+- **Role**: logique join session + heartbeat + leave.
+- **Pourquoi**: synchronisation d'etat et robustesse reseau.
+- **Contient**:
+  - `join()` (GET code, POST join waiting)
+  - `_updateLocalSessionState()` (clock offset, pause, active, ressources)
+  - `_sendPing()` avec retries + timeout
+  - `startHeartbeat()`
+  - `leaveSession()`
+- **Liens**: `session.html`, `desktop.html`, backend `practical-tests/*`.
+- **Variables importantes**:
+  - `heartbeatInterval`, `_heartbeatInFlight`, `API_BASE`.
+
+### `src/renderer/viewmodels/DesktopVM.js`
+- **Role**: VM desktop simple (version legacy).
+- **Pourquoi**: etat local ouverture IDE + logout.
+- **Contient**:
+  - reconstruction user depuis sessionStorage
+  - `toggleIde()`, `launchExternalIDE()`, `logout()`
+- **Liens**: `views/DesktopView.js` (peu utilise dans page desktop actuelle).
+
+### `src/renderer/viewmodels/QuizVM.js`
+- **Role**: moteur quiz etudiant dans `desktop.html`.
+- **Pourquoi**: rendre questions, collecter reponses, soumettre score.
+- **Contient**:
+  - `init/sync/render/renderResult`
+  - `setAnswer()`, `submitQuiz()`
+- **Liens**:
+  - lit `sessionQuizData` / `sessionTestType`
+  - envoi via socket event `submitQuiz` ou fallback HTTP
+- **Logique importante**:
+  - support types `QCM`, `QCMImage`, `VraiFaux`, `Libre`, `Classement`.
+
+## 4.10 Renderer - ViewModels professeur (modulaires)
+
+### `src/renderer/viewmodels/professor/ProfessorCore.js`
+- **Role**: noyau `ProfVM` + helpers communs + init dashboard.
+- **Pourquoi**: point central modules professeur.
+- **Contient**:
+  - helpers de normalisation (`_resolveStr`, `_toIsoFromDateAndTime`, etc.)
+  - store `ProfData`
+  - `ProfVM.init()`, `initSocket()`, `checkConnection()`
+- **Liens**: charge en premier avant autres modules `Professor*`.
+
+### `src/renderer/viewmodels/professor/ProfessorSessions.js`
+- **Role**: gestion sessions professeur (historique, creation, archive, suppression).
+- **Pourquoi**: cycle de vie session cote enseignant.
+- **Contient**:
+  - `fetchRecentSessions()`, `renderSessions()`
+  - `openCreateModal()`, `generateCode()`
+  - `fetchClasses()`, `fetchExams()`, `selectExam()`
+  - `addUrl/removeUrl/renderUrls`
+- **Liens**:
+  - endpoints `/practical-tests/*`, `/classe`, `/professor/exams`.
+- **Variables importantes**:
+  - `sharedUrls`, `selectedExam`, `mode`, `quizQuestions`.
+
+### `src/renderer/viewmodels/professor/ProfessorMonitoring.js`
+- **Role**: monitoring temps reel et controle etudiants.
+- **Pourquoi**: supervision anti-triche.
+- **Contient**:
+  - details session: `showSessionDetails`, `refreshSessionDetails`
+  - controle acces: `grantAccess`, `denyAccess`
+  - surveillance ecran/process: `openMonitorModal`, `_renderMonitorData`
+  - gestion risques/ignores: `_getRisk`, `toggleIgnoreProcess`
+  - actions discipline: `lockdownStudent`, `unlockStudent`
+  - messagerie privee: `openMessageModal`, `sendPrivateMessage`
+  - actions session: `togglePause`, `endSession`, `extendSession`
+  - export: `generatePDFReport`
+- **Liens**:
+  - socket events (`student-monitoring-update`, `student-waiting`, ...)
+  - localStorage fallback pour attente access.
+
+### `src/renderer/viewmodels/professor/ProfessorWork.js`
+- **Role**: explorateur et telechargement travaux etudiants.
+- **Pourquoi**: recuperer submissions ZIP.
+- **Contient**:
+  - `openWorkModal`, `fetchWorkFolders`, `renderWorkExplorer`
+  - `downloadSubmission()`
+- **Liens**: endpoint `/practical-tests/professor/work-folders` + `/submissions/:id/download`.
+
+### `src/renderer/viewmodels/professor/ProfessorQuiz.js`
+- **Role**: quiz IA/manuel cote professeur.
+- **Pourquoi**: generer et editer questions.
+- **Contient**:
+  - selection type quiz
+  - extraction texte PDF/TXT (`handleAIFiles`)
+  - appel Together API (`generateAIQuiz`)
+  - edition locale questions (`renderQuizQuestions`)
+- **Liens**: injecte questions dans creation session (module sessions).
+- **Attention securite**: cle API IA hardcodee dans le fichier (risque eleve).
+
+## 4.11 Renderer - Views
+
+### `src/renderer/views/LoginView.js`
+- **Role**: binding DOM <-> `LoginVM` (version legere).
+- **Pourquoi**: pattern MVVM (pont Vue/VM).
+- **Contient**: listeners form + fonction `render()`.
+- **Liens**: redondant partiellement avec script inline de `login.html`.
+
+### `src/renderer/views/SessionView.js`
+- **Role**: binding DOM <-> `SessionVM` (version legere).
+- **Pourquoi**: facade simple pour page session.
+- **Contient**: submit + rendering loading.
+- **Liens**: redondant partiellement avec script inline `session.html`.
+
+### `src/renderer/views/DesktopView.js`
+- **Role**: ancienne vue desktop simple avec fenetre IDE draggable.
+- **Pourquoi**: heritage de prototype.
+- **Contient**: drag logic, toggle IDE, logout.
+- **Liens**: moins utilise par `desktop.html` actuel.
+
+### `src/renderer/views/ClassroomDesktopView.js`
+- **Role**: gestion UI bureau (fenetres, z-index, launcher, clock, actions VS Code externe).
+- **Pourquoi**: comportement "OS".
+- **Contient**:
+  - objet global `UI`
+  - drag/drop fenetres
+  - `AppActions.requestVSCodeLaunch()`
+- **Liens**: appele depuis boutons de `desktop.html`.
+
+### `src/renderer/views/BrowserView.js`
+- **Role**: VM de navigateur integre via `<webview>`.
+- **Pourquoi**: encapsuler navigation et etat browser.
+- **Contient**:
+  - `init()`, `navigate()`, `goBack/goForward/reload/stop`
+  - securite UI (`updateSecurityIcon`) et erreurs de chargement
+- **Liens**: utilise dans fenetre navigateur de `desktop.html`.
+
+### `src/renderer/views/VsCodeView.js`
+- **Role**: simulation VS Code + integration Monaco.
+- **Pourquoi**: proposer un editeur pedagogique integre.
+- **Contient**:
+  - `FileStore` (fichiers Java de demo)
+  - `VsCodeVM` (tabs, open/close, save, run)
+  - init Monaco, commandes clavier, terminal simule
+- **Liens**: attendu par une page `vscode.html` absente actuellement.
+
+## 5) Flux metier detaille pas a pas
+
+### A. Authentification
+1. L'utilisateur saisit identifiant/mot de passe dans `login.html`.
+2. `LoginVM.login()` detecte le mode:
+   - email -> professeur
+   - sinon -> etudiant
+3. Professeur: `POST /auth/login` puis controle role.
+4. Etudiant: login compte service -> recherche etudiant -> verification CIN.
+5. Donnees session sont stockees en `sessionStorage` puis redirection.
+
+### B. Rejoindre une session etudiante
+1. `session.html` construit un code 6 chiffres.
+2. `SessionVM.join()` interroge `GET /practical-tests/code/:code`.
+3. Si ok: `POST /practical-tests/:testId/join` avec statut `waiting`.
+4. Redirection vers `desktop.html`.
+5. `desktop.html` affiche waiting room jusqu'a approbation professeur.
+
+### C. Session live (desktop)
+1. `robustInit()` cree `sessionVM` et demarre heartbeat.
+2. Socket etudiant emet `joinSession-waiting` ou `joinSession`.
+3. `tick()` met a jour timer via clock offset serveur.
+4. `session-updated` rafraichit PDF/lien/etat pause.
+5. En cas fin session (`sessionIsActive=false`): sortie vers login.
+
+### D. Monitoring professeur
+1. Prof ouvre details d'une session.
+2. Refresh API periodique + events socket.
+3. Les etudiants actifs/en attente sont calcules via participants + fallback localStorage.
+4. Prof peut:
+   - accorder/refuser acces
+   - voir flux ecran
+   - analyser processus + risques
+   - verrouiller/deverrouiller poste
+   - envoyer message prive
+   - pause/reprendre/terminer/prolonger session
+
+### E. Partage ecran et collecte processus
+1. Prof envoie `start-sharing-screen`.
+2. Etudiant capture ecran via `electronAPI.captureScreen()` toutes les ~1s.
+3. Etudiant envoie frames socket `send-screen-frame`.
+4. Process monitoring via IPC `monitor:getProcesses` toutes les ~4s.
+
+## 6) Incoherences techniques actuelles (etat reel)
+
+1. `src/renderer/viewmodels/ProfessorVM.js` est attendu par `check-structure.js` mais n'existe pas.
+   - La logique professeur est aujourd'hui decoupee en `ProfessorCore/Sessions/Monitoring/Work/Quiz`.
+2. `desktop.html` contient **2 blocs `<style>` inline**, ce qui fait echouer `test` et `test:structure`.
+3. `professor.html` contient un script inline d'initialisation (faible mais signale par check structure).
+4. `VsCodeView.js` existe, mais la page `src/renderer/vscode.html` est absente.
+5. Credentials sensibles dans le frontend:
+   - compte service (`config.js`)
+   - cle Together API (`ProfessorQuiz.js`)
+
+   // model est " meta-llama/Llama-3-8b-chat-hf"
+
+## 7) Resume architecture par couches
+
+- **Presentation (View)**: `*.html` + styles `assets/css/*`
+- **Logique presentation/metier (ViewModel)**: `viewmodels/*`
+- **Donnees (Model)**: `models/*`
+- **Infrastructure desktop (Electron)**:
+  - main: `main.js`, `ipcHandlers.js`
+  - preload: `preload.js`
+- **Services externes**:
+  - API backend (REST)
+  - Socket.IO (temps reel)
+
+## 8) Enchainement des fichiers critiques
+
+1. `main.js` lance fenetre + preload.
+2. `preload.js` expose `electronAPI`.
+3. `login.html` + `LoginVM.js` auth.
+4. `session.html` + `SessionVM.js` join.
+5. `desktop.html` + `SessionVM.js` + `BrowserView.js` + `ClassroomDesktopView.js` + `QuizVM.js` runtime etudiant.
+6. `professor.html` + modules `Professor*` runtime enseignant.
+
+Ce document decrit l'etat reel du code au moment de l'analyse et sert de reference technique pour maintenance/refactor.
