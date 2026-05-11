@@ -21,14 +21,14 @@ Object.assign(ProfVM, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!resp.ok) {
-                if (el) el.innerHTML = `<div style="text-align:center; padding:20px; color:#ed4245;">âš ï¸ Erreur ${resp.status}: Chargement impossible.</div>`;
+                if (el) el.innerHTML = `<div style="text-align:center; padding:20px; color:#ed4245;">?? Erreur ${resp.status}: Chargement impossible.</div>`;
                 return;
             }
 
             const data = await resp.json();
             this._lastSessionsFetch = Date.now();
             let joined = [];
-            try { joined = JSON.parse(localStorage.getItem('joinedSessions') || '[]'); } catch(e) {}
+            try { joined = JSON.parse(localStorage.getItem('joinedSessions') || '[]'); } catch (e) { }
             const dataIds = new Set(data.map(d => d._id));
             const joinedToDisplay = joined.filter(j => !dataIds.has(j._id));
             const allData = [...data, ...joinedToDisplay];
@@ -38,8 +38,8 @@ Object.assign(ProfVM, {
                 if (!title) title = s.testType === 'WEB_LINK' ? "Lien de redirection" : "Environnement de test";
                 const classe = _getClasse(s);
                 const displayTitle = _buildSessionTitle(title, classe);
-                const mode = s.isJoined ? 'ðŸ¤ Rejointe' : (s.testType === 'WEB_LINK' ? 'ðŸ”— URL' : 'ðŸ–¥ï¸ App');
-                const dur = s.duration ? ` Â· ${_formatDuree(s.duration)}` : '';
+                const mode = s.isJoined ? '?? Rejointe' : (s.testType === 'WEB_LINK' ? '?? URL' : '??? App');
+                const dur = s.duration ? ` · ${_formatDuree(s.duration)}` : '';
                 const date = s.startedAt ? new Date(s.startedAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Date inconnue';
                 const status = s.isActive ? 'active' : 'closed';
                 return {
@@ -68,8 +68,8 @@ Object.assign(ProfVM, {
             console.error('[ProfVM] fetchRecentSessions failed:', e);
             const el = document.getElementById('sessionsList');
             if (el) {
-                const msg = (e.message.includes('404')) ? `âš ï¸ L'historique des sessions n'est pas encore disponible sur ce serveur.` : `âš ï¸ Impossible de contacter le serveur (${API_BASE}).`;
-                el.innerHTML = `<div style="text-align:center; padding:20px; color:#ed4245; font-size:13px;">${msg}<br/><button class="btn btn-ghost" style="margin-top:12px;" onclick="ProfVM.fetchRecentSessions()">ðŸ”„ RÃ©essayer</button></div>`;
+                const msg = (e.message.includes('404')) ? `?? L'historique des sessions n'est pas encore disponible sur ce serveur.` : `?? Impossible de contacter le serveur (${API_BASE}).`;
+                el.innerHTML = `<div style="text-align:center; padding:20px; color:#ed4245; font-size:13px;">${msg}<br/><button class="btn btn-ghost" style="margin-top:12px;" onclick="ProfVM.fetchRecentSessions()">?? R?essayer</button></div>`;
             }
         }
     },
@@ -78,12 +78,12 @@ Object.assign(ProfVM, {
         const el = document.getElementById('sessionsList');
         if (!el) return;
         if (!ProfData.sessions || ProfData.sessions.length === 0) {
-            el.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.2); font-size:13px;">Aucune session rÃ©cente trouvÃ©e.</div>`;
+            el.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.2); font-size:13px;">Aucune session récente trouvée.</div>`;
             return;
         }
         const filtered = ProfData.sessions.filter(s => this.viewingArchive ? s.isArchived : !s.isArchived);
         if (filtered.length === 0) {
-            el.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.2); font-size:13px;">Aucune session trouvÃ©e dans cette catÃ©gorie.</div>`;
+            el.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.2); font-size:13px;">Aucune session trouvée dans cette catégorie.</div>`;
             return;
         }
         el.innerHTML = filtered.map(s => `
@@ -92,13 +92,13 @@ Object.assign(ProfVM, {
                     <div class="session-code" style="font-size:17px; color:#fff; font-weight:700;">${s.course}</div>
                     <div class="session-meta" style="margin-top:2px;">
                         <strong style="color:var(--primary); font-size:13.5px; font-family:monospace; letter-spacing:1px;">CODE: ${s.code}</strong><br/>
-                        <small style="color:rgba(255,255,255,.45); font-size:11.5px;">${s.meta} Â· ${s.date}</small>
+                        <small style="color:rgba(255,255,255,.45); font-size:11.5px;">${s.meta} · ${s.date}</small>
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
-                    ${!this.viewingArchive && !s.isJoined ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height:26px;" onclick="event.stopPropagation(); ProfVM.archiveSession('${s.id}')">ðŸ—ƒï¸ Archiver</button>` : ''}
-                    ${!s.isJoined ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height:26px; color:#ff7b7b;" onclick="event.stopPropagation(); ProfVM.deleteSession('${s.id}')">ðŸ—‘ï¸ Supprimer</button>` : ''}
-                    <span class="session-badge ${s.status}">${s.status === 'active' ? 'ðŸŸ¢ Active' : 'âš« TerminÃ©e'}</span>
+                    ${!this.viewingArchive && !s.isJoined ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height:26px;" onclick="event.stopPropagation(); ProfVM.archiveSession('${s.id}')">📋 Archiver</button>` : ''}
+                    ${!s.isJoined ? `<button class="btn btn-ghost" style="padding:4px 8px; font-size:11px; height:26px; color:#ff7b7b;" onclick="event.stopPropagation(); ProfVM.deleteSession('${s.id}')">🗑️ Supprimer</button>` : ''}
+                    <span class="session-badge ${s.status}">${s.status === 'active' ? '🟢 Active' : '🔴 Termine'}</span>
                 </div>
             </div>`).join('');
     },
@@ -113,11 +113,11 @@ Object.assign(ProfVM, {
             });
             if (resp.ok) this.fetchRecentSessions();
             else alert("Erreur lors de l'archivage.");
-        } catch (e) { alert("Erreur rÃ©seau"); }
+        } catch (e) { alert("Erreur réseau"); }
     },
 
     async deleteSession(id) {
-        if (!confirm("âš ï¸ Voulez-vous vraiment supprimer cette session ?\n\nCette action est dÃ©finitive.")) return;
+        if (!confirm("?? Voulez-vous vraiment supprimer cette session ?\n\nCette action est d?finitive.")) return;
         try {
             const token = sessionStorage.getItem('accessToken');
             const resp = await fetch(`${API_BASE}/practical-tests/${id}`, {
@@ -131,7 +131,7 @@ Object.assign(ProfVM, {
                 const err = await resp.json().catch(() => ({}));
                 alert("Erreur lors de la suppression: " + (err.message || "Erreur inconnue"));
             }
-        } catch (e) { alert("Erreur rÃ©seau"); }
+        } catch (e) { alert("Erreur réseau"); }
     },
 
     toggleSessions(mode = 'recent') {
@@ -143,7 +143,7 @@ Object.assign(ProfVM, {
             card.classList.toggle('visible', this.sessionsOpen);
             card.style.display = this.sessionsOpen ? 'block' : 'none';
             if (this.sessionsOpen) {
-                document.getElementById('sessionsCardTitle').innerHTML = wantsArchive ? 'ðŸ—„ï¸ Mes sessions archivÃ©es' : 'ðŸ“‹ Mes sessions rÃ©centes';
+                document.getElementById('sessionsCardTitle').innerHTML = wantsArchive ? '??? Mes sessions archiv?es' : '?? Mes sessions r?centes';
                 this.fetchRecentSessions();
                 window.requestAnimationFrame(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }));
             }
@@ -170,14 +170,14 @@ Object.assign(ProfVM, {
         if (examSearch) examSearch.value = '';
         const modalActions = document.getElementById('modalActions');
         if (modalActions) {
-            modalActions.innerHTML = `<button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Annuler</button><button class="btn btn-indigo" onclick="ProfVM.generateCode()">ðŸŽ² GÃ©nÃ©rer le code session</button>`;
+            modalActions.innerHTML = `<button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Annuler</button><button class="btn btn-indigo" onclick="ProfVM.generateCode()">  le code session</button>`;
         }
         this.setMode('existant');
         document.getElementById('createModal').classList.add('open');
         const pdfFile = document.getElementById('pdfFile');
         if (pdfFile) pdfFile.value = '';
         const pdfFileName = document.getElementById('pdfFileName');
-        if (pdfFileName) pdfFileName.textContent = 'Aucun fichier sÃ©lectionnÃ©';
+        if (pdfFileName) pdfFileName.textContent = 'Aucun fichier sélectionné';
         this.fetchExams();
         this.fetchClasses();
     },
@@ -202,7 +202,7 @@ Object.assign(ProfVM, {
     renderClassDropdown(list) {
         const el = document.getElementById('n_classe');
         if (!el) return;
-        let html = '<option value="">â€” SÃ©lectionner â€”</option>';
+        let html = '<option value="">Sélectionner </option>';
         list.forEach(c => {
             const label = c.nom || c.name || c.code || 'Classe sans nom';
             const val = (typeof c._id === 'object' && c._id.$oid) ? c._id.$oid : (c._id || c.id);
@@ -212,7 +212,7 @@ Object.assign(ProfVM, {
     },
 
     onPdfSelected(input) {
-        const fileName = input.files[0] ? input.files[0].name : 'Aucun fichier sÃ©lectionnÃ©';
+        const fileName = input.files[0] ? input.files[0].name : 'Aucun fichier sélectionné';
         const el = document.getElementById('pdfFileName');
         if (el) {
             el.textContent = fileName;
@@ -258,7 +258,7 @@ Object.assign(ProfVM, {
         if (modalError) modalError.style.display = 'none';
         let apiSessionCode = null, data = null, courseLabel, classeLabel, dateLabel, dureeLabel, startLabel;
         const btnGen = document.querySelector('#modalActions .btn-indigo') || document.querySelector('#modalActions .btn-green') || document.querySelector('#modalActions .btn-primary');
-        const oriHtml = btnGen ? btnGen.innerHTML : 'ðŸŽ² GÃ©nÃ©rer le code session';
+        const oriHtml = btnGen ? btnGen.innerHTML : '?? G?n?rer le code session';
 
         if (this.mode === 'existant') {
             try {
@@ -268,9 +268,9 @@ Object.assign(ProfVM, {
                 let classId = null;
                 if (e.classe) classId = (typeof e.classe === 'object') ? (e.classe._id || e.classe.id) : (isMongoId(e.classe) ? e.classe : null);
                 if (!classId && e.matiere?.classe) classId = (typeof e.matiere.classe === 'object') ? (e.matiere.classe._id || e.matiere.classe.id) : (isMongoId(e.matiere.classe) ? e.matiere.classe : null);
-                if (!classId) throw new Error("ID de classe non trouvÃ©.");
+                if (!classId) throw new Error("ID de classe non trouvé.");
                 courseLabel = _resolveStr(e.matiere, 'nom', 'code', 'name') || _resolveStr(e.subject) || _resolveStr(e.title) || 'Examen';
-                classeLabel = (document.getElementById('af_classe')?.value || _getClasse(e) || '').trim() || 'â€”';
+                classeLabel = (document.getElementById('af_classe')?.value || _getClasse(e) || '').trim() || '?';
                 let parsedDuree = parseInt(e.duree || e.durationMinutes || 120, 10);
                 const examDateSource = _resolveStr(e.scheduledStartTime) || _resolveStr(e.date) || _resolveStr(e.examDate) || _resolveStr(e.scheduledAt);
                 const examStartRaw = document.getElementById('af_start')?.value || '';
@@ -301,12 +301,12 @@ Object.assign(ProfVM, {
                 if (!resp.ok) throw new Error(data.message || 'Erreur communication serveur.');
                 apiSessionCode = data.sessionCode;
                 const dr = e.date || e.examDate || e.scheduledAt;
-                dateLabel = dr ? new Date(dr).toLocaleDateString('fr-FR') : 'â€”';
+                dateLabel = dr ? new Date(dr).toLocaleDateString('fr-FR') : '?';
                 dureeLabel = _formatDuree(parsedDuree);
-                startLabel = examStartRaw || 'â€”';
+                startLabel = examStartRaw || '?';
             } catch (err) {
                 if (btnGen) { btnGen.innerHTML = oriHtml; btnGen.disabled = false; }
-                if (modalError) { modalError.innerHTML = `<strong>Ã‰chec:</strong> ${err.message}`; modalError.style.display = 'block'; }
+                if (modalError) { modalError.innerHTML = `<strong>?chec:</strong> ${err.message}`; modalError.style.display = 'block'; }
                 return;
             }
         } else {
@@ -316,7 +316,7 @@ Object.assign(ProfVM, {
                 const classId = document.getElementById('n_classe')?.value;
                 const subjectValue = document.getElementById('n_matiere')?.value.trim();
                 const dureeRaw = document.getElementById('n_duree')?.value || '120';
-                if (!/^[0-9a-f]{24}$/i.test(String(classId))) throw new Error("Veuillez sÃ©lectionner une classe valide.");
+                if (!/^[0-9a-f]{24}$/i.test(String(classId))) throw new Error("Veuillez sélectionner une classe valide.");
                 let duration = 90;
                 if (dureeRaw.includes('h')) { const parts = dureeRaw.split('h'); duration = (parseInt(parts[0] || 0) * 60) + (parseInt(parts[1] || 0)); }
                 else { duration = parseInt(dureeRaw) || 90; }
@@ -349,15 +349,15 @@ Object.assign(ProfVM, {
                 const resp = await fetch(`${API_BASE}/practical-tests`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData });
                 data = await resp.json();
                 if (btnGen) { btnGen.innerHTML = oriHtml; btnGen.disabled = false; }
-                if (!resp.ok) throw new Error(data.message || 'Erreur API crÃ©ation rapide.');
+                if (!resp.ok) throw new Error(data.message || 'Erreur API création rapide.');
                 apiSessionCode = data.sessionCode;
                 courseLabel = subjectValue || 'Session rapide';
                 dateLabel = nDate;
                 dureeLabel = dureeRaw;
-                startLabel = nStart || 'â€”';
+                startLabel = nStart || '?';
             } catch (err) {
                 if (btnGen) { btnGen.innerHTML = oriHtml; btnGen.disabled = false; }
-                if (modalError) { modalError.innerHTML = `<strong>Ã‰chec:</strong> ${err.message}`; modalError.style.display = 'block'; }
+                if (modalError) { modalError.innerHTML = `<strong>?chec:</strong> ${err.message}`; modalError.style.display = 'block'; }
                 return;
             }
         }
@@ -373,7 +373,7 @@ Object.assign(ProfVM, {
         sessionStorage.setItem('sessionDuree', dureeLabel);
         sessionStorage.setItem('sessionStart', startLabel);
         const selectedWhitelist = this.selectedExam ? (document.getElementById('af_whitelist')?.value || '') : (document.getElementById('n_whitelist')?.value || '');
-        sessionStorage.setItem('allowedIDEs', selectedWhitelist.trim() || 'Non dÃ©fini');
+        sessionStorage.setItem('allowedIDEs', selectedWhitelist.trim() || 'Non défini');
         sessionStorage.setItem('sharedFiles', JSON.stringify(this.sharedFiles.map(f => f.name)));
         sessionStorage.setItem('sharedUrls', JSON.stringify(this.sharedUrls));
 
@@ -382,18 +382,18 @@ Object.assign(ProfVM, {
         const sum = document.getElementById('codeSummary');
         if (sum) {
             sum.style.display = 'block';
-            const classeDisplay = (!classeLabel || classeLabel === 'â€”' || /^[0-9a-f]{24}$/i.test(classeLabel)) ? '' : ` Â· ${classeLabel}`;
-            sum.innerHTML = `${courseLabel}${classeDisplay} Â· ${dureeLabel} Â· [${startLabel}]`;
+            const classeDisplay = (!classeLabel || classeLabel === '?' || /^[0-9a-f]{24}$/i.test(classeLabel)) ? '' : ` ? ${classeLabel}`;
+            sum.innerHTML = `${courseLabel}${classeDisplay} · ${dureeLabel} · [${startLabel}]`;
         }
 
-        ProfData.sessions.unshift({ code, course: _buildSessionTitle(courseLabel, classeLabel), date: 'Ã€ l\'instant', status: 'active', id: testId, isActive: true });
+        ProfData.sessions.unshift({ code, course: _buildSessionTitle(courseLabel, classeLabel), date: 'ì l\'instant', status: 'active', id: testId, isActive: true });
         const statCount = document.getElementById('stat-count');
         if (statCount) statCount.textContent = ProfData.sessions.length;
         this.renderSessions();
 
         const mActions = document.getElementById('modalActions');
         if (mActions) {
-            mActions.innerHTML = `<button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Fermer</button><button class="btn btn-ghost" id="copyBtn" onclick="navigator.clipboard.writeText('${code}').then(()=>document.getElementById('copyBtn').textContent='âœ… CopiÃ©!')">ðŸ“‹ Copier</button>`;
+            mActions.innerHTML = `<button class="btn btn-ghost" onclick="ProfVM.closeCreateModal()">Fermer</button><button class="btn btn-ghost" id="copyBtn" onclick="navigator.clipboard.writeText('${code}').then(()=>document.getElementById('copyBtn').textContent='? Copi?!')">?? Copier</button>`;
         }
     },
 
@@ -422,7 +422,7 @@ Object.assign(ProfVM, {
     renderUrls() {
         const el = document.getElementById('urlList');
         if (!el) return;
-        el.innerHTML = this.sharedUrls.map((u, i) => `<div class="url-chip"><span>${u}</span><button onclick="ProfVM.removeUrl(${i})">Ã—</button></div>`).join('');
+        el.innerHTML = this.sharedUrls.map((u, i) => `<div class="url-chip"><span>${u}</span><button onclick="ProfVM.removeUrl(${i})">?</button></div>`).join('');
     },
 
 
@@ -444,7 +444,7 @@ Object.assign(ProfVM, {
                 try {
                     const err = await resp.json();
                     if (err?.message) message = Array.isArray(err.message) ? err.message.join(', ') : String(err.message);
-                } catch (_) {}
+                } catch (_) { }
                 throw new Error(message);
             }
 
@@ -536,11 +536,11 @@ Object.assign(ProfVM, {
 
     validate() {
         if (this.mode === 'existant') {
-            if (!this.selectedExam) { alert("Veuillez sÃ©lectionner un examen."); return false; }
+            if (!this.selectedExam) { alert("Veuillez sélectionner un examen."); return false; }
         } else {
             const subject = document.getElementById('n_matiere')?.value.trim();
             const classe = document.getElementById('n_classe')?.value;
-            if (!subject || !classe) { alert("Veuillez remplir le sujet et sÃ©lectionner une classe."); return false; }
+            if (!subject || !classe) { alert("Veuillez remplir le sujet et sélectionner une classe."); return false; }
         }
         return true;
     }
